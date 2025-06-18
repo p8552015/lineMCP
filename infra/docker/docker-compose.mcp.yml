@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  postgres-mcp:
+    image: crystaldba/postgres-mcp:latest
+    ports:
+      - "3000:3000"
+    environment:
+      # PostgreSQL connection settings
+      DATABASE_URI: postgresql://postgres:password@postgres:5432/mydb
+      ACCESS_MODE: restricted
+      # Server settings
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,136 @@
+{
+  "project": "Services 資料夾重構",
+  "generated_at": "2025-06-18T15:01:56.419849",
+  "total_tasks": 9,
+  "total_estimated_hours": 78,
+  "tasks": [
+    {
+      "id": "SRF-001",
+      "title": "創建命令處理器抽象基類",
+      "description": "\n創建 CommandHandler 抽象基類和 CommandRegistry：\n- 定義 CommandHandler(ABC) 介面\n- 實作 CommandRegistry 用於命令註冊\n- 設計依賴注入機制\n- 撰寫單元測試框架\n\n檔案位置：\n- src/services/command/base.py\n- src/services/command/registry.py\n- tests/test_command_handlers.py\n                ",
+      "category": "refactor",
+      "priority": "CRITICAL",
+      "estimated_hours": 8,
+      "dependencies": [],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419676",
+      "due_date": "2025-06-25T15:01:56.419685"
+    },
+    {
+      "id": "SRF-002",
+      "title": "重構 SQL 命令處理器",
+      "description": "\n從 MessageHandler 中提取 SQL 相關功能：\n- 創建 SQLCommandHandler 類別\n- 移動所有 _handle_sql_* 方法\n- 實作錯誤處理和驗證\n- 增加 SQL 注入防護測試\n\n檔案：src/services/command/sql_handler.py\n影響：message_handler.py 減少 ~200 行\n                ",
+      "category": "refactor",
+      "priority": "CRITICAL",
+      "estimated_hours": 6,
+      "dependencies": [
+        "SRF-001"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419691",
+      "due_date": "2025-06-25T15:01:56.419692"
+    },
+    {
+      "id": "SRF-003",
+      "title": "重構機台狀態命令處理器",
+      "description": "\n提取機台相關查詢功能：\n- 創建 MachineStatusHandler\n- 移動 _handle_machine_query_* 方法\n- 移動 _get_machine_status_async 等方法\n- 優化故障統計查詢邏輯\n\n檔案：src/services/command/machine_handler.py\n影響：message_handler.py 減少 ~300 行\n                ",
+      "category": "refactor",
+      "priority": "HIGH",
+      "estimated_hours": 8,
+      "dependencies": [
+        "SRF-001"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419696",
+      "due_date": "2025-06-25T15:01:56.419697"
+    },
+    {
+      "id": "SRF-004",
+      "title": "重構 Excel/文件命令處理器",
+      "description": "\n提取 Excel 和文件處理功能：\n- 創建 ExcelCommandHandler\n- 移動所有 _handle_*_command 方法 (create, read, write, chart, pivot)\n- 整合 FlexBuilder 依賴\n- 增加文件操作測試\n\n檔案：src/services/command/excel_handler.py\n影響：message_handler.py 減少 ~400 行\n                ",
+      "category": "refactor",
+      "priority": "HIGH",
+      "estimated_hours": 10,
+      "dependencies": [
+        "SRF-001"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419700",
+      "due_date": "2025-06-25T15:01:56.419701"
+    },
+    {
+      "id": "SRF-005",
+      "title": "統一 MCP 客戶端實作",
+      "description": "\n解決重複的 MCP 客戶端問題：\n- 定義 MCPClientInterface 介面\n- 實作 MCPClientFactory 工廠模式\n- 整合 mcp_client.py 和 simple_mcp_client.py\n- 移除重複程式碼\n- 增加錯誤恢復機制\n\n檔案：\n- src/services/mcp/interface.py\n- src/services/mcp/factory.py\n- 刪除：simple_mcp_client.py\n                ",
+      "category": "refactor",
+      "priority": "HIGH",
+      "estimated_hours": 6,
+      "dependencies": [
+        "SRF-002",
+        "SRF-003"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419705",
+      "due_date": "2025-06-25T15:01:56.419705"
+    },
+    {
+      "id": "SRF-006",
+      "title": "重構 FlexBuilder 模組化",
+      "description": "\n將 1,313 行的 FlexBuilder 拆分：\n- 創建 BaseFlexBuilder 抽象類別\n- 實作 ListFlexBuilder, ChartFlexBuilder, TableFlexBuilder\n- 提取共用元件到 FlexComponents\n- 使用建造者模式設計 API\n- 減少硬編碼 JSON 結構\n\n新結構：\n- src/services/flex/base.py\n- src/services/flex/builders/\n- src/services/flex/components.py\n                ",
+      "category": "refactor",
+      "priority": "MEDIUM",
+      "estimated_hours": 12,
+      "dependencies": [
+        "SRF-004"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419708",
+      "due_date": "2025-06-25T15:01:56.419709"
+    },
+    {
+      "id": "SRF-007",
+      "title": "實作服務依賴注入容器",
+      "description": "\n創建依賴注入系統：\n- 設計 ServiceContainer 類別\n- 實作服務生命週期管理\n- 配置驅動的服務選擇\n- 支援服務降級和故障恢復\n- 撰寫完整的整合測試\n\n檔案：src/services/container.py\n配置：src/config/services.yaml\n                ",
+      "category": "refactor",
+      "priority": "MEDIUM",
+      "estimated_hours": 8,
+      "dependencies": [
+        "SRF-001",
+        "SRF-005"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419714",
+      "due_date": "2025-06-25T15:01:56.419714"
+    },
+    {
+      "id": "SRF-008",
+      "title": "建立完整測試套件",
+      "description": "\n為所有新的命令處理器創建測試：\n- 單元測試覆蓋率 >90%\n- 整合測試驗證命令路由\n- 效能測試確保回應時間\n- Mock 外部依賴 (OpenAI, MCP)\n                ",
+      "category": "refactor",
+      "priority": "HIGH",
+      "estimated_hours": 16,
+      "dependencies": [
+        "SRF-002",
+        "SRF-003",
+        "SRF-004"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419720",
+      "due_date": "2025-06-25T15:01:56.419722"
+    },
+    {
+      "id": "SRF-009",
+      "title": "更新文檔和架構圖",
+      "description": "\n更新專案文檔：\n- 重構後的架構圖\n- 新的命令處理器使用說明\n- 開發者指南更新\n- API 文檔生成\n                ",
+      "category": "refactor",
+      "priority": "LOW",
+      "estimated_hours": 4,
+      "dependencies": [
+        "SRF-008"
+      ],
+      "status": "pending",
+      "created_at": "2025-06-18T15:01:56.419727",
+      "due_date": "2025-06-25T15:01:56.419727"
+    }
+  ]
+}

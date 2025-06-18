@@ -1,0 +1,46 @@
+mcp_client:
+  # 客戶端類型：simple (預設), legacy, http, mock
+  client_type: simple
+  
+  # 伺服器配置
+  servers:
+    sqlite: http://localhost:3003
+    postgres: http://localhost:3002
+    context7: http://localhost:3004
+  
+  # 預設呼叫選項
+  default_options:
+    timeout: 30.0
+    max_retries: 3
+    retry_delay: 1.0
+    enable_circuit_breaker: true
+  
+  # HTTP 客戶端配置
+  http_client:
+    max_keepalive: 20
+    max_connections: 100
+    keepalive_expiry: 5
+    connect_timeout: 10.0
+    read_timeout: 30.0
+    write_timeout: 10.0
+    pool_timeout: 5.0
+  
+  # 熔斷器配置
+  circuit_breaker:
+    failure_threshold: 5
+    success_threshold: 3
+    timeout: 60
+  
+  # 連接池配置
+  connection_pool:
+    min_size: 2
+    max_size: 20
+    timeout: 30.0
+    idle_timeout: 300.0
+  
+  # 可觀測性配置
+  observability:
+    enable_metrics: true
+    enable_tracing: true
+    metrics_port: 9090
+    trace_endpoint: http://localhost:4317

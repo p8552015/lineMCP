@@ -1,0 +1,214 @@
+INFO:     Will watch for changes in these directories: ['/Users/yen/Desktop/lineMCP/apps/bot']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [80759] using StatReload
+2025-06-18 21:32:03 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:32:03 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:32:03 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:32:04 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:32:04 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:32:04 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:32:04 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:32:04 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:32:04 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [80762]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:56209 - "GET /health HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+{"user_id_hash": "a33e30d5", "message_text": "M001\u6a5f\u53f0\u73fe\u5728\u72c0\u6cc1\u5982\u4f55", "event": "Message processing timeout, sending quick response", "logger": "src.routes.webhook", "level": "warning", "timestamp": "2025-06-18T13:32:48.231453Z"}
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [80762]
+2025-06-18 21:34:31 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:34:31 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:34:31 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:34:31 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:34:31 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:34:31 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:34:31 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:34:31 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:34:31 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [81262]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81262]
+2025-06-18 21:34:48 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:34:48 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:34:48 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:34:49 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:34:49 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:34:49 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:34:49 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:34:49 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:34:49 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [81279]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81279]
+2025-06-18 21:37:35 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:37:35 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:37:35 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:37:35 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:37:35 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:37:35 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:37:35 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:37:35 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:37:35 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [81450]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81450]
+2025-06-18 21:39:35 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:39:35 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:39:35 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:39:36 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:39:36 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:39:36 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:39:36 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:39:36 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:39:36 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [81635]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81635]
+2025-06-18 21:43:19 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:43:19 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:43:19 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:43:19 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:43:19 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:43:19 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:43:19 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:43:19 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:43:19 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [81987]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [81987]
+2025-06-18 21:44:03 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:44:03 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:44:03 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:44:03 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:44:03 [info     ] ✅ 使用真正的MCP客戶端作為回退
+2025-06-18 21:44:03 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:44:03 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:03 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:44:03 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:03 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [82041]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [82041]
+2025-06-18 21:44:17 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:44:17 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:44:17 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:44:17 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:44:17 [info     ] ✅ 使用真正的MCP客戶端作為回退
+2025-06-18 21:44:17 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:44:17 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:17 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:44:17 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:17 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [82056]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [82056]
+2025-06-18 21:44:25 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:44:25 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:44:25 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:44:25 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
+2025-06-18 21:44:25 [info     ] ✅ 使用真正的MCP客戶端作為回退
+2025-06-18 21:44:25 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:44:25 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:25 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:44:25 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:44:25 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [82065]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [82065]
+2025-06-18 21:48:06 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:48:06 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:48:06 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:48:06 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-18 21:48:06 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:48:06 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:48:06 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:48:06 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:48:06 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [82276]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [82276]
+2025-06-18 21:48:29 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-18 21:48:29 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-18 21:48:29 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-18 21:48:29 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-18 21:48:29 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-18 21:48:29 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:48:29 [info     ] TaskMaster integration temporarily disabled
+2025-06-18 21:48:29 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-18 21:48:29 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [82297]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+{"event": "\u274c Server\u5feb\u901f\u9000\u51fa: stdout=, stderr=", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024516Z"}
+{"event": "\u274c MCP Server\u555f\u52d5\u6e2c\u8a66\u5931\u6557", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024766Z"}
+{"event": "\u274c \u7121\u6cd5\u5efa\u7acbMCP\u9023\u63a5", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024807Z"}
+{"event": "\u26a0\ufe0f \u5f37\u5065\u7684MCP\u8abf\u7528\u5931\u6557\uff0c\u5207\u63db\u5230\u517c\u5bb9\u6a21\u5f0f", "logger": "src.services.unified_mcp_client", "level": "warning", "timestamp": "2025-06-18T13:49:11.024853Z"}
+INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
