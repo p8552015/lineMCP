@@ -132,12 +132,22 @@ echo -e "\n${PURPLE}==============================================\n${NC}"
 echo -e "${PURPLE}📋 當前架構摘要${NC}"
 echo -e "${PURPLE}==============================================\n${NC}"
 
-echo -e "${CYAN}🏗️ 架構類型：${NC}生產級簡化架構"
+# 檢查新架構狀態
+echo -e "${CYAN}🏗️ 當前架構類型：${NC}"
+if [ "$USE_NEW_ARCHITECTURE" = "true" ] && [ "$SERVICE_FACTORY_TYPE" = "enhanced" ]; then
+    echo -e "${GREEN}   ✅ 新架構 (EnhancedServiceFactory + DI)${NC}"
+    echo -e "${CYAN}🔧 依賴注入：${NC}15個服務已註冊"
+    echo -e "${CYAN}🚪 應用門面：${NC}ApplicationFacade"
+    echo -e "${CYAN}💬 訊息處理：${NC}MessageHandlerDI"
+    echo -e "${CYAN}📊 監控系統：${NC}內建效能指標"
+    echo -e "${CYAN}🛡️ 錯誤處理：${NC}統一異常處理"
+else
+    echo -e "${YELLOW}   ⚠️ 舊架構 (基礎 MessageHandler)${NC}"
+fi
+
 echo -e "${CYAN}🔗 MCP 協議：${NC}STDIO (macOS 修復版)"
-echo -e "${CYAN}🛠️ 主要客戶端：${NC}production_mcp_client.py"
-echo -e "${CYAN}🔧 統一介面：${NC}unified_mcp_client.py"
-echo -e "${CYAN}🗄️ 資料庫：${NC}SQLite (server_fixed.py)"
-echo -e "${CYAN}📦 移除組件：${NC}mcp_common 庫 (7550+ 行)"
-echo -e "${CYAN}⚡ 效能提升：${NC}減少 90% 複雜度"
+echo -e "${CYAN}🗄️ 資料庫：${NC}SQLite MCP 服務器"
+echo -e "${CYAN}🤖 AI 模型：${NC}Gemini 1.5 Flash (智能切換)"
+echo -e "${CYAN}⚡ 零風險遷移：${NC}完全可回滾"
 
 echo -e "\n${GREEN}✨ 系統檢查完成！${NC}\n"

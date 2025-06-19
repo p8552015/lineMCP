@@ -40,6 +40,7 @@ def parse_command(message: str) -> Command | None:
         "format",
         "info",
         "task",
+        "models",  # 添加 models 指令支援
     ]
 
     if command_name not in supported_commands:

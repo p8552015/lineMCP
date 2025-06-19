@@ -11,6 +11,11 @@ from src.config import get_settings
 settings = get_settings()
 
 
+def get_tracer(name: str = __name__):
+    """獲取追蹤器"""
+    return trace.get_tracer(name)
+
+
 def setup_observability():
     structlog.configure(
         processors=[

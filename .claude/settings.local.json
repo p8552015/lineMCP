@@ -15,7 +15,21 @@
       "Bash(./start-production.sh:*)",
       "Bash(/Users/yen/Desktop/lineMCP/start-production.sh test:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__zen__thinkdeep",
+      "Bash(python -m pytest tests/unit/test_error_handling.py -v)",
+      "Bash(export USE_NEW_ARCHITECTURE=true)",
+      "Bash(export SERVICE_FACTORY_TYPE=enhanced)",
+      "Bash(echo:*)",
+      "Bash(timeout:*)",
+      "Bash(unset:*)",
+      "Bash(unset SERVICE_FACTORY_TYPE)",
+      "Bash(curl:*)",
+      "Bash(./status.sh)",
+      "Bash(true)",
+      "Bash(tree:*)",
+      "mcp__zen__codereview"
     ],
     "deny": []
   }

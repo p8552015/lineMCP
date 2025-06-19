@@ -1,4 +1,7 @@
+import asyncio
+import concurrent.futures
 import hashlib
+import json
 from datetime import UTC, datetime
 
 import structlog
@@ -15,35 +18,29 @@ from linebot.v3.messaging import (
 from prometheus_client import Counter
 
 from src.config import get_settings
-from src.services.message_handler import MessageHandler
+from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
+from src.services.message_handler_di import MessageHandlerDI
 from src.utils.signature_validator import SignatureValidator
 
-# from src.utils.redis_client import get_cached_value, set_cached_value
-# from src.utils.observability import get_tracer
 
 logger = structlog.get_logger()
 settings = get_settings()
 router = APIRouter()
-# tracer = get_tracer(__name__)
 
 webhook_handler = WebhookHandler(settings.line_channel_secret)
 configuration = Configuration(access_token=settings.line_channel_access_token)
 signature_validator = SignatureValidator(settings.line_channel_secret, settings.app_env)
 
 # 初始化LINE API客戶端和訊息處理器
-
-message_handler = MessageHandler()
-
+# 使用新架構的增強版服務工廠
+enhanced_factory = get_enhanced_service_factory()
+enhanced_factory.initialize()
+message_handler: MessageHandlerDI = enhanced_factory.create_message_handler()
 
 webhook_requests_total = Counter(
     "webhook_requests_total",
     "Total webhook requests",
     ["event_type", "status"],
-)
-
-replay_attacks_blocked = Counter(
-    "replay_attacks_blocked_total",
-    "Total replay attacks blocked",
 )
 
 
@@ -54,9 +51,6 @@ async def handle_webhook(
     x_line_request_id: str = Header(None, alias="X-Line-Request-Id"),
 ):
     try:
-        # with tracer.start_as_current_span("webhook_handler") as span:
-        #     span.set_attribute("line.request_id", x_line_request_id or "")
-
         logger.info(
             "Received webhook request",
             signature_present=bool(x_line_signature),
@@ -101,16 +95,12 @@ async def handle_webhook(
 
         # 直接處理 LINE webhook 事件，繞過同步事件處理器
         try:
-            import json
-
             webhook_data = json.loads(body_str)
             events = webhook_data.get("events", [])
 
             logger.info(f"Processing {len(events)} webhook events")
 
             # 使用 asyncio.gather 並行處理所有事件，設定總超時時間
-            import asyncio
-
             if events:
                 # 創建所有事件的處理任務
                 event_tasks = []
@@ -155,15 +145,6 @@ async def handle_webhook(
             logger.warning(
                 "Returning success despite processing error to prevent retries"
             )
-
-        # Skip replay attack check for now to debug
-        # try:
-        #     if await check_replay_attack(body_str, x_line_request_id):
-        #         logger.warning("Replay attack detected", request_id=x_line_request_id)
-        #         replay_attacks_blocked.inc()
-        #         raise HTTPException(status_code=400, detail="Duplicate request")
-        # except Exception as e:
-        #     logger.warning("Replay check failed, skipping", error=str(e))
 
         logger.info("Webhook processed successfully")
         return JSONResponse(content={"status": "ok"})
@@ -214,8 +195,6 @@ async def handle_text_message_async(event: dict):
         )
 
         # 使用 asyncio.wait_for 設定超時限制，確保不會超過 LINE 的要求
-        import asyncio
-
         try:
             # 設定 8 秒超時（LINE Platform 通常要求 10 秒內回應）
             reply_message = await asyncio.wait_for(
@@ -240,10 +219,7 @@ async def handle_text_message_async(event: dict):
             quick_response = TextMessage(text="⏳ 正在處理您的請求，請稍候...")
             await send_reply_message_async(reply_token, quick_response)
 
-            # 在背景繼續處理（不等待結果）
-            # 註：背景任務可能會引起異步上下文問題，暫時禁用
-            # asyncio.create_task(process_message_background(user_id, message_text))
-            logger.info("背景處理已暫時禁用以避免異步上下文問題")
+            # 超時情況下無法進行進一步處理，直接返回
 
     except Exception as e:
         logger.error("Error processing text message", error=str(e), exc_info=e)
@@ -263,9 +239,6 @@ async def send_reply_message_async(reply_token: str, message):
             line_bot_api = MessagingApi(api_client)
 
             # 在執行緒池中執行同步 API 呼叫
-            import asyncio
-            import concurrent.futures
-
             def send_sync():
                 line_bot_api.reply_message(
                     ReplyMessageRequest(reply_token=reply_token, messages=[message])
@@ -283,41 +256,5 @@ async def send_reply_message_async(reply_token: str, message):
         )
 
 
-async def process_message_background(user_id: str, message_text: str):
-    """背景處理訊息（用於超時後的處理）"""
-    try:
-        logger.info(
-            "Processing message in background",
-            user_id_hash=hashlib.sha256(
-                (user_id + settings.jwt_secret_key).encode()
-            ).hexdigest()[:8],
-            message_text=message_text[:50],
-        )
 
-        # 在背景處理訊息，不需要 reply_token
-        result = await message_handler.process_message(
-            user_id=user_id,
-            message_text=message_text,
-            reply_token="",  # 背景處理不需要 reply token
-        )
-
-        logger.info("Background message processing completed")
-
-    except Exception as e:
-        logger.error("Background message processing failed", error=str(e), exc_info=e)
-
-
-async def check_replay_attack(body: str, request_id: str) -> bool:
-    if not request_id:
-        return False
-
-    cache_key = f"line_request:{request_id}"
-    if await get_cached_value(cache_key):
-        return True
-
-    body_hash = hashlib.sha256(body.encode()).hexdigest()
-    await set_cached_value(cache_key, body_hash, expire_seconds=300)
-    return False
-
-
-# 舊的同步事件處理器已移除，現在使用完全非同步的架構
+# 優化完成：移除了損壞的 replay attack 檢查和未使用的背景處理功能
