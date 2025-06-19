@@ -124,8 +124,7 @@ class StatusCommandHandler(CommandHandler):
         # 檢查各個服務
         services_to_check = [
             ("自然語言服務", self.context.nl_service),
-            ("訊息格式化器", self.context.formatter),
-            ("Flex建構器", self.context.flex_builder)
+            ("訊息格式化器", self.context.formatter)
         ]
         
         healthy_count = 0

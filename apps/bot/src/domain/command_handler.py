@@ -93,7 +93,6 @@ class CommandContext:
                  nl_service,
                  db_service,
                  formatter,
-                 flex_builder,
                  openai_client=None):
         """
         初始化指令上下文
@@ -104,7 +103,6 @@ class CommandContext:
             nl_service: 自然語言服務
             db_service: 資料庫服務
             formatter: 訊息格式化器
-            flex_builder: Flex 建構器
             openai_client: OpenAI 客戶端（可選）
         """
         self.mcp_client_factory = mcp_client_factory
@@ -112,7 +110,6 @@ class CommandContext:
         self.nl_service = nl_service
         self.db_service = db_service
         self.formatter = formatter
-        self.flex_builder = flex_builder
         self.openai_client = openai_client
     
     async def get_mcp_client(self):

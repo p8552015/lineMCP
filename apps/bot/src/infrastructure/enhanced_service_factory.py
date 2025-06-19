@@ -13,7 +13,6 @@ from .service_registry import (
 )
 from src.services.ai_model_service import AIModelService
 from src.services.database_service import DatabaseService
-from src.services.flex_builder import FlexBuilder
 from src.services.message_formatter import MessageFormatter
 from src.services.message_handler_di import MessageHandlerDI
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
@@ -91,12 +90,6 @@ class EnhancedServiceFactory:
             MessageFormatter,
             tags=["core", "formatting"],
             metadata={"description": "訊息格式化器"}
-        )
-        
-        self._registry.register_singleton(
-            FlexBuilder,
-            tags=["core", "formatting", "line"],
-            metadata={"description": "LINE Flex 訊息建構器"}
         )
         
         # MCP 相關服務
@@ -209,7 +202,6 @@ class EnhancedServiceFactory:
             nl_service=provider.get_required_service(NaturalLanguageToSQLService),
             db_service=provider.get_required_service(DatabaseService),
             formatter=provider.get_required_service(MessageFormatter),
-            flex_builder=provider.get_required_service(FlexBuilder),
             openai_client=provider.get_service(OpenAIClient)
         )
         
@@ -225,7 +217,6 @@ class EnhancedServiceFactory:
             nl_service=provider.get_required_service(NaturalLanguageToSQLService),
             db_service=provider.get_required_service(DatabaseService),
             formatter=provider.get_required_service(MessageFormatter),
-            flex_builder=provider.get_required_service(FlexBuilder),
             openai_client=provider.get_service(OpenAIClient)
         )
         
@@ -243,7 +234,6 @@ class EnhancedServiceFactory:
             nl_service=provider.get_required_service(NaturalLanguageToSQLService),
             db_service=provider.get_required_service(DatabaseService),
             formatter=provider.get_required_service(MessageFormatter),
-            flex_builder=provider.get_required_service(FlexBuilder),
             openai_client=provider.get_service(OpenAIClient)
         )
         
@@ -330,10 +320,7 @@ class EnhancedServiceFactory:
         """獲取 OpenAI 客戶端實例"""
         return self.get_required_service(OpenAIClient)
         
-    def get_flex_builder(self) -> FlexBuilder:
-        """獲取 Flex 建構器實例"""
-        return self.get_required_service(FlexBuilder)
-        
+    
     def get_message_formatter(self) -> MessageFormatter:
         """獲取訊息格式化器實例"""
         return self.get_required_service(MessageFormatter)

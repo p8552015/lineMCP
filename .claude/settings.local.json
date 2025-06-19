@@ -29,7 +29,11 @@
       "Bash(./status.sh)",
       "Bash(true)",
       "Bash(tree:*)",
-      "mcp__zen__codereview"
+      "mcp__zen__codereview",
+      "Bash(rg:*)",
+      "Bash(python -m pytest tests/integration/test_flexbuilder_isolation.py::TestFlexBuilderIsolation::test_flexbuilder_import_tracking -v)",
+      "Bash(python tests/integration/test_flexbuilder_isolation_simple.py)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

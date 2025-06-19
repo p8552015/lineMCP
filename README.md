@@ -17,7 +17,7 @@
 
 ### ✅ 已實現特性
 - **🏢 分層架構設計** - Application/Domain/Infrastructure/Services 四層架構
-- **💉 依賴注入系統** - 企業級服務工廠與註冊表 (15 個服務)
+- **💉 依賴注入系統** - 企業級服務工廠與註冊表 (14 個服務)
 - **🚪 門面模式** - 統一的應用層 API 介面
 - **🔧 生產級 MCP 修復** - 解決 macOS KqueueSelector 掛起問題
 - **🤖 多 AI 模型支援** - Gemini 1.5 Flash (15M 免費 tokens/月) + OpenAI
@@ -25,6 +25,7 @@
 - **⚙️ 統一配置管理** - 動態路徑解析，零硬編碼
 - **📈 可觀測性完整** - 結構化日誌 + Prometheus + OpenTelemetry
 - **🔐 企業級安全** - JWT 認證 + 簽章驗證 + 環境變數管理
+- **🎯 代碼優化** - 漸進式重構移除 1416 行未使用代碼
 
 ## 🚀 快速啟動
 
@@ -104,14 +105,14 @@ lineMCP/
 │   │   ├── models_command.py, sql_command.py
 │   │   ├── status_command.py, tables_command.py
 │   │
-│   ├── 🏢 services/                      # 服務層 - 具體實現 (13 個核心服務)
+│   ├── 🏢 services/                      # 服務層 - 具體實現 (12 個核心服務)
 │   │   ├── message_handler_di.py (17K)   # 💬 主要訊息處理器 (依賴注入版)
 │   │   ├── ai_model_service.py (12K)     # 🤖 AI 模型服務
 │   │   ├── database_service.py (14K)     # 🗄️ 資料庫服務
-│   │   ├── flex_builder.py (46K) ⚠️     # 🎨 LINE Flex 建構器 (需重構)
 │   │   ├── nl_to_sql_service.py (20K)    # 🧠 自然語言轉 SQL
 │   │   ├── production_mcp_client.py (14K) # 🎯 生產級 MCP 客戶端
 │   │   ├── unified_mcp_client.py (4.4K) # 🔧 統一 MCP 客戶端介面
+│   │   ├── message_formatter.py (8K)     # 📝 訊息格式化服務
 │   │   └── 其他支援服務...
 │   │
 │   ├── 🎮 routes/                        # 路由層 - API 端點
@@ -161,7 +162,7 @@ graph TD
 
 #### 💉 **依賴注入系統**
 - **`EnhancedServiceFactory`**: 企業級服務工廠，支援多種生命週期
-- **`ServiceRegistry`**: 15 個服務註冊 (13 singleton + 2 transient)
+- **`ServiceRegistry`**: 14 個服務註冊 (12 singleton + 2 transient)
 - **自動依賴解析**: 零配置服務注入
 
 #### 🚪 **門面模式 (Facade Pattern)**
@@ -169,10 +170,10 @@ graph TD
 - **簡化客戶端**: 複雜系統的簡單介面
 - **職責分離**: 清晰的 API 邊界
 
-#### ⚠️ **已知技術債務**
-- **`flex_builder.py` (46KB)**: 巨型檔案需要立即重構
-- **循環依賴**: ApplicationFacade ↔ EnhancedServiceFactory
-- **MCP 客戶端不一致**: OpenAI 繞過 UnifiedMCPClient 抽象
+#### ✅ **架構優化完成**
+- ✅ **FlexBuilder 重構**: 成功移除 1416 行未使用代碼
+- ⚠️ **循環依賴**: ApplicationFacade ↔ EnhancedServiceFactory 
+- ⚠️ **MCP 客戶端不一致**: OpenAI 繞過 UnifiedMCPClient 抽象
 
 ## ⚙️ 配置指南
 
@@ -344,9 +345,9 @@ cd apps/bot && poetry run python3 -i -c "from src.services import *"
 
 ### 📊 架構指標
 - **🏗️ 企業級設計**：分層架構 + 依賴注入 + 門面模式
-- **📦 服務管理**：15 個註冊服務 (13 singleton + 2 transient)
+- **📦 服務管理**：14 個註冊服務 (12 singleton + 2 transient)
 - **🔧 可維護性**：清晰的職責分離與模組化設計
-- **⚠️ 技術債務**：已識別並規劃改進路徑
+- **✅ 代碼優化**：成功移除 1416 行未使用代碼，提升維護效率
 
 ### 💰 成本效益
 - **🆓 免費額度**：Google Gemini 15M tokens/月
@@ -400,9 +401,10 @@ cp apps/bot/.env.example apps/bot/.env
 - ✅ **完整監控**: 結構化日誌 + Prometheus + OpenTelemetry
 - ✅ **測試完備**: 單元測試 + 整合測試套件
 - ✅ **文檔完善**: 詳細的開發與部署指南
+- ✅ **代碼品質**: 漸進式重構，移除 1416 行死代碼
 
 ### 🔮 **未來發展**
-- 🎯 **技術債務管理**: 已識別重構需求與改進路徑
+- ✅ **技術債務管理**: FlexBuilder 重構完成，架構更清晰
 - 🎯 **擴展能力**: 微服務化準備，多租戶架構支援
 - 🎯 **持續改進**: CI/CD 管線與自動化測試
 

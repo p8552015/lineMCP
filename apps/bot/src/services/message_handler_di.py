@@ -19,7 +19,6 @@ from src.utils.observability import get_tracer
 from .ai_model_service import AIModelService
 from .database_service import DatabaseService
 from .error_handlers import ErrorContext, log_performance, mcp_error_handler
-from .flex_builder import FlexBuilder
 from .mcp_response_parser import MCPResponseParser
 from .message_formatter import MessageFormatter
 from .nl_to_sql_service import NaturalLanguageToSQLService, QueryType
@@ -43,7 +42,6 @@ class MessageHandlerDI:
                  nl_service: NaturalLanguageToSQLService,
                  db_service: DatabaseService,
                  formatter: MessageFormatter,
-                 flex_builder: FlexBuilder,
                  openai_client: Optional[OpenAIClient] = None):
         """
         初始化訊息處理器
@@ -54,7 +52,6 @@ class MessageHandlerDI:
             nl_service: 自然語言處理服務
             db_service: 資料庫服務
             formatter: 訊息格式化器
-            flex_builder: Flex 消息建構器
             openai_client: OpenAI 客戶端（可選）
         """
         self.mcp_client_factory = mcp_client_factory
@@ -62,7 +59,6 @@ class MessageHandlerDI:
         self.nl_service = nl_service
         self.db_service = db_service
         self.formatter = formatter
-        self.flex_builder = flex_builder
         self.openai_client = openai_client
         
         # 內部狀態
@@ -155,7 +151,6 @@ class MessageHandlerDI:
             nl_service=self.nl_service,
             db_service=self.db_service,
             formatter=self.formatter,
-            flex_builder=self.flex_builder,
             openai_client=self.openai_client
         )
         
