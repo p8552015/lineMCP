@@ -1,6 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 from functools import lru_cache
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,6 +24,14 @@ class Settings(BaseSettings):
     postgres_mcp_url: str = "http://localhost:3002"
     postgres_connection_string: str = "postgresql://localhost:5432/mcp_test"
 
+    # MCP STDIO Configuration (生產級)
+    mcp_project_root: str = ""  # 自動推斷項目根目錄
+    mcp_sqlite_server_script: str = "apps/servers/src/sqlite/server_fixed.py"
+    mcp_sqlite_database_path: str = "apps/servers/src/sqlite/test.db"
+    mcp_stdio_timeout: int = 10
+    mcp_connection_retry_attempts: int = 3
+    mcp_connection_retry_delay: float = 1.0
+
     # Application Configuration
     app_env: str = "development"
     app_debug: bool = False
@@ -38,7 +47,7 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_db: int = 0
-    redis_password: Optional[str] = None
+    redis_password: str | None = None
 
     # Observability
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
@@ -54,10 +63,42 @@ class Settings(BaseSettings):
     rate_limit_requests_per_minute: int = 60
     rate_limit_burst: int = 10
 
+    # Google AI Configuration
+    google_api_key: str | None = None
+    google_model: str = "gemini-1.5-flash"
+
+    # AI Model Preferences
+    ai_model_provider: str = "google"  # google, openai, auto
+    ai_enable_enhanced_nl: bool = True
+    ai_fallback_to_rules: bool = True
+    ai_rules_first: bool = True  # 規則優先
+
     @property
     def redis_url(self) -> str:
         password = f":{self.redis_password}@" if self.redis_password else ""
         return f"redis://{password}{self.redis_host}:{self.redis_port}/{self.redis_db}"
+
+    @property
+    def project_root(self) -> str:
+        """自動推斷項目根目錄"""
+        if self.mcp_project_root:
+            return self.mcp_project_root
+
+        # 從當前文件位置推斷項目根目錄
+        # /path/to/lineMCP/apps/bot/src/config.py -> /path/to/lineMCP
+        current_file = Path(__file__).absolute()
+        # config.py -> src -> bot -> apps -> lineMCP (根目錄)
+        return str(current_file.parent.parent.parent.parent)
+
+    @property
+    def mcp_sqlite_server_path(self) -> str:
+        """MCP SQLite 服務器腳本的完整路徑"""
+        return str(Path(self.project_root) / self.mcp_sqlite_server_script)
+
+    @property
+    def mcp_sqlite_db_path(self) -> str:
+        """MCP SQLite 資料庫的完整路徑"""
+        return str(Path(self.project_root) / self.mcp_sqlite_database_path)
 
 
 @lru_cache

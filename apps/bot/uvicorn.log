@@ -1,0 +1,65 @@
+2025-06-19 14:22:33 [warning  ] ⚠️ 沒有可用的 AI 模型，需要設定 API 金鑰
+2025-06-19 14:22:33 [info     ] ✅ AI模型服務初始化完成，支援 0 個模型
+2025-06-19 14:22:33 [info     ] 🧠 自然語言服務初始化
+2025-06-19 14:22:33 [info     ]    📝 規則優先: 是
+2025-06-19 14:22:33 [info     ]    🤖 AI增強: 禁用
+2025-06-19 14:22:33 [info     ]    🔄 規則回退: 啟用
+2025-06-19 14:22:33 [info     ] ✅ 重構版訊息處理器初始化完成
+2025-06-19 14:22:33 [info     ] 🤖 AI模型服務：已啟用
+2025-06-19 14:22:33 [info     ] 🧠 自然語言轉SQL服務：已啟用
+2025-06-19 14:22:33 [info     ] 🗄️ 資料庫服務：已啟用
+2025-06-19 14:22:33 [info     ] 📝 訊息格式化服務：已啟用
+2025-06-19 14:22:33 [warning  ] ⚠️ 沒有可用的 AI 模型，需要設定 API 金鑰
+2025-06-19 14:22:33 [info     ] ✅ AI模型服務初始化完成，支援 0 個模型
+2025-06-19 14:22:33 [info     ] 🧠 自然語言服務初始化
+2025-06-19 14:22:33 [info     ]    📝 規則優先: 是
+2025-06-19 14:22:33 [info     ]    🤖 AI增強: 禁用
+2025-06-19 14:22:33 [info     ]    🔄 規則回退: 啟用
+2025-06-19 14:22:33 [info     ] ✅ 重構版訊息處理器初始化完成
+2025-06-19 14:22:33 [info     ] 🤖 AI模型服務：已啟用
+2025-06-19 14:22:33 [info     ] 🧠 自然語言轉SQL服務：已啟用
+2025-06-19 14:22:33 [info     ] 🗄️ 資料庫服務：已啟用
+2025-06-19 14:22:33 [info     ] 📝 訊息格式化服務：已啟用
+INFO:     Started server process [18703]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56736 - "GET /docs HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+INFO:     147.92.149.166:0 - "POST /Webhook HTTP/1.1" 200 OK
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aError: Only SELECT queries are allowed for read_query", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:38.761424Z"}
+{"execution_time": "0.002s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "PRAGMA table_info(machines)", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:38.761903Z"}
+{"delay": 1.0, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "Retry attempt 1/3 for _execute_query", "logger": "src.services.error_handlers", "level": "warning", "timestamp": "2025-06-19T06:23:38.762018Z"}
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aError: Only SELECT queries are allowed for read_query", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:39.766658Z"}
+{"execution_time": "0.005s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "PRAGMA table_info(machines)", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:39.767163Z"}
+{"delay": 2.0, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "Retry attempt 2/3 for _execute_query", "logger": "src.services.error_handlers", "level": "warning", "timestamp": "2025-06-19T06:23:39.767341Z"}
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aError: Only SELECT queries are allowed for read_query", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:41.770875Z"}
+{"execution_time": "0.003s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "PRAGMA table_info(machines)", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:41.771061Z"}
+{"attempt": 3, "max_attempts": 3, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "All retry attempts failed for _execute_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:41.771151Z"}
+{"event": "Failed to get table info: JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "logger": "src.services.database_service", "level": "error", "timestamp": "2025-06-19T06:23:41.771265Z"}
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aDatabase error: no such column: u.record_date", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:41.775070Z"}
+{"execution_time": "0.002s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "SELECT \n                    m.department,\n                    COUNT(DISTINCT m.machine_id) as machin", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:41.775179Z"}
+{"delay": 1.0, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "Retry attempt 1/3 for _execute_query", "logger": "src.services.error_handlers", "level": "warning", "timestamp": "2025-06-19T06:23:41.775247Z"}
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aDatabase error: no such column: u.record_date", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:42.779971Z"}
+{"execution_time": "0.004s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "SELECT \n                    m.department,\n                    COUNT(DISTINCT m.machine_id) as machin", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:42.780581Z"}
+{"delay": 2.0, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "Retry attempt 2/3 for _execute_query", "logger": "src.services.error_handlers", "level": "warning", "timestamp": "2025-06-19T06:23:42.780706Z"}
+{"event": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)\uff0c\u539f\u59cb\u5167\u5bb9\uff1aDatabase error: no such column: u.record_date", "logger": "src.services.mcp_response_parser", "level": "error", "timestamp": "2025-06-19T06:23:44.789176Z"}
+{"execution_time": "0.008s", "error_type": "MCPParseError", "error_message": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "query_preview": "SELECT \n                    m.department,\n                    COUNT(DISTINCT m.machine_id) as machin", "event": "Operation failed: database_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:44.789498Z"}
+{"attempt": 3, "max_attempts": 3, "error": "JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "event": "All retry attempts failed for _execute_query", "logger": "src.services.error_handlers", "level": "error", "timestamp": "2025-06-19T06:23:44.789653Z"}
+{"event": "Query execution failed: JSON \u89e3\u6790\u5931\u6557\uff1aExpecting value: line 1 column 1 (char 0)", "logger": "src.services.database_service", "level": "error", "timestamp": "2025-06-19T06:23:44.789859Z"}
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18703]

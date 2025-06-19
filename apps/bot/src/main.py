@@ -1,15 +1,15 @@
 from contextlib import asynccontextmanager
 from uuid import uuid4
+
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from prometheus_client import make_asgi_app
-from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from prometheus_client import make_asgi_app
 
 from src.config import get_settings
 from src.middleware import setup_middleware
-from src.routes import webhook, test_webhook
+from src.routes import test_webhook, webhook
 from src.utils.observability import setup_observability
 from src.utils.redis_client import get_redis_client
 
@@ -24,17 +24,17 @@ async def lifespan(app: FastAPI):
         logger.info("Observability setup complete")
     except Exception as e:
         logger.warning("Observability setup failed", error=str(e))
-    
+
     try:
         redis_client = get_redis_client()
         await redis_client.ping()
         logger.info("Redis connection successful")
     except Exception as e:
         logger.warning("Redis connection failed", error=str(e))
-    
+
     logger.info("Application started", environment=settings.app_env)
     yield
-    
+
     try:
         redis_client = get_redis_client()
         await redis_client.close()
@@ -83,7 +83,9 @@ async def health_check():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    trace_id = request.state.trace_id if hasattr(request.state, "trace_id") else str(uuid4())
+    trace_id = (
+        request.state.trace_id if hasattr(request.state, "trace_id") else str(uuid4())
+    )
     logger.error(
         "Unhandled exception",
         trace_id=trace_id,

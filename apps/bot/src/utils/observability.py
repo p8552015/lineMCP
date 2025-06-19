@@ -1,10 +1,10 @@
 import structlog
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 from src.config import get_settings
 
@@ -38,7 +38,7 @@ def setup_observability():
     )
 
     tracer_provider = TracerProvider(resource=resource)
-    
+
     if settings.otel_exporter_otlp_endpoint:
         otlp_exporter = OTLPSpanExporter(
             endpoint=settings.otel_exporter_otlp_endpoint,

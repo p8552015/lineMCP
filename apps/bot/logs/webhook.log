@@ -1,210 +1,30 @@
 INFO:     Will watch for changes in these directories: ['/Users/yen/Desktop/lineMCP/apps/bot']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [80759] using StatReload
-2025-06-18 21:32:03 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:32:03 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:32:03 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:32:04 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:32:04 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:32:04 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:32:04 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:32:04 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:32:04 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [80762]
+INFO:     Started reloader process [92844] using StatReload
+2025-06-19 09:35:25 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 09:35:25 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 09:35:25 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 09:35:25 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 09:35:25 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 09:35:25 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 09:35:25 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 09:35:25 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 09:35:25 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [92847]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     127.0.0.1:56209 - "GET /health HTTP/1.1" 200 OK
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
-INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
-Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
-{"user_id_hash": "a33e30d5", "message_text": "M001\u6a5f\u53f0\u73fe\u5728\u72c0\u6cc1\u5982\u4f55", "event": "Message processing timeout, sending quick response", "logger": "src.routes.webhook", "level": "warning", "timestamp": "2025-06-18T13:32:48.231453Z"}
+INFO:     127.0.0.1:58699 - "GET /health HTTP/1.1" 200 OK
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
-WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [80762]
-2025-06-18 21:34:31 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:34:31 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:34:31 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:34:31 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:34:31 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:34:31 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:34:31 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:34:31 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:34:31 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [81262]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81262]
-2025-06-18 21:34:48 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:34:48 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:34:48 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:34:49 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:34:49 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:34:49 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:34:49 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:34:49 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:34:49 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [81279]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81279]
-2025-06-18 21:37:35 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:37:35 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:37:35 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:37:35 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:37:35 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:37:35 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:37:35 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:37:35 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:37:35 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [81450]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81450]
-2025-06-18 21:39:35 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:39:35 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:39:35 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:39:36 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:39:36 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:39:36 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:39:36 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:39:36 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:39:36 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [81635]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/true_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81635]
-2025-06-18 21:43:19 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:43:19 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:43:19 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:43:19 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:43:19 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:43:19 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:43:19 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:43:19 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:43:19 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [81987]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [81987]
-2025-06-18 21:44:03 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:44:03 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:44:03 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:44:03 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:44:03 [info     ] ✅ 使用真正的MCP客戶端作為回退
-2025-06-18 21:44:03 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:44:03 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:03 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:44:03 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:03 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [82041]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [82041]
-2025-06-18 21:44:17 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:44:17 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:44:17 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:44:17 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:44:17 [info     ] ✅ 使用真正的MCP客戶端作為回退
-2025-06-18 21:44:17 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:44:17 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:17 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:44:17 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:17 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [82056]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [82056]
-2025-06-18 21:44:25 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:44:25 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:44:25 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:44:25 [info     ] ✅ 真正的 MCP 客戶端已初始化 - 嚴格遵循 MCP 協定
-2025-06-18 21:44:25 [info     ] ✅ 使用真正的MCP客戶端作為回退
-2025-06-18 21:44:25 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:44:25 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:25 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:44:25 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:44:25 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [82065]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [82065]
-2025-06-18 21:48:06 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:48:06 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:48:06 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:48:06 [info     ] ✅ 準備使用強健的MCP客戶端
-2025-06-18 21:48:06 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:48:06 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:48:06 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:48:06 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:48:06 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [82276]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
-INFO:     Shutting down
-INFO:     Waiting for application shutdown.
-INFO:     Application shutdown complete.
-INFO:     Finished server process [82276]
-2025-06-18 21:48:29 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
-2025-06-18 21:48:29 [info     ] ✅ 使用新的統一 MCP 客戶端實作
-2025-06-18 21:48:29 [info     ] 📦 使用 MCP 協定回退模式
-2025-06-18 21:48:29 [info     ] ✅ 準備使用強健的MCP客戶端
-2025-06-18 21:48:29 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
-2025-06-18 21:48:29 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:48:29 [info     ] TaskMaster integration temporarily disabled
-2025-06-18 21:48:29 [info     ] MCP 客戶端類型: 統一客戶端
-2025-06-18 21:48:29 [info     ] TaskMaster integration temporarily disabled
-INFO:     Started server process [82297]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-{"event": "\u274c Server\u5feb\u901f\u9000\u51fa: stdout=, stderr=", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024516Z"}
-{"event": "\u274c MCP Server\u555f\u52d5\u6e2c\u8a66\u5931\u6557", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024766Z"}
-{"event": "\u274c \u7121\u6cd5\u5efa\u7acbMCP\u9023\u63a5", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-18T13:49:11.024807Z"}
-{"event": "\u26a0\ufe0f \u5f37\u5065\u7684MCP\u8abf\u7528\u5931\u6557\uff0c\u5207\u63db\u5230\u517c\u5bb9\u6a21\u5f0f", "logger": "src.services.unified_mcp_client", "level": "warning", "timestamp": "2025-06-18T13:49:11.024853Z"}
+INFO:     147.92.149.168:0 - "POST /Webhook HTTP/1.1" 200 OK
+{"event": "\u274c Server\u5feb\u901f\u9000\u51fa: stdout=, stderr=", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-19T01:36:30.093259Z"}
+{"event": "\u274c MCP Server\u555f\u52d5\u6e2c\u8a66\u5931\u6557", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-19T01:36:30.093527Z"}
+{"event": "\u274c \u7121\u6cd5\u5efa\u7acbMCP\u9023\u63a5", "logger": "src.services.robust_mcp_client", "level": "error", "timestamp": "2025-06-19T01:36:30.093570Z"}
+{"event": "\u26a0\ufe0f \u5f37\u5065\u7684MCP\u8abf\u7528\u5931\u6557\uff0c\u5207\u63db\u5230\u517c\u5bb9\u6a21\u5f0f", "logger": "src.services.unified_mcp_client", "level": "warning", "timestamp": "2025-06-19T01:36:30.093615Z"}
 INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
@@ -212,3 +32,1317 @@ Transient error StatusCode.UNAVAILABLE encountered while exporting traces to loc
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
 Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+WARNING:  StatReload detected changes in 'src/services/fixed_stdio_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [92847]
+2025-06-19 10:13:21 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:13:21 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:13:21 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:13:21 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:13:21 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:13:21 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:13:21 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:13:21 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:13:21 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [98081]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/__init__.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [98081]
+Process SpawnProcess-3:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 19, in <module>
+    from src.services.message_handler import MessageHandler
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/__init__.py", line 5
+    """
+       ^
+SyntaxError: (unicode error) 'utf-8' codec can't decode byte 0xa2 in position 32: invalid start byte
+WARNING:  StatReload detected changes in 'src/services/__init__.py'. Reloading...
+2025-06-19 10:20:24 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:20:24 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:20:24 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:20:24 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:20:24 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:20:24 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:20:24 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:20:24 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:20:24 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [99026]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/patched_stdio_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99026]
+2025-06-19 10:29:27 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:29:27 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:29:27 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:29:27 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:29:27 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:29:27 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:29:27 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:29:27 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:29:27 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [99677]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/patched_stdio_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99677]
+2025-06-19 10:29:42 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:29:42 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:29:42 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:29:42 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:29:42 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:29:42 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:29:42 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:29:42 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:29:42 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [99698]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/patched_stdio_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99698]
+2025-06-19 10:30:14 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:30:14 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:30:14 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:30:14 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:30:14 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:30:14 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:30:14 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:30:14 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:30:14 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [99766]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/patched_stdio_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99766]
+2025-06-19 10:30:21 [info     ] ✅ 使用 TrueMCPClient 實作，100% MCP 協定合規
+2025-06-19 10:30:21 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:30:21 [info     ] 📦 使用 MCP 協定回退模式
+2025-06-19 10:30:21 [info     ] ✅ 準備使用強健的MCP客戶端
+2025-06-19 10:30:21 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:30:21 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:30:21 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:30:21 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:30:21 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [99778]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99778]
+2025-06-19 10:53:03 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+2025-06-19 10:53:03 [info     ] 🔧 檢測到 KqueueSelector，切換到 SelectSelector
+2025-06-19 10:53:03 [info     ] ✅ 已切換到 SelectSelector（macOS 修復）
+2025-06-19 10:53:03 [info     ] ✅ 生產級 MCP 客戶端初始化完成
+2025-06-19 10:53:03 [info     ] ✅ 統一客戶端已重構為生產級實作
+2025-06-19 10:53:03 [info     ] ✅ 簡化 MCP 客戶端已初始化（使用統一實作）
+2025-06-19 10:53:03 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:53:03 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:53:03 [info     ] MCP 客戶端類型: 統一客戶端
+2025-06-19 10:53:03 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [1869]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/unified_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1869]
+2025-06-19 10:53:38 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+Process SpawnProcess-10:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 35, in <module>
+    message_handler = MessageHandler()
+                      ^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/message_handler.py", line 42, in __init__
+    self.mcp_client = get_simple_mcp_client()
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/simple_mcp_client.py", line 68, in get_simple_mcp_client
+    _simple_mcp_client = SimpleMCPClient()
+                         ^^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/simple_mcp_client.py", line 18, in __init__
+    self._unified_client = get_unified_mcp_client(client_type="simple")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_unified_mcp_client() got an unexpected keyword argument 'client_type'
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+2025-06-19 10:54:24 [info     ] ✅ 使用新的統一 MCP 客戶端實作
+Process SpawnProcess-11:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 35, in <module>
+    message_handler = MessageHandler()
+                      ^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/message_handler.py", line 42, in __init__
+    self.mcp_client = get_simple_mcp_client()
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/simple_mcp_client.py", line 68, in get_simple_mcp_client
+    _simple_mcp_client = SimpleMCPClient()
+                         ^^^^^^^^^^^^^^^^^
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/simple_mcp_client.py", line 18, in __init__
+    self._unified_client = get_unified_mcp_client(client_type="simple")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_unified_mcp_client() got an unexpected keyword argument 'client_type'
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+Process SpawnProcess-12:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 22, in import_from_string
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 19, in <module>
+    from src.services.message_handler import MessageHandler
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/__init__.py", line 7, in <module>
+    from .stdio_fixed_unified_client import (
+ModuleNotFoundError: No module named 'src.services.stdio_fixed_unified_client'
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+Process SpawnProcess-13:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 22, in import_from_string
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 19, in <module>
+    from src.services.message_handler import MessageHandler
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/__init__.py", line 7, in <module>
+    from .stdio_fixed_unified_client import (
+ModuleNotFoundError: No module named 'src.services.stdio_fixed_unified_client'
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+Process SpawnProcess-14:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 22, in import_from_string
+    raise exc from None
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 12, in <module>
+    from src.routes import webhook, test_webhook
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/routes/webhook.py", line 19, in <module>
+    from src.services.message_handler import MessageHandler
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/services/__init__.py", line 7, in <module>
+    from .stdio_fixed_unified_client import (
+ModuleNotFoundError: No module named 'src.services.stdio_fixed_unified_client'
+WARNING:  StatReload detected changes in 'src/services/__init__.py'. Reloading...
+2025-06-19 10:56:47 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:56:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:56:47 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:56:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:56:47 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2205]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2205]
+2025-06-19 10:57:39 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:57:39 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:57:39 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:57:39 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:57:39 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2296]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2296]
+2025-06-19 10:57:49 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:57:49 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:57:49 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:57:49 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:57:49 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2314]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2314]
+2025-06-19 10:58:14 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:58:14 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:14 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:58:14 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:14 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2355]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2355]
+2025-06-19 10:58:28 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:58:28 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:28 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:58:28 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:28 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2377]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2377]
+2025-06-19 10:58:47 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:58:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:47 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:58:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:58:47 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2416]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2416]
+2025-06-19 10:59:36 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 10:59:36 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:59:36 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 10:59:36 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 10:59:36 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2487]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2487]
+2025-06-19 11:04:10 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:10 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:10 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:10 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:10 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2907]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2907]
+2025-06-19 11:04:15 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:15 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:15 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:15 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:15 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2918]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2918]
+2025-06-19 11:04:26 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:26 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:26 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:26 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:26 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2931]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2931]
+2025-06-19 11:04:35 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:35 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:35 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:35 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:35 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2943]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2943]
+2025-06-19 11:04:43 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:43 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:43 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:43 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:43 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2958]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2958]
+2025-06-19 11:04:54 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:04:54 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:54 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:04:54 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:04:54 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [2970]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2970]
+Process SpawnProcess-28:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-29:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-30:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-31:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-32:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-33:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 11, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/mcp_config.py'. Reloading...
+Process SpawnProcess-34:
+Traceback (most recent call last):
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 21, in <module>
+    from ..config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 21, in <module>
+    from ..config import get_settings
+ImportError: attempted relative import beyond top-level package
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 25, in <module>
+    from config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 6, in <module>
+    from .mcp_config import (
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/mcp_config.py", line 25, in <module>
+    from config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/mcp_config.py'. Reloading...
+Process SpawnProcess-35:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+ImportError: cannot import name 'get_settings' from 'src.config' (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/mcp_config.py'. Reloading...
+Process SpawnProcess-36:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+ImportError: cannot import name 'get_settings' from 'src.config' (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/mcp_config.py'. Reloading...
+Process SpawnProcess-37:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+ImportError: cannot import name 'get_settings' from 'src.config' (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+Process SpawnProcess-38:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+ImportError: cannot import name 'get_settings' from 'src.config' (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/__init__.py'. Reloading...
+Process SpawnProcess-39:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 13, in <module>
+    from config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 13, in <module>
+    from config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/__init__.py'. Reloading...
+Process SpawnProcess-40:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 66, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/asyncio/base_events.py", line 650, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 70, in serve
+    await self._serve(sockets)
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/server.py", line 77, in _serve
+    config.load()
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/config.py", line 435, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1206, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1178, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1149, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/main.py", line 10, in <module>
+    from src.config import get_settings
+  File "/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py", line 16, in <module>
+    from src.config import get_settings
+ImportError: cannot import name 'get_settings' from partially initialized module 'src.config' (most likely due to a circular import) (/Users/yen/Desktop/lineMCP/apps/bot/src/config/__init__.py)
+WARNING:  StatReload detected changes in 'src/config/__init__.py'. Reloading...
+2025-06-19 11:33:30 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:33:30 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:33:30 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:33:30 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:33:30 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [7312]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7312]
+2025-06-19 11:48:45 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:48:45 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:48:45 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:48:45 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:48:45 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [9212]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     147.92.149.169:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+{"event": "\u274c \u670d\u52d9\u5668\u932f\u8aa4\uff1a{'code': -32602, 'message': 'Invalid request parameters', 'data': ''}", "logger": "src.services.production_mcp_client", "level": "error", "timestamp": "2025-06-19T03:53:57.450745Z"}
+{"event": "\u274c \u7d71\u4e00\u5ba2\u6236\u7aef\u8abf\u7528\u5931\u6557\uff1a\u7121\u6cd5\u9023\u63a5\u5230\u670d\u52d9\u5668\uff1asqlite", "logger": "src.services.unified_mcp_client", "level": "error", "timestamp": "2025-06-19T03:53:57.453530Z"}
+INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+WARNING:  StatReload detected changes in 'src/services/production_mcp_client.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9212]
+2025-06-19 11:56:55 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 11:56:55 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:56:55 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 11:56:55 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 11:56:55 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [10237]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+{"error": "0", "event": "Failed to get machine status async", "logger": "src.services.message_handler", "level": "error", "timestamp": "2025-06-19T04:00:01.326766Z"}
+INFO:     147.92.150.195:0 - "POST /Webhook HTTP/1.1" 200 OK
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 1s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 2s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 4s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 8s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 16s.
+Transient error StatusCode.UNAVAILABLE encountered while exporting traces to localhost:4317, retrying in 32s.
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [10237]
+2025-06-19 12:05:33 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 12:05:33 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:05:33 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 12:05:33 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:05:33 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [11233]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11233]
+2025-06-19 12:05:47 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 12:05:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:05:47 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 12:05:47 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:05:47 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [11259]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'src/services/message_handler.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11259]
+2025-06-19 12:06:00 [info     ] ✅ 使用生產級統一 MCP 客戶端實作
+2025-06-19 12:06:00 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:06:00 [info     ] TaskMaster integration temporarily disabled
+2025-06-19 12:06:00 [info     ] ✅ 使用生產級統一 MCP 客戶端
+2025-06-19 12:06:00 [info     ] TaskMaster integration temporarily disabled
+INFO:     Started server process [11277]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11277]
+INFO:     Stopping reloader process [92844]

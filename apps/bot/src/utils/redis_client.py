@@ -1,6 +1,6 @@
-from typing import Optional
-import redis.asyncio as redis
 from functools import lru_cache
+
+import redis.asyncio as redis
 
 from src.config import get_settings
 
@@ -17,13 +17,13 @@ def get_redis_client() -> redis.Redis:
     )
 
 
-async def get_cached_value(key: str) -> Optional[str]:
+async def get_cached_value(key: str) -> str | None:
     redis_client = get_redis_client()
     return await redis_client.get(key)
 
 
 async def set_cached_value(
-    key: str, value: str, expire_seconds: Optional[int] = None
+    key: str, value: str, expire_seconds: int | None = None
 ) -> None:
     redis_client = get_redis_client()
     await redis_client.set(key, value, ex=expire_seconds)

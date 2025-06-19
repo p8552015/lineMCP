@@ -1,7 +1,7 @@
-from typing import Dict, Any
+from typing import Any
 
 
-def get_mcp_manifest() -> Dict[str, Any]:
+def get_mcp_manifest() -> dict[str, Any]:
     """
     Returns the MCP tools manifest for Context7 documentation queries and PostgreSQL database operations.
     This defines the available tools that can be called via OpenAI's function calling.
@@ -17,7 +17,7 @@ def get_mcp_manifest() -> Dict[str, Any]:
                         "description": "Search query for documentation (e.g., 'Next.js app router', 'React hooks', 'Python FastAPI')",
                     },
                     "framework": {
-                        "type": "string", 
+                        "type": "string",
                         "description": "Optional framework or technology to focus on (e.g., 'react', 'nextjs', 'python', 'fastapi')",
                         "default": "",
                     },
@@ -25,7 +25,7 @@ def get_mcp_manifest() -> Dict[str, Any]:
                         "type": "string",
                         "description": "Programming language to focus on (e.g., 'javascript', 'python', 'typescript')",
                         "default": "",
-                    }
+                    },
                 },
                 "required": ["query"],
             },
@@ -47,7 +47,7 @@ def get_mcp_manifest() -> Dict[str, Any]:
                         "type": "string",
                         "description": "Specific use case or pattern needed",
                         "default": "",
-                    }
+                    },
                 },
                 "required": ["technology", "concept"],
             },
@@ -62,14 +62,14 @@ def get_mcp_manifest() -> Dict[str, Any]:
                         "description": "Library or framework name",
                     },
                     "api_name": {
-                        "type": "string", 
+                        "type": "string",
                         "description": "API method or function name",
                     },
                     "version": {
                         "type": "string",
                         "description": "Specific version (optional)",
                         "default": "latest",
-                    }
+                    },
                 },
                 "required": ["library", "api_name"],
             },
@@ -86,7 +86,7 @@ def get_mcp_manifest() -> Dict[str, Any]:
                     "topic": {
                         "type": "string",
                         "description": "Specific topic (e.g., 'security', 'performance', 'testing')",
-                    }
+                    },
                 },
                 "required": ["technology", "topic"],
             },

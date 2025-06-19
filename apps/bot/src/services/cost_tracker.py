@@ -1,10 +1,11 @@
+from datetime import UTC, datetime
+from typing import Any
+
 import structlog
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any
 from prometheus_client import Counter, Gauge
 
 from src.config import get_settings
-from src.utils.redis_client import increment_counter, get_counter, set_cached_value
+from src.utils.redis_client import get_counter, increment_counter
 
 logger = structlog.get_logger()
 settings = get_settings()
@@ -36,20 +37,24 @@ class CostTracker:
         self, user_id: str, input_tokens: int, output_tokens: int
     ) -> None:
         user_id_hash = self._hash_user_id(user_id)
-        
-        token_usage_counter.labels(type="input", user_id_hash=user_id_hash).inc(input_tokens)
-        token_usage_counter.labels(type="output", user_id_hash=user_id_hash).inc(output_tokens)
-        
+
+        token_usage_counter.labels(type="input", user_id_hash=user_id_hash).inc(
+            input_tokens
+        )
+        token_usage_counter.labels(type="output", user_id_hash=user_id_hash).inc(
+            output_tokens
+        )
+
         month_key = self._get_month_key()
-        
+
         await increment_counter(f"{month_key}:input_tokens", input_tokens)
         await increment_counter(f"{month_key}:output_tokens", output_tokens)
-        
+
         await increment_counter(f"{month_key}:user:{user_id_hash}:requests", 1)
-        
+
         current_cost = await self.get_current_month_cost()
         monthly_cost_gauge.set(current_cost)
-        
+
         if current_cost > self.monthly_budget * 0.9:
             logger.warning(
                 "Approaching monthly budget limit",
@@ -60,7 +65,7 @@ class CostTracker:
 
     async def check_budget(self) -> bool:
         current_cost = await self.get_current_month_cost()
-        
+
         if current_cost >= self.monthly_budget:
             budget_exceeded_counter.inc()
             logger.error(
@@ -69,27 +74,27 @@ class CostTracker:
                 budget=self.monthly_budget,
             )
             return False
-        
+
         return True
 
     async def get_current_month_cost(self) -> float:
         month_key = self._get_month_key()
-        
+
         input_tokens = await get_counter(f"{month_key}:input_tokens")
         output_tokens = await get_counter(f"{month_key}:output_tokens")
-        
+
         input_cost = (input_tokens / 1000) * self.input_price_per_1k
         output_cost = (output_tokens / 1000) * self.output_price_per_1k
-        
+
         return round(input_cost + output_cost, 2)
 
-    async def get_usage_stats(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+    async def get_usage_stats(self, user_id: str | None = None) -> dict[str, Any]:
         month_key = self._get_month_key()
-        
+
         if user_id:
             user_id_hash = self._hash_user_id(user_id)
             requests = await get_counter(f"{month_key}:user:{user_id_hash}:requests")
-            
+
             return {
                 "user_id_hash": user_id_hash,
                 "requests_this_month": requests,
@@ -98,7 +103,7 @@ class CostTracker:
             input_tokens = await get_counter(f"{month_key}:input_tokens")
             output_tokens = await get_counter(f"{month_key}:output_tokens")
             current_cost = await self.get_current_month_cost()
-            
+
             return {
                 "month": month_key,
                 "input_tokens": input_tokens,
@@ -107,15 +112,18 @@ class CostTracker:
                 "current_cost_usd": current_cost,
                 "budget_usd": self.monthly_budget,
                 "budget_remaining_usd": round(self.monthly_budget - current_cost, 2),
-                "budget_percentage_used": round((current_cost / self.monthly_budget) * 100, 2),
+                "budget_percentage_used": round(
+                    (current_cost / self.monthly_budget) * 100, 2
+                ),
             }
 
     def _get_month_key(self) -> str:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return f"cost:{now.year}:{now.month:02d}"
 
     def _hash_user_id(self, user_id: str) -> str:
         import hashlib
-        return hashlib.sha256(
-            (user_id + settings.jwt_secret_key).encode()
-        ).hexdigest()[:16]
+
+        return hashlib.sha256((user_id + settings.jwt_secret_key).encode()).hexdigest()[
+            :16
+        ]
