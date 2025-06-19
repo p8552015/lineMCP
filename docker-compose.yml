@@ -1,0 +1,113 @@
+services:
+  # LINE Bot 主服務
+  line-bot:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # LINE 設定
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      # OpenAI 設定
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      # MCP 服務端點（使用容器網路）
+      MCP_SERVER_URL: http://sqlite-mcp:3003
+      POSTGRES_MCP_URL: http://postgres-mcp:3002
+      # 其他設定
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      - sqlite-mcp
+      - postgres-mcp
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # SQLite MCP 服務
+  sqlite-mcp:
+    build:
+      context: ./apps/servers/src/sqlite
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./data/sqlite:/data
+    environment:
+      PYTHONUNBUFFERED: 1
+      PYTHONUTF8: 1
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # PostgreSQL MCP 服務
+  postgres-mcp:
+    image: crystaldba/postgres-mcp:latest
+    ports:
+      - "3002:3000"
+    environment:
+      DATABASE_URI: postgresql://postgres:password@postgres:5432/mydb
+      ACCESS_MODE: restricted
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # 監控服務 (Prometheus)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # 監控視覺化 (Grafana)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
