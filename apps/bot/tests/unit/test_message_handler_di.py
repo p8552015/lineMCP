@@ -117,7 +117,7 @@ class TestMessageHandlerDI:
     @pytest.mark.asyncio
     async def test_natural_language_processing_with_mocks(self, message_handler_di, mock_services):
         """測試自然語言處理（完全模擬）"""
-        from src.services.nl_to_sql_service import QueryType
+        from apps.bot.backup.nl_to_sql_service import QueryType
         
         # 設置所有模擬回應
         mock_services['db_service'].get_table_info.return_value = {

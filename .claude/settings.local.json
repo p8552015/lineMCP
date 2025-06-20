@@ -33,7 +33,14 @@
       "Bash(rg:*)",
       "Bash(python -m pytest tests/integration/test_flexbuilder_isolation.py::TestFlexBuilderIsolation::test_flexbuilder_import_tracking -v)",
       "Bash(python tests/integration/test_flexbuilder_isolation_simple.py)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(pkill:*)",
+      "Bash(touch:*)",
+      "Bash(python -m pytest tests/application/test_application_facade.py -v)",
+      "Bash(pip3 install:*)",
+      "mcp__zen__debug",
+      "Bash(python test_t02_empty_query_fix.py)",
+      "Bash(python:*)"
     ],
     "deny": []
   }

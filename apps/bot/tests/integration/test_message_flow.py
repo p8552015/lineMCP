@@ -73,7 +73,7 @@ class TestMessageFlow:
             # 設置模擬回應
             mock_table_info.return_value = {"machines": {"columns": ["id", "status"]}}
             
-            from src.services.nl_to_sql_service import QueryType
+            from apps.bot.backup.nl_to_sql_service import QueryType
             mock_parse.return_value = Mock(
                 query_type=QueryType.MACHINE_STATUS,
                 confidence=0.9,
@@ -102,7 +102,7 @@ class TestMessageFlow:
         """測試未知查詢的處理流程"""
         # 模擬自然語言服務返回低信心度結果
         with patch.object(message_handler.nl_service, 'parse_natural_language') as mock_parse:
-            from src.services.nl_to_sql_service import QueryType
+            from apps.bot.backup.nl_to_sql_service import QueryType
             mock_parse.return_value = Mock(
                 query_type=QueryType.UNKNOWN,
                 confidence=0.1,

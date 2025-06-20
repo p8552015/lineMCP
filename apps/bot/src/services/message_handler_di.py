@@ -21,7 +21,8 @@ from .database_service import DatabaseService
 from .error_handlers import ErrorContext, log_performance, mcp_error_handler
 from .mcp_response_parser import MCPResponseParser
 from .message_formatter import MessageFormatter
-from .nl_to_sql_service import NaturalLanguageToSQLService, QueryType
+from .nl_to_sql_service import NaturalLanguageToSQLService
+from .nl_to_sql.models.query_models import QueryType
 from .openai_client import OpenAIClient
 
 logger = structlog.get_logger()
@@ -170,7 +171,18 @@ class MessageHandlerDI:
                 text="請提供SQL查詢語句，例如：/sql SELECT * FROM machines LIMIT 5"
             )
 
-        sql_query = " ".join(args)
+        sql_query = " ".join(args).strip()
+
+        # 🔥 緊急修復：檢查空查詢
+        if not sql_query:
+            logger.error("❌ 緊急阻止：MessageHandler SQL 查詢為空", 
+                        user_id=user_id, 
+                        args=args)
+            return TextMessage(
+                text="❌ SQL 查詢不能為空\\n\\n"
+                     "📝 用法：/sql <SQL查詢語句>\\n"
+                     "💡 例如：/sql SELECT * FROM machines LIMIT 5"
+            )
 
         with ErrorContext("sql_command") as ctx:
             ctx.add_context(query_preview=sql_query[:100])

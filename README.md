@@ -4,7 +4,7 @@
 
 ## 🎯 專案概述
 
-基於 Model Context Protocol (MCP) 的生產級 LINE Bot，整合 AI 模型與工業資料庫，提供智慧製造監控服務。採用分層架構設計與依賴注入模式，專注於可靠性、可維護性和企業級擴展能力。
+基於 Model Context Protocol (MCP) 的生產級 LINE Bot，整合 AI 模型與工業資料庫，提供智慧製造監控服務。採用 SOLID 原則的分層架構設計、依賴注入模式與依賴倒置原則 (DIP)，完全解決循環依賴問題，專注於可靠性、可維護性和企業級擴展能力。
 
 ### 🌟 核心價值
 - **🤖 AI 驅動分析** - Google Gemini 1.5 Flash + OpenAI GPT-4o-mini 智能引擎
@@ -26,6 +26,7 @@
 - **📈 可觀測性完整** - 結構化日誌 + Prometheus + OpenTelemetry
 - **🔐 企業級安全** - JWT 認證 + 簽章驗證 + 環境變數管理
 - **🎯 代碼優化** - 漸進式重構移除 1416 行未使用代碼
+- **🛡️ 生產級穩定性** - v5 緊急修復：解決空查詢問題和類型安全錯誤
 
 ## 🚀 快速啟動
 
@@ -96,7 +97,8 @@ lineMCP/
 │   │   └── exceptions.py (7.4K)          # 領域異常定義
 │   │
 │   ├── 🏗️ infrastructure/               # 基礎設施層 - 依賴注入和服務工廠
-│   │   ├── enhanced_service_factory.py (13K) # 增強服務工廠
+│   │   ├── service_factory_interface.py (2K) # IServiceFactory 抽象介面 (DIP)
+│   │   ├── enhanced_service_factory.py (13K) # 增強服務工廠實現
 │   │   ├── error_handler.py (6.0K)       # 統一錯誤處理
 │   │   └── service_registry.py (13K)     # 服務註冊表 (15 個服務)
 │   │
@@ -139,7 +141,7 @@ lineMCP/
 │   └── status.sh                       # 📊 系統狀態檢查
 ```
 
-### 🔗 依賴關係圖 (新架構)
+### 🔗 依賴關係圖 (已解決循環依賴)
 ```mermaid
 graph TD
     A[routes/] --> B[application/]
@@ -152,27 +154,58 @@ graph TD
     E --> D
     C --> G
     
+    %% 依賴倒置原則實現
+    B --> I[IServiceFactory 介面]
+    E --> I
+    I -.-> J["依賴倒置原則 (DIP)"]
+    
     style B fill:#ffcccc
     style C fill:#ccffcc  
     style E fill:#ccccff
     style D fill:#ffffcc
+    style I fill:#ff9999
+    style J fill:#ffff99
 ```
+
+### 🎯 循環依賴解決方案 (2025-06-20 已完成)
+
+#### 📋 **問題分析**
+```
+之前：ApplicationFacade ↔ EnhancedServiceFactory (循環依賴)
+現在：ApplicationFacade → IServiceFactory ← EnhancedServiceFactory (依賴倒置)
+```
+
+#### 🔧 **解決方案核心**
+- **引入抽象介面**: `IServiceFactory` 抽象工廠介面
+- **依賴倒置原則**: 高層模組 (ApplicationFacade) 依賴抽象，不依賴具體實現
+- **職責分離**: EnhancedServiceFactory 專注服務創建，ApplicationFacade 專注業務協調
+
+#### ✅ **實現效益**
+- **架構清晰**: 層次分明，依賴方向清楚
+- **可測試性**: 易於 Mock IServiceFactory 進行單元測試
+- **擴展性**: 可輕鬆替換不同的服務工廠實現
+- **SOLID 原則**: 依賴倒置原則 (DIP)、開閉原則 (OCP)、單一職責原則 (SRP)
 
 ### 🏗️ 企業級架構特色
 
-#### 💉 **依賴注入系統**
-- **`EnhancedServiceFactory`**: 企業級服務工廠，支援多種生命週期
+#### 💉 **依賴注入系統 (SOLID 原則實現)**
+- **`IServiceFactory`**: 抽象服務工廠介面，實現依賴倒置原則 (DIP)
+- **`EnhancedServiceFactory`**: 企業級服務工廠實現，支援多種生命週期
 - **`ServiceRegistry`**: 14 個服務註冊 (12 singleton + 2 transient)
-- **自動依賴解析**: 零配置服務注入
+- **循環依賴解決**: ApplicationFacade 透過抽象介面依賴，不直接依賴具體實現
+- **自動依賴解析**: 零配置服務注入，支援多層級依賴關係
 
 #### 🚪 **門面模式 (Facade Pattern)**
 - **`ApplicationFacade`**: 統一的應用層入口
 - **簡化客戶端**: 複雜系統的簡單介面
 - **職責分離**: 清晰的 API 邊界
 
-#### ✅ **架構優化完成**
+#### ✅ **企業級架構優化已完成**
 - ✅ **FlexBuilder 重構**: 成功移除 1416 行未使用代碼
-- ⚠️ **循環依賴**: ApplicationFacade ↔ EnhancedServiceFactory 
+- ✅ **循環依賴解決**: 實現依賴倒置原則 (DIP)，ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
+- ✅ **SOLID 原則實現**: 依賴倒置原則 (DIP)、開閉原則 (OCP)、單一職責原則 (SRP)
+- ✅ **架構清晰度提升**: 層次分明，高層模組不再依賴低層模組的具體實現
+- ✅ **v5 生產級修復**: 空查詢問題和統計服務類型錯誤完全解決
 - ⚠️ **MCP 客戶端不一致**: OpenAI 繞過 UnifiedMCPClient 抽象
 
 ## ⚙️ 配置指南
@@ -259,11 +292,14 @@ OPENAI_API_KEY=your_key            # 付費使用
 - **🎯 規則優先** - 規則引擎優先，AI 增強輔助，確保可預測性
 - **📊 智能查詢** - 自然語言轉 SQL，支援複雜統計分析
 
-### 🛠️ 工程實力
+### 🛠️ 企業級工程實力
+- **🏗️ SOLID 原則實現** - 依賴倒置原則 (DIP) 解決循環依賴，提升架構品質
+- **💉 依賴注入架構** - IServiceFactory 抽象介面 + EnhancedServiceFactory 實現
 - **🔧 STDIO 修復專家** - 解決 macOS KqueueSelector 掛起問題
 - **⚡ 零配置啟動** - 動態路徑推斷，無硬編碼依賴
 - **📈 可觀測性** - 結構化日誌 + Prometheus + OpenTelemetry
 - **🔐 安全加固** - JWT + 簽章驗證 + 環境變數隔離
+- **🧪 可測試性提升** - 抽象介面設計，輕鬆 Mock 進行單元測試
 
 
 **保留的核心價值：**
@@ -292,12 +328,16 @@ cd apps/bot && poetry run mypy src/
 ```
 
 ### ✅ 驗證清單
+- [x] **循環依賴解決** - ApplicationFacade ↔ EnhancedServiceFactory 循環依賴已消除
+- [x] **依賴倒置原則** - IServiceFactory 抽象介面實現 DIP
 - [x] **AI 模型載入** - Gemini 1.5 Flash + GPT-4o-mini 正常運作
 - [x] **MCP 連接** - 統一客戶端成功連接 SQLite 服務器
 - [x] **配置載入** - 所有環境變數正確解析
-- [x] **依賴注入** - 服務間依賴關係健康
+- [x] **依賴注入** - 服務間依賴關係健康，14 個服務正常註冊
 - [x] **FastAPI 啟動** - 10 個路由端點正常載入
 - [x] **程式碼品質** - 通過 black、ruff 格式化檢查
+- [x] **架構品質** - 符合 SOLID 原則，層次分明
+- [x] **生產級穩定性** - v5 修復：空查詢問題和類型安全錯誤完全解決
 
 ## 🔧 故障排除
 
@@ -305,10 +345,13 @@ cd apps/bot && poetry run mypy src/
 
 | 問題類型 | 診斷命令 | 解決方案 |
 |---------|---------|---------|
+| **循環依賴檢查** | `python3 -c "import src.application.application_facade; import src.infrastructure.enhanced_service_factory; print('✅ 無循環依賴')"` | 確認 IServiceFactory 介面正確實現 |
 | **MCP 連接失敗** | `./start-production.sh test` | 檢查 SQLite 服務器路徑配置 |
 | **模組導入錯誤** | `./status.sh` | 確認 Poetry 環境與依賴 |
 | **配置缺失** | `./start-production.sh config` | 檢查 .env 檔案完整性 |
 | **AI 模型錯誤** | 查看詳細日誌 | 驗證 API Key 有效性 |
+| **空查詢問題** | `python3 test_current_fix_status.py` | v5 修復已解決，檢查模板配置 |
+| **類型安全錯誤** | 查看統計服務日誌 | v5 修復已實施雙重類型轉換 |
 
 ### 📊 日誌監控
 ```bash
@@ -386,22 +429,26 @@ cp apps/bot/.env.example apps/bot/.env
 - 🤖 **AI 分析**: Google Gemini + OpenAI 雙引擎智能分析
 - 📊 **數據洞察**: 自然語言轉 SQL，秒級生成報表
 - 🔧 **預測維護**: AI 輔助的智能決策支援
-- 🏗️ **企業級架構**: 分層設計，穩定可靠
+- 🏗️ **企業級架構**: SOLID 原則實現，循環依賴已解決，架構更穩固
 
 ## 🏆 技術優勢總結
 
 ### 🚀 **生產就緒**
-- ✅ **企業級架構**: 四層分層設計 + 依賴注入
+- ✅ **企業級架構**: 四層分層設計 + 依賴注入 + SOLID 原則實現
+- ✅ **循環依賴解決**: 實現依賴倒置原則 (DIP)，架構更清晰穩固
 - ✅ **高效能**: < 3 秒啟動，支援 150+ 並發用戶
 - ✅ **成本優化**: Gemini 15M 免費 tokens/月
 - ✅ **穩定可靠**: 生產級 MCP 通訊，macOS 問題已修復
+- ✅ **生產級穩定性**: v5 緊急修復完成，空查詢和類型錯誤完全解決
 
 ### 🛠️ **開發友善**
 - ✅ **零配置啟動**: 一鍵部署與自動依賴檢查
+- ✅ **架構優化**: 依賴倒置原則實現，循環依賴完全解決
 - ✅ **完整監控**: 結構化日誌 + Prometheus + OpenTelemetry
-- ✅ **測試完備**: 單元測試 + 整合測試套件
-- ✅ **文檔完善**: 詳細的開發與部署指南
-- ✅ **代碼品質**: 漸進式重構，移除 1416 行死代碼
+- ✅ **測試完備**: 單元測試 + 整合測試套件，Mock 介面設計
+- ✅ **文檔完善**: 詳細的開發與部署指南，架構改善紀錄
+- ✅ **代碼品質**: 漸進式重構，移除 1416 行死代碼，SOLID 原則實現
+- ✅ **生產級容錯**: v5 修復實現多層保護機制，自動錯誤恢復
 
 ### 🔮 **未來發展**
 - ✅ **技術債務管理**: FlexBuilder 重構完成，架構更清晰

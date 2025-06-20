@@ -9,7 +9,7 @@ from prometheus_client import make_asgi_app
 
 from src.config import get_settings
 from src.middleware import setup_middleware
-from src.routes import test_webhook, webhook
+from src.routes import webhook
 from src.utils.observability import setup_observability
 from src.utils.redis_client import get_redis_client
 
@@ -56,9 +56,7 @@ FastAPIInstrumentor.instrument_app(app)
 
 app.include_router(webhook.router, tags=["webhook"])
 
-# 只在開發環境加入測試路由
-if settings.app_env.lower() in ["development", "dev", "test"]:
-    app.include_router(test_webhook.router, tags=["testing"])
+# 測試路由已移除，聚焦核心功能
 
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)

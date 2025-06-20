@@ -192,7 +192,7 @@ class TestMessageHandlerCore:
         # 檢查服務類型
         from src.services.openai_client import OpenAIClient
         from src.services.ai_model_service import AIModelService
-        from src.services.nl_to_sql_service import NaturalLanguageToSQLService
+        from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
         from src.services.database_service import DatabaseService
         from src.services.message_formatter import MessageFormatter
         from src.services.flex_builder import FlexBuilder

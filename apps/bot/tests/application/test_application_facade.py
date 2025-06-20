@@ -6,7 +6,7 @@ from unittest.mock import Mock, AsyncMock, patch
 from linebot.v3.messaging import Message, TextMessage
 
 from src.application.application_facade import ApplicationFacade, get_application_facade
-from src.infrastructure.service_factory import ServiceFactory
+from src.infrastructure.service_factory_interface import IServiceFactory
 
 
 class TestApplicationFacade:
@@ -15,16 +15,12 @@ class TestApplicationFacade:
     @pytest.fixture
     def mock_service_factory(self):
         """模擬服務工廠"""
-        factory = Mock(spec=ServiceFactory)
+        factory = Mock(spec=IServiceFactory)
         
-        # 模擬服務創建方法
-        factory.get_mcp_client_factory = AsyncMock()
-        factory.get_ai_model_service.return_value = Mock()
-        factory.get_nl_service.return_value = Mock()
-        factory.get_database_service.return_value = Mock()
-        factory.get_message_formatter.return_value = Mock()
-        factory.get_flex_builder.return_value = Mock()
-        factory.get_openai_client.return_value = Mock()
+        # 模擬 IServiceFactory 介面方法
+        factory.initialize = Mock()
+        factory.get_service = Mock()
+        factory.get_required_service = Mock()
         
         return factory
     

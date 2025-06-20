@@ -10,7 +10,7 @@ import structlog
 
 from .error_handlers import ErrorContext, async_retry, mcp_error_handler
 from .mcp_response_parser import MCPParseError, MCPQueryError, MCPResponseParser
-from .nl_to_sql_service import ParsedQuery, QueryType
+from .nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 logger = structlog.get_logger()
 
@@ -39,6 +39,13 @@ class DatabaseService:
         Returns:
             查詢結果列表
         """
+        # 🔥 緊急修復：檢查空查詢
+        if not sql_query or not sql_query.strip():
+            logger.error("❌ 緊急阻止：嘗試執行空查詢", 
+                        query_repr=repr(sql_query),
+                        query_length=len(sql_query) if sql_query else 0)
+            raise ValueError("SQL 查詢不能為空")
+        
         with ErrorContext("database_query") as ctx:
             ctx.add_context(query_preview=sql_query[:100])
 
@@ -64,6 +71,19 @@ class DatabaseService:
                 "success": False,
                 "error": "無法理解的查詢",
                 "suggestion": "請嘗試：M001狀況、所有機台、故障記錄等",
+            }
+
+        # 🔥 緊急修復：檢查解析後的查詢是否為空
+        if not parsed_query.sql_query or not parsed_query.sql_query.strip():
+            logger.error("❌ 緊急阻止：解析後的查詢為空", 
+                        query_type=parsed_query.query_type.value,
+                        parameters=parsed_query.parameters,
+                        confidence=parsed_query.confidence)
+            return {
+                "success": False,
+                "error": "查詢解析失敗：生成的 SQL 查詢為空",
+                "query_type": parsed_query.query_type.value,
+                "suggestion": "請檢查查詢模板或聯絡系統管理員",
             }
 
         try:
@@ -304,6 +324,11 @@ class DatabaseService:
     async def _get_recent_fault_count(self, machine_id: str, days: int = 7) -> int:
         """獲取近期故障次數"""
         try:
+            # 🔥 緊急修復：檢查參數
+            if not machine_id or not machine_id.strip():
+                logger.warning("❌ machine_id 為空，無法查詢故障次數", machine_id=repr(machine_id))
+                return 0
+            
             fault_query = f"""
                 SELECT COUNT(*) as fault_count
                 FROM machine_faults 

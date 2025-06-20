@@ -81,6 +81,13 @@ class QueryApplicationService(BaseApplicationService):
         if not self._initialized:
             await self.initialize()
         
+        # 🔥 緊急修復：檢查空查詢
+        if not query or not query.strip():
+            logger.error("❌ 緊急阻止：嘗試執行空查詢", 
+                        user_id=user_id,
+                        query_repr=repr(query))
+            raise create_validation_error("query", query, "查詢不能為空")
+        
         # 驗證查詢
         self._validate_query(query)
         

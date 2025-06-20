@@ -9,7 +9,7 @@ from typing import Any
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
-from .nl_to_sql_service import QueryType
+from .nl_to_sql.models.query_models import QueryType
 
 logger = structlog.get_logger()
 

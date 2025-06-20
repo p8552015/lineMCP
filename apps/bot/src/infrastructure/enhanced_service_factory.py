@@ -5,6 +5,7 @@
 from typing import Optional, Any, Dict, Type
 import structlog
 
+from .service_factory_interface import IServiceFactory
 from .service_registry import (
     ServiceRegistry,
     ServiceProvider,
@@ -16,6 +17,18 @@ from src.services.database_service import DatabaseService
 from src.services.message_formatter import MessageFormatter
 from src.services.message_handler_di import MessageHandlerDI
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
+
+# 新的 SOLID 重構組件
+from src.services.nl_to_sql.interfaces.parsing_interfaces import IParser
+from src.services.nl_to_sql.interfaces.query_builder_interfaces import IQueryBuilder, ITemplateManager
+from src.services.nl_to_sql.interfaces.statistics_interfaces import IStatistics, IConfiguration
+from src.services.nl_to_sql.parsers.rule_based_parser import RuleBasedParser
+from src.services.nl_to_sql.parsers.ai_enhanced_parser import AIEnhancedParser
+from src.services.nl_to_sql.parsers.composite_parser import CompositeParser
+from src.services.nl_to_sql.builders.sql_query_builder import SQLQueryBuilder
+from src.services.nl_to_sql.builders.query_template_manager import QueryTemplateManager
+from src.services.nl_to_sql.services.configuration_service import ConfigurationService
+from src.services.nl_to_sql.services.query_statistics_service import QueryStatisticsService
 from src.services.openai_client import OpenAIClient
 from src.services.unified_mcp_client import get_unified_mcp_client
 from src.services.mcp_response_parser import MCPResponseParser
@@ -30,7 +43,7 @@ from src.application.base_service import ApplicationServiceContext
 logger = structlog.get_logger()
 
 
-class EnhancedServiceFactory:
+class EnhancedServiceFactory(IServiceFactory):
     """
     增強版服務工廠
     
@@ -63,6 +76,7 @@ class EnhancedServiceFactory:
         self._register_domain_services()
         self._register_application_services()
         self._register_infrastructure_services()
+        self._register_nl_to_sql_services()  # 新增 SOLID 重構服務
         
         # 創建服務提供者
         self._provider = self._registry.create_provider()
@@ -173,17 +187,7 @@ class EnhancedServiceFactory:
             scope=ServiceScope.SINGLETON
         )
         
-        # 應用門面（延遲導入避免循環依賴）
-        def create_application_facade_lazy(provider):
-            from src.application.application_facade import ApplicationFacade
-            return ApplicationFacade(self)
-        
-        # 註冊時使用字符串標識符
-        self._registry.register_factory(
-            "ApplicationFacade",
-            create_application_facade_lazy,
-            scope=ServiceScope.SINGLETON
-        )
+        # 移除 ApplicationFacade 相關的註冊邏輯
         
     def _register_infrastructure_services(self):
         """註冊基礎設施服務"""
@@ -193,6 +197,116 @@ class EnhancedServiceFactory:
             lambda provider: self._create_message_handler(provider),
             scope=ServiceScope.TRANSIENT
         )
+    
+    def _register_nl_to_sql_services(self):
+        """註冊 NL-to-SQL SOLID 重構服務"""
+        logger.info("註冊 NL-to-SQL SOLID 重構服務")
+        
+        # 1. 配置和統計服務（基礎服務）
+        self._registry.register_singleton(
+            ConfigurationService,
+            tags=["nl-to-sql", "configuration", "core"],
+            metadata={"description": "NL-to-SQL 配置管理服務"}
+        )
+        
+        self._registry.register_singleton(
+            QueryStatisticsService,
+            tags=["nl-to-sql", "statistics", "monitoring"],
+            metadata={"description": "查詢統計追蹤服務"}
+        )
+        
+        # 2. 模板管理器（依賴配置服務）
+        self._registry.register_factory(
+            QueryTemplateManager,
+            lambda provider: QueryTemplateManager(
+                configuration=provider.get_required_service(ConfigurationService)
+            ),
+            scope=ServiceScope.SINGLETON
+        )
+        
+        # 3. 查詢建構器（依賴模板管理器）
+        self._registry.register_factory(
+            SQLQueryBuilder,
+            lambda provider: SQLQueryBuilder(
+                template_manager=provider.get_required_service(QueryTemplateManager)
+            ),
+            scope=ServiceScope.SINGLETON
+        )
+        
+        # 4. 解析器（依賴配置服務）
+        self._registry.register_factory(
+            RuleBasedParser,
+            lambda provider: RuleBasedParser(
+                configuration=provider.get_required_service(ConfigurationService)
+            ),
+            scope=ServiceScope.SINGLETON
+        )
+        
+        self._registry.register_factory(
+            AIEnhancedParser,
+            lambda provider: AIEnhancedParser(
+                ai_model_service=provider.get_required_service(AIModelService)
+            ),
+            scope=ServiceScope.SINGLETON
+        )
+        
+        # 5. 組合解析器（策略協調器）
+        self._registry.register_factory(
+            CompositeParser,
+            lambda provider: self._create_composite_parser(provider),
+            scope=ServiceScope.SINGLETON
+        )
+        
+        # 6. 介面註冊（供依賴注入使用）
+        # 使用 register_factory 方法正確註冊介面工廠函數
+        self._registry.register_factory(
+            IConfiguration,
+            lambda provider: provider.get_required_service(ConfigurationService),
+            scope=ServiceScope.SINGLETON
+        )
+        self._registry.register_factory(
+            IStatistics,
+            lambda provider: provider.get_required_service(QueryStatisticsService),
+            scope=ServiceScope.SINGLETON
+        )
+        self._registry.register_factory(
+            ITemplateManager,
+            lambda provider: provider.get_required_service(QueryTemplateManager),
+            scope=ServiceScope.SINGLETON
+        )
+        self._registry.register_factory(
+            IQueryBuilder,
+            lambda provider: provider.get_required_service(SQLQueryBuilder),
+            scope=ServiceScope.SINGLETON
+        )
+        self._registry.register_factory(
+            IParser,
+            lambda provider: provider.get_required_service(CompositeParser),  # 預設使用組合解析器
+            scope=ServiceScope.SINGLETON
+        )
+        
+        logger.info("NL-to-SQL SOLID 重構服務註冊完成")
+    
+    def _create_composite_parser(self, provider: ServiceProvider) -> CompositeParser:
+        """創建組合解析器並配置策略"""
+        composite_parser = CompositeParser()
+        
+        # 添加規則解析器
+        rule_parser = provider.get_required_service(RuleBasedParser)
+        composite_parser.add_parser(rule_parser, weight=1.0)
+        
+        # 添加 AI 增強解析器
+        ai_parser = provider.get_required_service(AIEnhancedParser)
+        composite_parser.add_parser(ai_parser, weight=1.2)
+        
+        # 設定回退門檻
+        composite_parser.set_fallback_threshold(0.5)
+        
+        logger.info("組合解析器配置完成", 
+                   parser_count=2, 
+                   fallback_threshold=0.5)
+        
+        return composite_parser
         
     def _create_command_executor(self, provider: ServiceProvider) -> CommandExecutor:
         """創建指令執行器"""
@@ -270,9 +384,6 @@ class EnhancedServiceFactory:
             
         return self._provider.get_required_service(service_type)
         
-    def create_application_facade(self):
-        """創建應用門面"""
-        return self.get_required_service("ApplicationFacade")
         
     def create_message_handler(self) -> MessageHandlerDI:
         """創建訊息處理器"""
@@ -336,6 +447,52 @@ class EnhancedServiceFactory:
     async def get_mcp_client_factory(self):
         """MCP 客戶端工廠函數"""
         return await get_unified_mcp_client()
+    
+    # 新增的 SOLID 重構服務獲取方法
+    def get_configuration_service(self) -> ConfigurationService:
+        """獲取配置管理服務實例"""
+        return self.get_required_service(ConfigurationService)
+    
+    def get_statistics_service(self) -> QueryStatisticsService:
+        """獲取統計追蹤服務實例"""
+        return self.get_required_service(QueryStatisticsService)
+    
+    def get_template_manager(self) -> QueryTemplateManager:
+        """獲取模板管理器實例"""
+        return self.get_required_service(QueryTemplateManager)
+    
+    def get_query_builder(self) -> SQLQueryBuilder:
+        """獲取查詢建構器實例"""
+        return self.get_required_service(SQLQueryBuilder)
+    
+    def get_rule_parser(self) -> RuleBasedParser:
+        """獲取規則解析器實例"""
+        return self.get_required_service(RuleBasedParser)
+    
+    def get_ai_parser(self) -> AIEnhancedParser:
+        """獲取 AI 解析器實例"""
+        return self.get_required_service(AIEnhancedParser)
+    
+    def get_composite_parser(self) -> CompositeParser:
+        """獲取組合解析器實例"""
+        return self.get_required_service(CompositeParser)
+    
+    # 介面版本的獲取方法
+    def get_parser(self) -> IParser:
+        """獲取預設解析器（組合解析器）"""
+        return self.get_required_service(IParser)
+    
+    def get_builder(self) -> IQueryBuilder:
+        """獲取預設查詢建構器"""
+        return self.get_required_service(IQueryBuilder)
+    
+    def get_configuration(self) -> IConfiguration:
+        """獲取配置服務介面"""
+        return self.get_required_service(IConfiguration)
+    
+    def get_statistics(self) -> IStatistics:
+        """獲取統計服務介面"""
+        return self.get_required_service(IStatistics)
 
 
 # 全域增強版服務工廠實例

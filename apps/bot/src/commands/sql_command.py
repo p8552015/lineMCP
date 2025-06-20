@@ -71,7 +71,18 @@ class SqlCommandHandler(CommandHandler):
                          "🔒 只允許 SELECT 查詢以確保資料安全"
                 )
         
-        sql_query = " ".join(args)
+        sql_query = " ".join(args).strip()
+        
+        # 🔥 緊急修復：檢查空查詢
+        if not sql_query:
+            logger.error("❌ 緊急阻止：SQL 指令查詢為空", 
+                        user_id=user_id, 
+                        args=args)
+            return TextMessage(
+                text="❌ SQL 查詢不能為空\\n\\n"
+                     f"📝 用法：{self.get_usage()}\\n"
+                     "💡 例如：/sql SELECT * FROM machines LIMIT 5"
+            )
         
         try:
             with ErrorContext("sql_command") as ctx:

@@ -79,7 +79,7 @@ def mock_database_service():
 @pytest.fixture
 def mock_nl_service():
     """模擬自然語言處理服務"""
-    from src.services.nl_to_sql_service import QueryType
+    from apps.bot.backup.nl_to_sql_service import QueryType
     from src.models.commands import Command
     
     service = AsyncMock()

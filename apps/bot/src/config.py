@@ -50,8 +50,11 @@ class Settings(BaseSettings):
     redis_password: str | None = None
 
     # Observability
-    otel_exporter_otlp_endpoint: str = "http://localhost:4317"
+    otel_enabled: bool = True
+    otel_exporter_otlp_endpoint: str = ""  # 空字串表示不使用 OTLP 導出器
     otel_service_name: str = "line-mcp-webhook"
+    otel_auto_detect_endpoint: bool = True  # 自動檢測 OTLP 端點可用性
+    otel_fallback_to_console: bool = True  # 在開發環境中降級為控制台導出
     prometheus_port: int = 9090
 
     # Cost Control
@@ -77,6 +80,15 @@ class Settings(BaseSettings):
     # 新架構已完成遷移，永久啟用
     use_new_architecture: bool = True
     service_factory_type: str = "enhanced"
+    
+    # NL-to-SQL SOLID 架構配置
+    nl_to_sql_enabled: bool = True
+    nl_to_sql_config_dir: str = "src/services/nl_to_sql/config"
+    composite_parser_fallback_threshold: float = 0.5
+    enable_query_statistics: bool = True
+    ai_parser_timeout: int = 3000
+    rule_parser_cache_size: int = 1000
+    enable_config_hot_reload: bool = False
 
     @property
     def redis_url(self) -> str:

@@ -2,7 +2,7 @@
 應用服務門面 (Application Facade)
 提供統一的應用服務訪問入口
 """
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 import structlog
 from linebot.v3.messaging import Message
 
@@ -12,7 +12,7 @@ from .query_service import QueryApplicationService
 from .monitoring_service import MonitoringApplicationService
 from src.domain.command_handler import CommandContext
 from src.config import get_settings
-from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
+from src.infrastructure.service_factory_interface import IServiceFactory
 
 logger = structlog.get_logger()
 
@@ -28,18 +28,14 @@ class ApplicationFacade:
     - 提供高層次的業務操作介面
     """
     
-    def __init__(self, service_factory: Optional[Union[EnhancedServiceFactory, Any]] = None):
+    def __init__(self, service_factory: IServiceFactory):
         """
         初始化應用門面
         
         Args:
-            service_factory: 服務工廠，如果為 None 則根據配置選擇工廠類型
+            service_factory: 實現 IServiceFactory 介面的服務工廠
         """
-        # 支援兩種工廠類型，根據配置自動選擇
-        if service_factory is None:
-            self.service_factory = self._create_default_service_factory()
-        else:
-            self.service_factory = service_factory
+        self.service_factory = service_factory
             
         # 創建新的應用上下文，避免重複註冊問題
         self.context = ApplicationServiceContext()
@@ -50,17 +46,6 @@ class ApplicationFacade:
         self._query_service: Optional[QueryApplicationService] = None
         self._monitoring_service: Optional[MonitoringApplicationService] = None
     
-    def _create_default_service_factory(self) -> EnhancedServiceFactory:
-        """
-        創建預設的增強版服務工廠
-        
-        Returns:
-            增強版服務工廠實例
-        """
-        logger.info("創建 EnhancedServiceFactory")
-        factory = EnhancedServiceFactory()
-        factory.initialize()
-        return factory
     
     async def initialize(self) -> None:
         """初始化應用門面和所有服務"""
@@ -370,12 +355,12 @@ class ApplicationFacade:
 _application_facade: Optional[ApplicationFacade] = None
 
 
-def get_application_facade(service_factory: Optional[EnhancedServiceFactory] = None) -> ApplicationFacade:
+def get_application_facade(service_factory: IServiceFactory) -> ApplicationFacade:
     """
     獲取全域應用門面實例
     
     Args:
-        service_factory: 服務工廠
+        service_factory: 實現 IServiceFactory 介面的服務工廠
         
     Returns:
         應用門面實例

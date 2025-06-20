@@ -345,9 +345,25 @@ class ServiceProvider(IServiceProvider):
         """
         import inspect
         
-        # 如果是函數，直接調用
+        # 如果是函數，檢查是否需要參數
         if not inspect.isclass(implementation):
-            return implementation()
+            try:
+                sig = inspect.signature(implementation)
+                if len(sig.parameters) > 0:
+                    # 函數需要參數但這裡是 _auto_wire 路徑，可能應該使用 register_factory
+                    # 降級為 debug 級別，避免干擾正常日誌
+                    logger.debug("函數需要參數但使用了 _auto_wire 路徑",
+                                 function=getattr(implementation, '__name__', str(implementation)),
+                                 parameters=list(sig.parameters.keys()))
+                    # 嘗試注入 self (ServiceProvider)
+                    if len(sig.parameters) == 1 and 'provider' in sig.parameters:
+                        return implementation(self)
+                return implementation()
+            except Exception as e:
+                logger.error("函數自動注入失敗",
+                           function=getattr(implementation, '__name__', str(implementation)),
+                           error=str(e))
+                raise
             
         # 獲取構造函數簽名
         sig = inspect.signature(implementation.__init__)

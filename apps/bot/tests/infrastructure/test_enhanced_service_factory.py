@@ -11,9 +11,8 @@ from src.infrastructure.enhanced_service_factory import (
 from src.infrastructure.service_registry import ServiceRegistry, ServiceScope
 from src.services.ai_model_service import AIModelService
 from src.services.message_formatter import MessageFormatter
-from src.services.nl_to_sql_service import NaturalLanguageToSQLService
+from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
 from src.application.messaging_service import MessagingApplicationService
-from src.application.application_facade import ApplicationFacade
 
 
 class TestEnhancedServiceFactory:
@@ -105,19 +104,6 @@ class TestEnhancedServiceFactory:
         assert hasattr(handler, 'nl_service')
         assert hasattr(handler, 'formatter')
     
-    def test_create_application_facade(self, factory):
-        """測試創建應用門面"""
-        with patch('src.infrastructure.enhanced_service_factory.ApplicationFacade') as mock_facade_class:
-            # 設置模擬類的 __name__ 屬性
-            mock_facade_class.__name__ = 'ApplicationFacade'
-            mock_facade_instance = Mock()
-            mock_facade_class.return_value = mock_facade_instance
-            
-            factory.initialize()
-            
-            # 創建應用門面
-            facade = factory.create_application_facade()
-            assert facade is not None
     
     def test_compatibility_methods(self, factory):
         """測試與原有 ServiceFactory 的兼容性方法"""
@@ -126,7 +112,8 @@ class TestEnhancedServiceFactory:
         # 測試各個 get 方法
         assert factory.get_ai_model_service() is not None
         assert factory.get_message_formatter() is not None
-        assert factory.get_flex_builder() is not None
+        assert factory.get_nl_service() is not None
+        assert factory.get_database_service() is not None
         
         # 測試異步方法
         import asyncio
