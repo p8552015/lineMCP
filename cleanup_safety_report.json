@@ -1,0 +1,91 @@
+{
+  "safe_items": [],
+  "risky_items": [],
+  "blocked_items": [
+    {
+      "file": "/Users/yen/Desktop/lineMCP/apps/bot/src/services/database_service.py",
+      "method": "test_connection",
+      "safety_check": {
+        "safe_to_delete": false,
+        "references": [
+          {
+            "file": "/Users/yen/Desktop/lineMCP/apps/bot/tests/integration/test_message_flow.py",
+            "line": 124,
+            "content": "with patch.object(message_handler.db_service, 'test_connection') as mock_test:",
+            "pattern": "'test_connection'"
+          }
+        ],
+        "risks": [
+          "配置引用: ['Found in config files: *.json']"
+        ],
+        "recommendations": [
+          "⚠️ 發現引用或風險，需要進一步檢查"
+        ]
+      }
+    },
+    {
+      "file": "/Users/yen/Desktop/lineMCP/apps/bot/src/services/database_service.py",
+      "method": "get_table_info",
+      "safety_check": {
+        "safe_to_delete": false,
+        "references": [
+          {
+            "file": "/Users/yen/Desktop/lineMCP/apps/bot/tests/integration/test_message_flow.py",
+            "line": 68,
+            "content": "with patch.object(message_handler.db_service, 'get_table_info') as mock_table_info, \\",
+            "pattern": "'get_table_info'"
+          }
+        ],
+        "risks": [
+          "配置引用: ['Found in config files: *.json']"
+        ],
+        "recommendations": [
+          "⚠️ 發現引用或風險，需要進一步檢查"
+        ]
+      }
+    },
+    {
+      "file": "/Users/yen/Desktop/lineMCP/apps/bot/src/utils/observability.py",
+      "method": "get_telemetry_health",
+      "safety_check": {
+        "safe_to_delete": false,
+        "references": [],
+        "risks": [
+          "配置引用: ['Found in config files: *.json']"
+        ],
+        "recommendations": [
+          "⚠️ 發現引用或風險，需要進一步檢查"
+        ]
+      }
+    },
+    {
+      "file": "/Users/yen/Desktop/lineMCP/apps/bot/src/utils/redis_client.py",
+      "method": "get_cached_value",
+      "safety_check": {
+        "safe_to_delete": false,
+        "references": [],
+        "risks": [
+          "配置引用: ['Found in config files: *.json']"
+        ],
+        "recommendations": [
+          "⚠️ 發現引用或風險，需要進一步檢查"
+        ]
+      }
+    },
+    {
+      "file": "/Users/yen/Desktop/lineMCP/apps/bot/src/utils/redis_client.py",
+      "method": "set_cached_value",
+      "safety_check": {
+        "safe_to_delete": false,
+        "references": [],
+        "risks": [
+          "配置引用: ['Found in config files: *.json']"
+        ],
+        "recommendations": [
+          "⚠️ 發現引用或風險，需要進一步檢查"
+        ]
+      }
+    }
+  ],
+  "total_items": 5
+}

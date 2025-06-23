@@ -246,6 +246,3 @@ def get_telemetry_health() -> dict:
     
     return health_status
 
-
-def get_tracer(name: str = __name__) -> trace.Tracer:
-    return trace.get_tracer(name)

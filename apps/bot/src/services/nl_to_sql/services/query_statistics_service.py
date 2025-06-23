@@ -542,7 +542,9 @@ class QueryStatisticsService(IStatistics):
         
         for record in recent_records:
             hour = datetime.fromtimestamp(record["timestamp"]).hour
-            result = record["result"]
+            result = record.get("result", "other")
+            if result not in hourly_stats[hour]:
+                hourly_stats[hour][result] = 0
             hourly_stats[hour][result] += 1
         
         return {
@@ -598,27 +600,53 @@ class QueryStatisticsService(IStatistics):
                          error=str(e))
             return "unknown"
         
-        # 🔥 關鍵修復：使用明確的浮點數進行比較，避免字串比較錯誤 - 強化版
+        # 🔥 關鍵修復：終極類型安全的比較邏輯
         try:
-            # 🛡️ 最終類型確認：強制轉換為 float 進行比較
-            avg_time_float = float(avg_time)
+            # 🛡️ 雙重類型轉換保護 - 確保絕對是數值類型
+            if not isinstance(avg_time, (int, float)):
+                # 嘗試字符串轉換
+                if isinstance(avg_time, str):
+                    avg_time_float = float(avg_time.strip())
+                else:
+                    avg_time_float = float(avg_time)
+            else:
+                avg_time_float = float(avg_time)
             
-            # 🛡️ 使用明確的浮點數常量進行比較
-            if avg_time_float < 50.0:
+            # 🛡️ 最終類型驗證：確保是有效的浮點數
+            if not isinstance(avg_time_float, (int, float)):
+                logger.error("❌ 類型轉換後仍非數值", 
+                           result_type=type(avg_time_float).__name__)
+                return "unknown"
+            
+            # 🛡️ 檢查是否為有效數值（不是 NaN 或無限值）
+            import math
+            if math.isnan(avg_time_float) or math.isinf(avg_time_float):
+                logger.warning("檢測到 NaN 或無限值", avg_time=avg_time_float)
+                return "unknown"
+            
+            # 🛡️ 確保為正數
+            if avg_time_float < 0:
+                logger.warning("檢測到負數時間值", avg_time=avg_time_float)
+                return "unknown"
+            
+            # 🔥 絕對安全的比較：明確轉換為浮點數並比較
+            time_ms = float(avg_time_float)  # 最終保護
+            
+            if time_ms < 50.0:
                 return "excellent"
-            elif avg_time_float < 100.0:
+            elif time_ms < 100.0:
                 return "good"  
-            elif avg_time_float < 200.0:
+            elif time_ms < 200.0:
                 return "fair"
             else:
                 return "poor"
                 
         except (TypeError, ValueError, OverflowError) as e:
-            logger.error("❌ 效能評級比較失敗，發現類型錯誤", 
-                        avg_time=str(avg_time),
-                        avg_time_type=type(avg_time).__name__,
+            logger.error("❌ 效能評級比較失敗", 
+                        original_avg_time=str(avg_time),
+                        original_type=type(avg_time).__name__,
                         error_type=type(e).__name__,
-                        error=str(e))
+                        error_details=str(e))
             return "unknown"
     
     def _analyze_trend_direction(self, recent_records: List[Dict[str, Any]]) -> str:
@@ -968,8 +996,10 @@ class QueryStatisticsService(IStatistics):
             
             # 記錄到歷史
             self._history.append({
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": time.time(),
+                "timestamp_iso": datetime.now().isoformat(),
                 "event_type": event_name,
+                "result": ("success" if "success" in event_name.lower() else ("failure" if "failure" in event_name.lower() else "info")),
                 "metadata": metadata or {}
             })
             

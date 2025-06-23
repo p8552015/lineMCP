@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # ==============================================
-# LINE MCP Bot 生產級啟動腳本 v2.1
-# 基於完整架構優化後的設計 + v5 穩定性修復
+# LINE MCP Bot 生產級啟動腳本 v2.2
+# 基於模組化重構後的設計 + v5 穩定性修復
 # 
 # 架構升級總結：
 # ✅ 依賴注入 (DI) 架構
@@ -14,6 +14,7 @@
 # ✅ 整合測試和效能基準
 # ✅ NL-to-SQL SOLID 重構架構
 # ✅ v5 緊急修復：空查詢問題和類型安全錯誤完全解決
+# 🆕 v2.2 模組化重構：512 LOC 巨石拆分為4個專門模組
 # ==============================================
 
 set -e  # 遇到錯誤立即退出
@@ -34,8 +35,8 @@ BOT_DIR="$PROJECT_ROOT/apps/bot"
 SERVERS_DIR="$PROJECT_ROOT/apps/servers"
 
 echo -e "${PURPLE}==============================================\n${NC}"
-echo -e "${PURPLE}🚀 LINE MCP Bot 生產級啟動器 v2.1${NC}"
-echo -e "${PURPLE}🏗️  基於完整架構優化的企業級系統 + v5 穩定性修復${NC}"
+echo -e "${PURPLE}🚀 LINE MCP Bot 生產級啟動器 v2.2${NC}"
+echo -e "${PURPLE}🏗️  基於模組化重構的企業級系統 + v5 穩定性修復${NC}"
 echo -e "${PURPLE}==============================================\n${NC}"
 
 # 顯示架構優化成果
@@ -43,13 +44,16 @@ show_architecture_overview() {
     echo -e "${CYAN}🏛️ 系統架構概覽${NC}"
     echo -e "┌─────────────────────────────────────────────────────────┐"
     echo -e "│ ${MAGENTA}🔧 核心架構升級${NC}                                     │"
-    echo -e "│ ✅ EnhancedServiceFactory - 企業級服務管理               │"
+    echo -e "│ ✅ EnhancedServiceFactory - 企業級服務管理 (模組化重構)  │"
+    echo -e "│ ✅ CoreServicesRegistry - 核心服務註冊模組               │"
+    echo -e "│ ✅ ApplicationServicesRegistry - 應用層服務模組          │"
+    echo -e "│ ✅ InfrastructureServicesRegistry - 基礎設施服務模組     │"
     echo -e "│ ✅ ApplicationFacade - 統一應用入口                      │"
-    echo -e "│ ✅ MessagingApplicationService - 訊息處理協調            │"
     echo -e "│ ✅ CommandExecutor - 指令模式實現                        │"
     echo -e "│ ✅ ServiceRegistry - 依賴注入容器                        │"
     echo -e "│ ✅ NL-to-SQL SOLID 重構 - 7個核心組件                   │"
     echo -e "│ ✅ v5 穩定性修復 - 空查詢問題和類型安全錯誤完全解決     │"
+    echo -e "│ 🆕 v2.2 模組化重構 - 512 LOC → 4個專門模組 (-71%)      │"
     echo -e "│                                                         │"
     echo -e "│ ${MAGENTA}🧪 測試與品質保證${NC}                                   │"
     echo -e "│ ✅ 完整單元測試覆蓋 (基礎設施層)                         │"
@@ -127,25 +131,35 @@ check_architecture_dependencies() {
     python3 -c "import pytest" 2>/dev/null || echo -e "${YELLOW}⚠️ pytest 未安裝（開發環境建議安裝）${NC}"
     
     # 檢查關鍵服務是否可以導入
-    echo -e "${CYAN}▶ 檢查架構核心模組...${NC}"
+    echo -e "${CYAN}▶ 檢查模組化架構核心模組...${NC}"
     python3 -c "
 import sys
 sys.path.insert(0, 'src')
 try:
+    # 檢查主工廠
     from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
+    # 檢查模組化註冊器
+    from src.infrastructure.core_services_registry import register_core_services
+    from src.infrastructure.application_services_registry import register_application_services
+    from src.infrastructure.infrastructure_services_registry import register_infrastructure_services
+    # 檢查其他核心模組
     from src.application.application_facade import ApplicationFacade
     from src.domain.command_executor import CommandExecutor
-    print('✅ 核心架構模組可正常導入')
+    print('✅ 模組化架構核心模組可正常導入')
+    print('  - EnhancedServiceFactory (主工廠)')
+    print('  - CoreServicesRegistry (核心服務模組)')
+    print('  - ApplicationServicesRegistry (應用服務模組)')
+    print('  - InfrastructureServicesRegistry (基礎設施模組)')
 except ImportError as e:
-    print(f'❌ 架構模組導入失敗: {e}')
+    print(f'❌ 模組化架構導入失敗: {e}')
     sys.exit(1)
 " 2>/dev/null
     
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✅ 新架構核心模組檢查通過${NC}"
+        echo -e "${GREEN}✅ 模組化架構核心模組檢查通過${NC}"
     else
-        echo -e "${RED}❌ 新架構核心模組檢查失敗${NC}"
-        missing_deps+=("architecture")
+        echo -e "${RED}❌ 模組化架構核心模組檢查失敗${NC}"
+        missing_deps+=("modular_architecture")
     fi
     
     if [ ${#missing_deps[@]} -eq 0 ]; then
