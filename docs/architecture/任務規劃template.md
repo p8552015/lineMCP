@@ -86,6 +86,108 @@
   - 保留所有變更歷史和回滾機制
   2. 漸進式替換
   - 採用"新建-共存-遷移-驗證-移除"的五步法
+
+# 零風險遷移 Git 指令手冊
+
+依階段排列的完整流程──從建立錨點、雙軌共存，到最終移除舊架構與回滾指令，一檔搞定，可直接存成 `migration-guide.md`。
+
+---
+
+## 0️⃣ 建立遷移前錨點
+
+```bash
+git tag -a baseline-20250623 -m "遷移前最後穩定版"
+git push origin baseline-20250623
+```
+
+---
+
+## 1️⃣ 新建 (New)
+
+```bash
+git checkout -b feature/new-architecture
+# 建立最小骨架…
+
+git add .
+git commit -m "feat(core): scaffold new arch skeleton (no integration yet)"
+git push -u origin feature/new-architecture
+```
+
+---
+
+## 2️⃣ 共存 (Co-exist)
+
+```bash
+# 啟用 Feature Flag
+export NEW_ARCH=true     # 或寫入 .env ／ CI 變數
+
+# 與主幹保持同步
+git pull --rebase origin main
+
+# 黑暗推出：可運作的新功能合併回 main
+git checkout main
+git merge --no-ff feature/new-architecture -m "merge: new arch (flag off)"
+git push origin main
+```
+
+---
+
+## 3️⃣ 遷移 (Migrate)
+
+```bash
+git checkout -b migrate/<module-name>
+# 搬遷模組、覆寫、測試…
+
+git add .
+git commit -m "migrate(<module-name>): switch to new service"
+gh pr create -B main -t "Migrate <module-name>" -b "Flag guarded"
+```
+
+---
+
+## 4️⃣ 驗證 (Verify)
+
+```bash
+# 以下動作由 CI 自動執行
+npm test          # JS／TS 單元測試
+pytest            # Python 單元測試
+# Playwright／Cypress 端到端測試
+# 當 Tag 為 perf/* 時，自動執行壓力測試
+```
+
+---
+
+## 5️⃣ 移除 (Remove)
+
+```bash
+git checkout -b chore/cleanup-legacy
+git rm -r legacy/
+git commit -m "chore: remove legacy impl after full cutover"
+
+# 移除 Feature Flag 痕跡
+git grep -l "NEW_ARCH" | xargs sed -i '' '/NEW_ARCH/d'
+git commit -am "chore: drop NEW_ARCH flag"
+
+# 打正式版標籤並推送
+git tag -a v2.0.0 -m "New architecture complete"
+git push origin --tags
+```
+
+---
+
+## 🔄 快速回滾
+
+```bash
+# 回到遷移前錨點
+git checkout baseline-20250623
+
+# 或回滾單次合併
+git revert <merge-commit-sha> -m 1
+```
+
+> 若需補充 CI YAML 範例、Feature Flag SDK 細節或回滾腳本，可隨時告訴我！
+
+  
   - 每個階段都有獨立的測試和驗證機制
   - 確保任何時刻都能回滾到上一個穩定狀態
   3. 測試驅動安全網
