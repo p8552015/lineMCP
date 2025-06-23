@@ -1,0 +1,351 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [main, develop, 'feature/*', 'hotfix/*']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20.x"
+
+jobs:
+  python-quality:
+    name: Python Code Quality
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        working-directory: apps/bot
+        run: poetry install --no-interaction --no-ansi
+        
+      - name: Code formatting check (Black)
+        working-directory: apps/bot
+        run: |
+          poetry run black --check --diff src/ tests/
+          if [ $? -ne 0 ]; then
+            echo "❌ Code formatting check failed. Run 'poetry run black src/ tests/' to fix."
+            exit 1
+          fi
+          
+      - name: Import sorting check (isort)
+        working-directory: apps/bot
+        run: |
+          poetry run isort --check-only --diff src/ tests/
+          if [ $? -ne 0 ]; then
+            echo "❌ Import sorting check failed. Run 'poetry run isort src/ tests/' to fix."
+            exit 1
+          fi
+          
+      - name: Linting check (Ruff)
+        working-directory: apps/bot
+        run: |
+          poetry run ruff check src/ tests/ --output-format=github
+          if [ $? -ne 0 ]; then
+            echo "❌ Linting check failed. Run 'poetry run ruff check src/ tests/ --fix' to fix auto-fixable issues."
+            exit 1
+          fi
+          
+      - name: Type checking (MyPy)
+        working-directory: apps/bot
+        run: |
+          poetry run mypy src/
+          if [ $? -ne 0 ]; then
+            echo "❌ Type checking failed. Please fix type annotations."
+            exit 1
+          fi
+          
+      - name: Security audit (Bandit)
+        working-directory: apps/bot
+        run: |
+          poetry run bandit -r src/ -f json -o bandit-report.json
+          poetry run bandit -r src/
+          if [ $? -ne 0 ]; then
+            echo "❌ Security audit found issues. Please review and fix."
+            exit 1
+          fi
+          
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report-${{ matrix.python-version }}
+          path: apps/bot/bandit-report.json
+          
+      - name: Dependency audit (Safety)
+        working-directory: apps/bot
+        run: |
+          poetry run safety check --json --output safety-report.json
+          poetry run safety check
+          if [ $? -ne 0 ]; then
+            echo "❌ Dependency security audit found vulnerabilities."
+            exit 1
+          fi
+          
+      - name: Upload Safety report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safety-report-${{ matrix.python-version }}
+          path: apps/bot/safety-report.json
+
+  python-complexity:
+    name: Python Code Complexity
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install analysis tools
+        run: |
+          pip install radon xenon mccabe
+          
+      - name: Cyclomatic complexity check
+        working-directory: apps/bot
+        run: |
+          radon cc src/ --min B --show-complexity
+          xenon --max-absolute B --max-modules B --max-average B src/
+          if [ $? -ne 0 ]; then
+            echo "❌ Code complexity too high. Consider refactoring."
+            exit 1
+          fi
+          
+      - name: Maintainability index
+        working-directory: apps/bot
+        run: |
+          radon mi src/ --min B
+          if [ $? -ne 0 ]; then
+            echo "❌ Maintainability index too low."
+            exit 1
+          fi
+          
+      - name: Raw metrics
+        working-directory: apps/bot
+        run: radon raw src/ --summary
+
+  nodejs-quality:
+    name: Node.js Code Quality
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'apps/servers/') || contains(github.event.head_commit.added, 'apps/servers/')
+    
+    strategy:
+      matrix:
+        node-version: ["18.x", "20.x", "22.x"]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: apps/servers/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: apps/servers
+        run: npm ci
+        
+      - name: ESLint check
+        working-directory: apps/servers
+        run: |
+          npm run lint
+          if [ $? -ne 0 ]; then
+            echo "❌ ESLint check failed."
+            exit 1
+          fi
+          
+      - name: Prettier format check
+        working-directory: apps/servers
+        run: |
+          npm run format:check
+          if [ $? -ne 0 ]; then
+            echo "❌ Code formatting check failed. Run 'npm run format' to fix."
+            exit 1
+          fi
+          
+      - name: TypeScript type check
+        working-directory: apps/servers
+        run: |
+          npm run type-check
+          if [ $? -ne 0 ]; then
+            echo "❌ TypeScript type checking failed."
+            exit 1
+          fi
+
+  docker-quality:
+    name: Docker Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Dockerfile linting (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: apps/bot/Dockerfile
+          format: sarif
+          output-file: hadolint-results.sarif
+          
+      - name: Upload Hadolint results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif-file: hadolint-results.sarif
+          
+      - name: Check Dockerfile for security issues
+        run: |
+          echo "🔍 Checking for common Dockerfile security issues..."
+          
+          # Check for running as root
+          if grep -q "USER root" apps/bot/Dockerfile; then
+            echo "⚠️  Warning: Running as root user detected"
+          fi
+          
+          # Check for COPY --chown usage
+          if ! grep -q "COPY --chown" apps/bot/Dockerfile; then
+            echo "💡 Suggestion: Consider using COPY --chown for better security"
+          fi
+          
+          # Check for specific version pinning
+          if grep -q "FROM.*:latest" apps/bot/Dockerfile; then
+            echo "⚠️  Warning: Using 'latest' tag detected. Consider pinning specific versions."
+          fi
+
+  commit-quality:
+    name: Commit Quality Checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Conventional Commits check
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json
+          
+      - name: Check commit message length
+        run: |
+          commits=$(git log --oneline ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          while IFS= read -r commit; do
+            message=$(echo "$commit" | cut -d' ' -f2-)
+            if [ ${#message} -gt 72 ]; then
+              echo "❌ Commit message too long: $message"
+              exit 1
+            fi
+          done <<< "$commits"
+
+  documentation-quality:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check markdown files
+        uses: DavidAnson/markdownlint-action@v0.5.1
+        with:
+          files: '**/*.md'
+          config: .markdownlint.json
+          ignore: node_modules/
+          
+      - name: Check for TODO/FIXME comments
+        run: |
+          echo "🔍 Checking for TODO/FIXME comments..."
+          todo_count=$(grep -r "TODO\|FIXME" apps/bot/src/ --exclude-dir=__pycache__ | wc -l)
+          if [ $todo_count -gt 10 ]; then
+            echo "⚠️  High number of TODO/FIXME comments: $todo_count"
+            echo "Consider addressing some of these before merging."
+          fi
+          
+      - name: Check README files exist
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "❌ Root README.md not found"
+            exit 1
+          fi
+          if [ ! -f "apps/bot/README.md" ]; then
+            echo "⚠️  Bot README.md not found"
+          fi
+
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [python-quality, python-complexity, nodejs-quality, docker-quality, commit-quality, documentation-quality]
+    if: always()
+    
+    steps:
+      - name: Quality Gates Summary
+        run: |
+          echo "## 🎯 Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.python-quality.result }}" == "success" ]; then
+            echo "✅ Python Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Python Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.python-complexity.result }}" == "success" ]; then
+            echo "✅ Code Complexity: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Code Complexity: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.nodejs-quality.result }}" == "success" ] || [ "${{ needs.nodejs-quality.result }}" == "skipped" ]; then
+            echo "✅ Node.js Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Node.js Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.docker-quality.result }}" == "success" ]; then
+            echo "✅ Docker Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Docker Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Overall Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Fail if any quality check failed
+        if: needs.python-quality.result == 'failure' || needs.python-complexity.result == 'failure' || needs.nodejs-quality.result == 'failure' || needs.docker-quality.result == 'failure'
+        run: exit 1

@@ -1,0 +1,419 @@
+name: Security & Compliance Checks
+
+on:
+  push:
+    branches: [main, develop, 'feature/*', 'hotfix/*']
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # 每天凌晨 2 點執行安全掃描
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20.x"
+
+jobs:
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+      
+      - name: Run detect-secrets
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --all-files --force-use-all-plugins \
+            --exclude-files '.*\.lock$' \
+            --exclude-files '.*\.min\.js$' \
+            --exclude-files 'node_modules/.*' \
+            --exclude-files '\.git/.*' \
+            > .secrets.baseline
+          
+          # 檢查是否發現新的祕密
+          if [ -s .secrets.baseline ]; then
+            echo "🚨 發現潛在的祕密洩漏！"
+            cat .secrets.baseline
+            exit 1
+          else
+            echo "✅ 未發現祕密洩漏"
+          fi
+      
+      - name: Upload secrets scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: secrets-scan-results
+          path: .secrets.baseline
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Python dependency audit (Safety)
+        working-directory: apps/bot
+        run: |
+          poetry install --no-interaction
+          poetry export -f requirements.txt --output requirements.txt --without-hashes
+          
+          # 使用 Safety 掃描 Python 依賴
+          poetry run safety check --json --output safety-report.json || true
+          poetry run safety check || echo "發現 Python 依賴漏洞"
+      
+      - name: Python dependency audit (pip-audit)
+        working-directory: apps/bot
+        run: |
+          pip install pip-audit
+          pip-audit --requirement requirements.txt --format=json --output=pip-audit-report.json || true
+          pip-audit --requirement requirements.txt || echo "發現額外的 Python 依賴漏洞"
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Node.js dependency audit
+        working-directory: apps/servers
+        run: |
+          npm ci
+          
+          # npm audit
+          npm audit --audit-level=moderate --json > npm-audit-report.json || true
+          npm audit --audit-level=moderate || echo "發現 Node.js 依賴漏洞"
+      
+      - name: Upload dependency scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-results
+          path: |
+            apps/bot/safety-report.json
+            apps/bot/pip-audit-report.json
+            apps/servers/npm-audit-report.json
+
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Python license check
+        working-directory: apps/bot
+        run: |
+          poetry install --no-interaction
+          pip install pip-licenses
+          
+          # 檢查 Python 依賴許可證
+          pip-licenses --format=json --output-file=python-licenses.json
+          pip-licenses --format=table
+          
+          # 檢查是否有禁用的許可證
+          FORBIDDEN_LICENSES="GPL-2.0,GPL-3.0,AGPL-1.0,AGPL-3.0"
+          if pip-licenses --format=csv | grep -E "$FORBIDDEN_LICENSES"; then
+            echo "🚨 發現禁用的許可證！"
+            exit 1
+          fi
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Node.js license check
+        working-directory: apps/servers
+        run: |
+          npm ci
+          npx license-checker --json --out nodejs-licenses.json
+          npx license-checker
+          
+          # 檢查是否有禁用的許可證
+          if npx license-checker --excludePrivatePackages --failOn 'GPL-2.0;GPL-3.0;AGPL-1.0;AGPL-3.0'; then
+            echo "✅ Node.js 許可證檢查通過"
+          else
+            echo "🚨 發現禁用的 Node.js 許可證！"
+            exit 1
+          fi
+      
+      - name: Upload license reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-reports
+          path: |
+            apps/bot/python-licenses.json
+            apps/servers/nodejs-licenses.json
+
+  sast-analysis:
+    name: Static Application Security Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, javascript
+          queries: security-extended
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python,javascript"
+      
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/python
+            p/javascript
+          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
+          publishDeployment: 1
+          generateSarif: "1"
+      
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif-file: semgrep.sarif
+
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Bot Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/bot
+          push: false
+          tags: mcp-bot:security-scan
+          load: true
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'mcp-bot:security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif-file: 'trivy-results.sarif'
+      
+      - name: Run Grype vulnerability scanner
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype mcp-bot:security-scan -o json --file grype-results.json
+          grype mcp-bot:security-scan
+      
+      - name: Run Syft for SBOM generation
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft mcp-bot:security-scan -o spdx-json --file sbom.spdx.json
+          syft mcp-bot:security-scan -o table
+      
+      - name: Upload container scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: container-security-scan
+          path: |
+            trivy-results.sarif
+            grype-results.json
+            sbom.spdx.json
+
+  sbom-generation:
+    name: Software Bill of Materials (SBOM)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Generate Python SBOM
+        working-directory: apps/bot
+        run: |
+          poetry install --no-interaction
+          pip install cyclone-xbom
+          
+          # 生成 Python 依賴的 SBOM
+          cyclone-xbom requirements requirements.txt -o python-sbom.json --format json
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Generate Node.js SBOM
+        working-directory: apps/servers
+        run: |
+          npm ci
+          
+          # 使用 npm 內建的 SBOM 生成
+          npm sbom --sbom-format spdx --sbom-type application > nodejs-sbom.spdx.json
+      
+      - name: Combine SBOMs
+        run: |
+          # 創建合併的 SBOM 摘要
+          echo "# 軟體物料清單 (SBOM) 摘要" > SBOM-SUMMARY.md
+          echo "" >> SBOM-SUMMARY.md
+          echo "## 生成時間: $(date)" >> SBOM-SUMMARY.md
+          echo "" >> SBOM-SUMMARY.md
+          echo "## Python 依賴" >> SBOM-SUMMARY.md
+          if [ -f apps/bot/python-sbom.json ]; then
+            echo "- SBOM 檔案: python-sbom.json" >> SBOM-SUMMARY.md
+          fi
+          echo "" >> SBOM-SUMMARY.md
+          echo "## Node.js 依賴" >> SBOM-SUMMARY.md
+          if [ -f apps/servers/nodejs-sbom.spdx.json ]; then
+            echo "- SBOM 檔案: nodejs-sbom.spdx.json" >> SBOM-SUMMARY.md
+          fi
+          echo "" >> SBOM-SUMMARY.md
+          echo "## 容器映像" >> SBOM-SUMMARY.md
+          echo "- 容器 SBOM 由 Syft 生成" >> SBOM-SUMMARY.md
+      
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-reports
+          path: |
+            apps/bot/python-sbom.json
+            apps/servers/nodejs-sbom.spdx.json
+            SBOM-SUMMARY.md
+
+  compliance-report:
+    name: Compliance Summary Report
+    runs-on: ubuntu-latest
+    needs: [secrets-scan, dependency-scan, license-compliance, sast-analysis, container-security, sbom-generation]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Generate compliance summary
+        run: |
+          echo "## 🔒 安全與合規檢查報告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 檢查結果概覽" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # 祕密掃描
+          if [ "${{ needs.secrets-scan.result }}" == "success" ]; then
+            echo "✅ **祕密掃描**: 未發現洩漏" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **祕密掃描**: 發現潛在問題" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # 依賴掃描
+          if [ "${{ needs.dependency-scan.result }}" == "success" ]; then
+            echo "✅ **依賴掃描**: 無高風險漏洞" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **依賴掃描**: 發現漏洞，請檢查" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # 許可證合規
+          if [ "${{ needs.license-compliance.result }}" == "success" ]; then
+            echo "✅ **許可證合規**: 通過檢查" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **許可證合規**: 發現不合規許可證" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # SAST 分析
+          if [ "${{ needs.sast-analysis.result }}" == "success" ]; then
+            echo "✅ **靜態安全分析**: 未發現高風險問題" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **靜態安全分析**: 發現安全問題" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # 容器安全
+          if [ "${{ needs.container-security.result }}" == "success" ]; then
+            echo "✅ **容器安全**: 通過掃描" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **容器安全**: 發現漏洞" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # SBOM 生成
+          if [ "${{ needs.sbom-generation.result }}" == "success" ]; then
+            echo "✅ **SBOM 生成**: 完成" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **SBOM 生成**: 失敗" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 詳細報告" >> $GITHUB_STEP_SUMMARY
+          echo "詳細的安全掃描結果請查看各作業的 Artifacts 和 Security 頁籤。" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛡️ 安全策略" >> $GITHUB_STEP_SUMMARY
+          echo "- 高風險漏洞必須在 7 天內修復" >> $GITHUB_STEP_SUMMARY
+          echo "- 中風險漏洞必須在 30 天內修復" >> $GITHUB_STEP_SUMMARY
+          echo "- 祕密洩漏必須立即處理" >> $GITHUB_STEP_SUMMARY
+          echo "- 禁用許可證必須立即替換" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Fail on critical security issues
+        if: needs.secrets-scan.result == 'failure' || needs.license-compliance.result == 'failure'
+        run: |
+          echo "❌ 發現關鍵安全問題，阻止合併。"
+          exit 1

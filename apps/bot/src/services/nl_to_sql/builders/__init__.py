@@ -6,8 +6,8 @@ SQL 查詢建構器模組
 - QueryTemplateManager: 模板管理器
 """
 
-from .sql_query_builder import SQLQueryBuilder
 from .query_template_manager import QueryTemplateManager
+from .sql_query_builder import SQLQueryBuilder
 
 __all__ = [
     "SQLQueryBuilder",

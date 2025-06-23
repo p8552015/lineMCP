@@ -5,10 +5,11 @@ MCP 配置管理
 """
 
 import os
-import yaml
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
+
+import yaml
 
 
 @dataclass
@@ -49,37 +50,37 @@ class MCPClientConfig:
 @dataclass
 class NLToSQLConfig:
     """NL-to-SQL 服務配置"""
-    
+
     # 全域解析器設定
     default_confidence_threshold: float = 0.5
     max_parse_time: int = 5000  # 毫秒
     verbose_logging: bool = True
-    
+
     # 並行解析設定
     parallel_parsing_enabled: bool = True
     max_concurrent_parsers: int = 3
     timeout_per_parser: int = 2000  # 毫秒
-    
+
     # 解析器權重配置
     rule_based_parser_weight: float = 1.0
     ai_enhanced_parser_weight: float = 1.2
-    
+
     # 回退策略設定
     fallback_strategy_enabled: bool = True
     fallback_threshold: float = 0.5
-    
+
     # AI 服務配置
     ai_service_timeout: int = 3000  # 毫秒
     ai_service_max_retries: int = 2
-    
+
     # 快取設定
     cache_enabled: bool = True
     cache_size: int = 1000
     cache_ttl: int = 300  # 秒
-    
+
     # 統計設定
     statistics_enabled: bool = True
-    
+
     # 熱重載設定
     hot_reload_enabled: bool = False
 
@@ -152,116 +153,154 @@ class MCPConfigManager:
         env_config = self._load_nl_to_sql_env_config()
         if env_config:
             self._apply_nl_to_sql_env_config(env_config)
-        
+
         # 嘗試從 YAML 文件載入配置（向後兼容）
         yaml_config = self._load_nl_to_sql_yaml_config()
         if yaml_config:
             self._apply_nl_to_sql_yaml_config(yaml_config)
 
-    def _load_nl_to_sql_env_config(self) -> Dict[str, Any]:
+    def _load_nl_to_sql_env_config(self) -> dict[str, Any]:
         """從環境變數載入 NL-to-SQL 配置"""
         env_config = {}
-        
+
         # 環境變數前綴
         prefix = "NL_TO_SQL_"
-        
+
         # 定義環境變數映射
         env_mappings = {
             f"{prefix}CONFIDENCE_THRESHOLD": ("default_confidence_threshold", float),
             f"{prefix}MAX_PARSE_TIME": ("max_parse_time", int),
-            f"{prefix}VERBOSE_LOGGING": ("verbose_logging", lambda x: x.lower() in ('true', '1', 'yes')),
-            f"{prefix}PARALLEL_PARSING": ("parallel_parsing_enabled", lambda x: x.lower() in ('true', '1', 'yes')),
+            f"{prefix}VERBOSE_LOGGING": (
+                "verbose_logging",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            f"{prefix}PARALLEL_PARSING": (
+                "parallel_parsing_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
             f"{prefix}MAX_CONCURRENT_PARSERS": ("max_concurrent_parsers", int),
             f"{prefix}TIMEOUT_PER_PARSER": ("timeout_per_parser", int),
             f"{prefix}RULE_PARSER_WEIGHT": ("rule_based_parser_weight", float),
             f"{prefix}AI_PARSER_WEIGHT": ("ai_enhanced_parser_weight", float),
-            f"{prefix}FALLBACK_ENABLED": ("fallback_strategy_enabled", lambda x: x.lower() in ('true', '1', 'yes')),
+            f"{prefix}FALLBACK_ENABLED": (
+                "fallback_strategy_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
             f"{prefix}FALLBACK_THRESHOLD": ("fallback_threshold", float),
             f"{prefix}AI_TIMEOUT": ("ai_service_timeout", int),
             f"{prefix}AI_MAX_RETRIES": ("ai_service_max_retries", int),
-            f"{prefix}CACHE_ENABLED": ("cache_enabled", lambda x: x.lower() in ('true', '1', 'yes')),
+            f"{prefix}CACHE_ENABLED": (
+                "cache_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
             f"{prefix}CACHE_SIZE": ("cache_size", int),
             f"{prefix}CACHE_TTL": ("cache_ttl", int),
-            f"{prefix}STATISTICS_ENABLED": ("statistics_enabled", lambda x: x.lower() in ('true', '1', 'yes')),
-            f"{prefix}HOT_RELOAD": ("hot_reload_enabled", lambda x: x.lower() in ('true', '1', 'yes')),
+            f"{prefix}STATISTICS_ENABLED": (
+                "statistics_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
+            f"{prefix}HOT_RELOAD": (
+                "hot_reload_enabled",
+                lambda x: x.lower() in ("true", "1", "yes"),
+            ),
         }
-        
+
         for env_var, (config_key, converter) in env_mappings.items():
             if env_var in os.environ:
                 try:
                     env_config[config_key] = converter(os.environ[env_var])
-                except (ValueError, TypeError) as e:
+                except (ValueError, TypeError):
                     # 靜默忽略轉換錯誤，保持預設值
                     pass
-        
+
         return env_config
 
-    def _load_nl_to_sql_yaml_config(self) -> Optional[Dict[str, Any]]:
+    def _load_nl_to_sql_yaml_config(self) -> dict[str, Any] | None:
         """從 YAML 文件載入 NL-to-SQL 配置（向後兼容）"""
         if not self.settings:
             return None
-            
+
         try:
             # 構建配置文件路徑
-            config_dir = Path(self.settings.project_root) / "apps" / "bot" / "src" / "services" / "nl_to_sql" / "config"
+            config_dir = (
+                Path(self.settings.project_root)
+                / "apps"
+                / "bot"
+                / "src"
+                / "services"
+                / "nl_to_sql"
+                / "config"
+            )
             parser_settings_file = config_dir / "parser_settings.yaml"
-            
+
             if parser_settings_file.exists():
-                with open(parser_settings_file, 'r', encoding='utf-8') as f:
+                with open(parser_settings_file, encoding="utf-8") as f:
                     yaml_config = yaml.safe_load(f)
                     return self._extract_nl_to_sql_config_from_yaml(yaml_config)
-        except Exception as e:
+        except Exception:
             # 靜默忽略 YAML 載入錯誤
             pass
-        
+
         return None
 
-    def _extract_nl_to_sql_config_from_yaml(self, yaml_config: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_nl_to_sql_config_from_yaml(
+        self, yaml_config: dict[str, Any]
+    ) -> dict[str, Any]:
         """從 YAML 配置中提取 NL-to-SQL 設定"""
         extracted_config = {}
-        
+
         # 提取全域設定
         global_settings = yaml_config.get("global_parser_settings", {})
         if "default_confidence_threshold" in global_settings:
-            extracted_config["default_confidence_threshold"] = global_settings["default_confidence_threshold"]
+            extracted_config["default_confidence_threshold"] = global_settings[
+                "default_confidence_threshold"
+            ]
         if "max_parse_time" in global_settings:
             extracted_config["max_parse_time"] = global_settings["max_parse_time"]
         if "verbose_logging" in global_settings:
             extracted_config["verbose_logging"] = global_settings["verbose_logging"]
-        
+
         # 提取並行解析設定
         parallel_config = global_settings.get("parallel_parsing", {})
         if "enabled" in parallel_config:
             extracted_config["parallel_parsing_enabled"] = parallel_config["enabled"]
         if "max_concurrent_parsers" in parallel_config:
-            extracted_config["max_concurrent_parsers"] = parallel_config["max_concurrent_parsers"]
+            extracted_config["max_concurrent_parsers"] = parallel_config[
+                "max_concurrent_parsers"
+            ]
         if "timeout_per_parser" in parallel_config:
-            extracted_config["timeout_per_parser"] = parallel_config["timeout_per_parser"]
-        
+            extracted_config["timeout_per_parser"] = parallel_config[
+                "timeout_per_parser"
+            ]
+
         # 提取策略設定
         strategy_settings = yaml_config.get("strategy_settings", {})
         parser_weights = strategy_settings.get("parser_weights", {})
         if "RuleBasedParser" in parser_weights:
-            extracted_config["rule_based_parser_weight"] = parser_weights["RuleBasedParser"]
+            extracted_config["rule_based_parser_weight"] = parser_weights[
+                "RuleBasedParser"
+            ]
         if "AIEnhancedParser" in parser_weights:
-            extracted_config["ai_enhanced_parser_weight"] = parser_weights["AIEnhancedParser"]
-        
+            extracted_config["ai_enhanced_parser_weight"] = parser_weights[
+                "AIEnhancedParser"
+            ]
+
         # 提取回退策略設定
         fallback_strategy = strategy_settings.get("fallback_strategy", {})
         if "enabled" in fallback_strategy:
             extracted_config["fallback_strategy_enabled"] = fallback_strategy["enabled"]
         if "threshold" in fallback_strategy:
             extracted_config["fallback_threshold"] = fallback_strategy["threshold"]
-        
+
         return extracted_config
 
-    def _apply_nl_to_sql_env_config(self, env_config: Dict[str, Any]):
+    def _apply_nl_to_sql_env_config(self, env_config: dict[str, Any]):
         """應用環境變數配置到 NL-to-SQL 設定"""
         for key, value in env_config.items():
             if hasattr(self._nl_to_sql_config, key):
                 setattr(self._nl_to_sql_config, key, value)
 
-    def _apply_nl_to_sql_yaml_config(self, yaml_config: Dict[str, Any]):
+    def _apply_nl_to_sql_yaml_config(self, yaml_config: dict[str, Any]):
         """應用 YAML 配置到 NL-to-SQL 設定"""
         for key, value in yaml_config.items():
             if hasattr(self._nl_to_sql_config, key):
@@ -299,7 +338,7 @@ class MCPConfigManager:
             if hasattr(self._nl_to_sql_config, key):
                 setattr(self._nl_to_sql_config, key, value)
 
-    def get_nl_to_sql_config_dict(self) -> Dict[str, Any]:
+    def get_nl_to_sql_config_dict(self) -> dict[str, Any]:
         """獲取 NL-to-SQL 配置的字典格式"""
         return {
             "default_confidence_threshold": self._nl_to_sql_config.default_confidence_threshold,
@@ -385,11 +424,11 @@ class MCPConfigManager:
                 "statistics_enabled": self._nl_to_sql_config.statistics_enabled,
             },
         }
-        
+
         # 只有在有 settings 時才添加 project_root
-        if self.settings and hasattr(self.settings, 'project_root'):
+        if self.settings and hasattr(self.settings, "project_root"):
             summary["project_root"] = self.settings.project_root
-            
+
         return summary
 
 
@@ -452,7 +491,7 @@ def get_nl_to_sql_config() -> NLToSQLConfig:
     return get_mcp_config().get_nl_to_sql_config()
 
 
-def get_nl_to_sql_config_dict() -> Dict[str, Any]:
+def get_nl_to_sql_config_dict() -> dict[str, Any]:
     """獲取 NL-to-SQL 配置字典的便利函數"""
     return get_mcp_config().get_nl_to_sql_config_dict()
 

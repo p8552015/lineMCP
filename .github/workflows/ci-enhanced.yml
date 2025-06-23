@@ -1,0 +1,434 @@
+name: Enhanced CI
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*', 'hotfix/*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20.x"
+  COVERAGE_THRESHOLD: "80"
+  ASYNCIO_FORCE_SELECT_SELECTOR: "1"
+
+jobs:
+  python-tests:
+    name: Python Tests & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.8.0
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: apps/bot/.venv
+        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+    
+    - name: Install dependencies
+      working-directory: apps/bot
+      run: poetry install --no-interaction --no-ansi
+    
+    - name: Create test environment file
+      working-directory: apps/bot
+      run: |
+        cat > .env.test << EOF
+        LINE_CHANNEL_ACCESS_TOKEN=test_token
+        LINE_CHANNEL_SECRET=test_secret
+        GOOGLE_API_KEY=test_google_key
+        OPENAI_API_KEY=test_openai_key
+        AI_MODEL_PROVIDER=google
+        REDIS_URL=redis://localhost:6379/1
+        ASYNCIO_FORCE_SELECT_SELECTOR=1
+        EOF
+    
+    - name: Run unit tests with coverage
+      working-directory: apps/bot
+      run: |
+        poetry run pytest tests/ \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-report=term-missing \
+          --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+          --junitxml=pytest-results.xml \
+          -v
+    
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == env.PYTHON_VERSION
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/bot/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: pytest-results-${{ matrix.python-version }}
+        path: |
+          apps/bot/pytest-results.xml
+          apps/bot/htmlcov/
+    
+    - name: Run linting
+      working-directory: apps/bot
+      run: |
+        poetry run ruff check src/ tests/ --output-format=github
+    
+    - name: Check code formatting
+      working-directory: apps/bot
+      run: |
+        poetry run black --check src/ tests/
+
+  mcp-integration-tests:
+    name: MCP Integration Tests
+    runs-on: ubuntu-latest
+    needs: python-tests
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.8.0
+    
+    - name: Install dependencies
+      working-directory: apps/bot
+      run: poetry install --no-interaction --no-ansi
+    
+    - name: Set up Node.js for MCP servers
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: apps/servers/package-lock.json
+    
+    - name: Install MCP server dependencies
+      working-directory: apps/servers
+      run: npm ci
+    
+    - name: Build MCP servers
+      working-directory: apps/servers
+      run: npm run build --workspaces --if-present
+    
+    - name: Start SQLite MCP server in background
+      working-directory: apps/servers
+      run: |
+        npm start --workspace=@mcp/sqlite &
+        echo $! > sqlite-mcp.pid
+        sleep 5
+    
+    - name: Create MCP test environment
+      working-directory: apps/bot
+      run: |
+        cat > .env.test << EOF
+        LINE_CHANNEL_ACCESS_TOKEN=test_token
+        LINE_CHANNEL_SECRET=test_secret
+        GOOGLE_API_KEY=test_google_key
+        OPENAI_API_KEY=test_openai_key
+        AI_MODEL_PROVIDER=google
+        REDIS_URL=redis://localhost:6379/1
+        ASYNCIO_FORCE_SELECT_SELECTOR=1
+        MCP_SQLITE_SERVER_URL=stdio://npx @mcp/sqlite
+        EOF
+    
+    - name: Run MCP connection tests
+      working-directory: apps/bot
+      run: |
+        poetry run pytest tests/integration/test_mcp_connection.py -v \
+          --junitxml=mcp-test-results.xml
+    
+    - name: Run MCP query tests
+      working-directory: apps/bot
+      run: |
+        poetry run pytest tests/integration/test_mcp_queries.py -v \
+          --junitxml=mcp-query-results.xml
+    
+    - name: Stop MCP server
+      if: always()
+      run: |
+        if [ -f apps/servers/sqlite-mcp.pid ]; then
+          kill $(cat apps/servers/sqlite-mcp.pid) || true
+        fi
+    
+    - name: Upload MCP test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: mcp-test-results
+        path: |
+          apps/bot/mcp-test-results.xml
+          apps/bot/mcp-query-results.xml
+
+  api-integration-tests:
+    name: API Integration Tests
+    runs-on: ubuntu-latest
+    needs: python-tests
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.8.0
+    
+    - name: Install dependencies
+      working-directory: apps/bot
+      run: poetry install --no-interaction --no-ansi
+    
+    - name: Create API test environment
+      working-directory: apps/bot
+      run: |
+        cat > .env.test << EOF
+        LINE_CHANNEL_ACCESS_TOKEN=test_token
+        LINE_CHANNEL_SECRET=test_secret
+        GOOGLE_API_KEY=test_google_key
+        OPENAI_API_KEY=test_openai_key
+        AI_MODEL_PROVIDER=google
+        REDIS_URL=redis://localhost:6379/1
+        ASYNCIO_FORCE_SELECT_SELECTOR=1
+        EOF
+    
+    - name: Start FastAPI application in background
+      working-directory: apps/bot
+      run: |
+        poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        echo $! > fastapi.pid
+        sleep 10
+    
+    - name: Wait for application to be ready
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 1; done'
+    
+    - name: Run API endpoint tests
+      working-directory: apps/bot
+      run: |
+        poetry run pytest tests/integration/test_api_endpoints.py -v \
+          --junitxml=api-test-results.xml
+    
+    - name: Run webhook tests
+      working-directory: apps/bot
+      run: |
+        poetry run pytest tests/integration/test_webhook.py -v \
+          --junitxml=webhook-test-results.xml
+    
+    - name: Stop FastAPI application
+      if: always()
+      run: |
+        if [ -f apps/bot/fastapi.pid ]; then
+          kill $(cat apps/bot/fastapi.pid) || true
+        fi
+    
+    - name: Upload API test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: api-test-results
+        path: |
+          apps/bot/api-test-results.xml
+          apps/bot/webhook-test-results.xml
+
+  node-tests:
+    name: Node.js Tests & Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["18.x", "20.x", "22.x"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: apps/servers/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: apps/servers
+      run: npm ci
+    
+    - name: Run tests with coverage
+      working-directory: apps/servers
+      run: npm test --workspaces --if-present -- --coverage
+    
+    - name: Build
+      working-directory: apps/servers
+      run: npm run build --workspaces --if-present
+    
+    - name: Upload Node.js coverage
+      if: matrix.node-version == env.NODE_VERSION
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/servers/coverage/lcov.info
+        flags: nodejs
+        name: codecov-nodejs
+        fail_ci_if_error: false
+
+  docker-build:
+    name: Docker Build & Security Scan
+    runs-on: ubuntu-latest
+    needs: [python-tests, node-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Bot Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: apps/bot
+        push: false
+        tags: mcp-bot:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Run Trivy vulnerability scanner on Bot image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'mcp-bot:test'
+        format: 'sarif'
+        output: 'trivy-bot-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif-file: 'trivy-bot-results.sarif'
+    
+    - name: Build MCP Servers Docker images
+      working-directory: apps/servers
+      run: |
+        for dir in src/*/; do
+          if [ -f "$dir/Dockerfile" ]; then
+            echo "Building Docker image for $dir"
+            docker build -t "mcp-${dir##*/}:test" "$dir"
+          fi
+        done
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [python-tests, mcp-integration-tests, api-integration-tests, node-tests, docker-build]
+    if: always()
+    
+    steps:
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Generate test summary
+      run: |
+        echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.python-tests.result }}" == "success" ]; then
+          echo "✅ Python Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Python Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.mcp-integration-tests.result }}" == "success" ]; then
+          echo "✅ MCP Integration Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ MCP Integration Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.api-integration-tests.result }}" == "success" ]; then
+          echo "✅ API Integration Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ API Integration Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.node-tests.result }}" == "success" ]; then
+          echo "✅ Node.js Tests: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Node.js Tests: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.docker-build.result }}" == "success" ]; then
+          echo "✅ Docker Build: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Docker Build: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 **Coverage Reports**: Available in artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "🔒 **Security Scans**: Available in Security tab" >> $GITHUB_STEP_SUMMARY
+        
+    - name: Fail if critical tests failed
+      if: needs.python-tests.result == 'failure' || needs.mcp-integration-tests.result == 'failure'
+      run: |
+        echo "❌ Critical tests failed. Please fix before merging."
+        exit 1

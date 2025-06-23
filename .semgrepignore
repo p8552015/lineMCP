@@ -1,0 +1,60 @@
+# Semgrep ignore patterns
+
+# Test files
+tests/
+**/test_*.py
+**/*_test.py
+**/conftest.py
+
+# Generated files  
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Lock files
+poetry.lock
+package-lock.json
+yarn.lock
+
+# Documentation
+docs/
+*.md
+*.rst
+
+# Configuration files that may contain patterns
+.env*
+*.ini
+*.cfg
+*.yaml
+*.yml
+
+# Minified files
+*.min.js
+*.min.css
+
+# Binary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.ico
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files  
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore

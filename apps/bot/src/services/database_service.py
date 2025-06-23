@@ -41,11 +41,13 @@ class DatabaseService:
         """
         # 🔥 緊急修復：檢查空查詢
         if not sql_query or not sql_query.strip():
-            logger.error("❌ 緊急阻止：嘗試執行空查詢", 
-                        query_repr=repr(sql_query),
-                        query_length=len(sql_query) if sql_query else 0)
+            logger.error(
+                "❌ 緊急阻止：嘗試執行空查詢",
+                query_repr=repr(sql_query),
+                query_length=len(sql_query) if sql_query else 0,
+            )
             raise ValueError("SQL 查詢不能為空")
-        
+
         with ErrorContext("database_query") as ctx:
             ctx.add_context(query_preview=sql_query[:100])
 
@@ -75,10 +77,12 @@ class DatabaseService:
 
         # 🔥 緊急修復：檢查解析後的查詢是否為空
         if not parsed_query.sql_query or not parsed_query.sql_query.strip():
-            logger.error("❌ 緊急阻止：解析後的查詢為空", 
-                        query_type=parsed_query.query_type.value,
-                        parameters=parsed_query.parameters,
-                        confidence=parsed_query.confidence)
+            logger.error(
+                "❌ 緊急阻止：解析後的查詢為空",
+                query_type=parsed_query.query_type.value,
+                parameters=parsed_query.parameters,
+                confidence=parsed_query.confidence,
+            )
             return {
                 "success": False,
                 "error": "查詢解析失敗：生成的 SQL 查詢為空",
@@ -326,9 +330,11 @@ class DatabaseService:
         try:
             # 🔥 緊急修復：檢查參數
             if not machine_id or not machine_id.strip():
-                logger.warning("❌ machine_id 為空，無法查詢故障次數", machine_id=repr(machine_id))
+                logger.warning(
+                    "❌ machine_id 為空，無法查詢故障次數", machine_id=repr(machine_id)
+                )
                 return 0
-            
+
             fault_query = f"""
                 SELECT COUNT(*) as fault_count
                 FROM machine_faults 

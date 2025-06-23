@@ -2,24 +2,25 @@
 統一錯誤處理器
 提供一致的錯誤處理策略和用戶友善的錯誤回應
 """
+
 import traceback
-from typing import Optional, Dict, Any
-from linebot.v3.messaging import TextMessage, Message
+from typing import Any
 
 import structlog
+from linebot.v3.messaging import TextMessage
 
 from src.domain.exceptions import (
-    BotException,
-    ValidationException,
-    CommandParsingException,
-    DatabaseQueryException,
-    MCPConnectionException,
     AIServiceException,
     AuthenticationException,
-    RateLimitException,
-    ConfigurationException,
+    BotException,
     BusinessLogicException,
-    ExternalServiceException
+    CommandParsingException,
+    ConfigurationException,
+    DatabaseQueryException,
+    ExternalServiceException,
+    MCPConnectionException,
+    RateLimitException,
+    ValidationException,
 )
 
 logger = structlog.get_logger()
@@ -30,11 +31,11 @@ class UnifiedErrorHandler:
     統一錯誤處理器
     負責將各種異常轉換為用戶友善的回應
     """
-    
+
     def __init__(self, include_technical_details: bool = False):
         """
         初始化錯誤處理器
-        
+
         Args:
             include_technical_details: 是否在回應中包含技術細節
         """
@@ -49,45 +50,47 @@ class UnifiedErrorHandler:
             RateLimitException: "⏰",
             ConfigurationException: "⚙️",
             BusinessLogicException: "💼",
-            ExternalServiceException: "🌐"
+            ExternalServiceException: "🌐",
         }
-    
-    def handle_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> TextMessage:
+
+    def handle_error(
+        self, error: Exception, context: dict[str, Any] | None = None
+    ) -> TextMessage:
         """
         處理錯誤並返回用戶友善的訊息
-        
+
         Args:
             error: 異常對象
             context: 錯誤上下文資訊
-            
+
         Returns:
             用戶友善的錯誤訊息
         """
         context = context or {}
-        
+
         # 記錄錯誤
         self._log_error(error, context)
-        
+
         # 生成用戶回應
         if isinstance(error, BotException):
             return self._handle_bot_exception(error)
         else:
             return self._handle_system_exception(error)
-    
+
     def _handle_bot_exception(self, error: BotException) -> TextMessage:
         """處理自定義 Bot 異常"""
         icon = self._error_icons.get(type(error), "❌")
         message = f"{icon} {error.user_message}"
-        
+
         if self.include_technical_details and error.details:
             message += f"\n\n🔧 技術詳情：{error.details}"
-        
+
         return TextMessage(text=message)
-    
+
     def _handle_system_exception(self, error: Exception) -> TextMessage:
         """處理系統異常 - 增強 MCP 錯誤處理"""
         error_str = str(error).lower()
-        
+
         # MCP 相關錯誤的特殊處理
         if "mcp" in error_str or "connection broken" in error_str:
             if "connection broken" in error_str:
@@ -98,7 +101,7 @@ class UnifiedErrorHandler:
                 return TextMessage(text="📡 資料傳輸格式錯誤，請重新嘗試")
             else:
                 return TextMessage(text="🗄️ 資料庫服務暫時不可用，請稍後再試")
-        
+
         # 針對常見的系統異常提供特定處理
         elif isinstance(error, TimeoutError):
             return TextMessage(text="⏰ 操作逾時，請稍後再試")
@@ -122,19 +125,19 @@ class UnifiedErrorHandler:
             else:
                 message += "，請聯絡系統管理員"
             return TextMessage(text=message)
-    
-    def _log_error(self, error: Exception, context: Dict[str, Any]):
+
+    def _log_error(self, error: Exception, context: dict[str, Any]):
         """記錄錯誤詳情"""
         error_data = {
             "error_type": type(error).__name__,
             "error_message": str(error),
-            "context": context
+            "context": context,
         }
-        
+
         # 如果是自定義異常，記錄額外資訊
         if isinstance(error, BotException):
             error_data.update(error.to_dict())
-        
+
         # 對於嚴重錯誤，記錄完整的堆疊追蹤
         if not isinstance(error, (ValidationException, CommandParsingException)):
             error_data["traceback"] = traceback.format_exc()
@@ -148,14 +151,14 @@ class ErrorHandlerMiddleware:
     錯誤處理中間件
     可以作為裝飾器使用
     """
-    
+
     def __init__(self, error_handler: UnifiedErrorHandler):
         self.error_handler = error_handler
-    
+
     def __call__(self, func):
         """裝飾器實現"""
         import functools
-        
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             try:
@@ -165,17 +168,17 @@ class ErrorHandlerMiddleware:
                 context = {
                     "function": func.__name__,
                     "args_count": len(args),
-                    "kwargs_keys": list(kwargs.keys())
+                    "kwargs_keys": list(kwargs.keys()),
                 }
-                
+
                 # 處理錯誤並返回訊息
                 return self.error_handler.handle_error(e, context)
-        
+
         return wrapper
 
 
 # 全域錯誤處理器實例
-_global_error_handler: Optional[UnifiedErrorHandler] = None
+_global_error_handler: UnifiedErrorHandler | None = None
 
 
 def get_error_handler(include_technical_details: bool = False) -> UnifiedErrorHandler:
@@ -186,7 +189,9 @@ def get_error_handler(include_technical_details: bool = False) -> UnifiedErrorHa
     return _global_error_handler
 
 
-def handle_error_gracefully(error: Exception, context: Optional[Dict[str, Any]] = None) -> TextMessage:
+def handle_error_gracefully(
+    error: Exception, context: dict[str, Any] | None = None
+) -> TextMessage:
     """便捷函數：優雅地處理錯誤"""
     handler = get_error_handler()
     return handler.handle_error(error, context)

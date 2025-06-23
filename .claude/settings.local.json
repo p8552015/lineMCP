@@ -47,7 +47,12 @@
       "Bash(git checkout:*)",
       "Bash(PYTHONPATH=src poetry run python production_query_validation.py)",
       "Bash(PYTHONPATH=src poetry run python /Users/yen/Desktop/lineMCP/regression_test_baseline.py)",
-      "Bash(PYTHONPATH=src poetry run python regression_test_baseline.py)"
+      "Bash(PYTHONPATH=src poetry run python regression_test_baseline.py)",
+      "Bash(poetry check:*)",
+      "Bash(poetry lock:*)",
+      "Bash(poetry install:*)",
+      "Bash(pip install:*)",
+      "Bash(detect-secrets:*)"
     ],
     "deny": []
   }
