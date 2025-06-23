@@ -1,0 +1,202 @@
+# ==============================================================================
+# AlertManager 配置 - LINE MCP Bot 告警管理
+# ==============================================================================
+
+global:
+  # SMTP 配置
+  smtp_smarthost: '${SMTP_HOST:-localhost:587}'
+  smtp_from: '${ALERT_FROM_EMAIL:-alerts@example.com}'
+  smtp_auth_username: '${SMTP_USERNAME:-}'
+  smtp_auth_password: '${SMTP_PASSWORD:-}'
+  
+  # Slack 配置
+  slack_api_url: '${SLACK_API_URL:-}'
+
+# 模板
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# 路由配置
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'default'
+  
+  routes:
+    # 嚴重告警立即通知
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+    
+    # 警告級別告警
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+    
+    # 系統相關告警
+    - match:
+        service: system
+      receiver: 'system-alerts'
+    
+    # 應用相關告警
+    - match:
+        service: line-mcp-bot
+      receiver: 'application-alerts'
+    
+    # 業務相關告警
+    - match:
+        type: business
+      receiver: 'business-alerts'
+
+# 抑制規則
+inhibit_rules:
+  # 如果服務下線，抑制其他相關告警
+  - source_match:
+      alertname: ServiceDown
+    target_match:
+      service: line-mcp-bot
+    equal: ['instance']
+  
+  # 如果節點下線，抑制該節點的其他告警
+  - source_match:
+      alertname: NodeDown
+    target_match_re:
+      alertname: High.*
+    equal: ['instance']
+
+# 接收器配置
+receivers:
+  # 預設接收器
+  - name: 'default'
+    email_configs:
+      - to: '${DEFAULT_EMAIL:-admin@example.com}'
+        subject: '🚨 LINE MCP Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Instance: {{ .Labels.instance }}
+          
+          {{ end }}
+        html: |
+          <h2>🚨 LINE MCP 系統告警</h2>
+          {{ range .Alerts }}
+          <div style="border: 1px solid #ddd; padding: 10px; margin: 10px;">
+            <h3 style="color: {{ if eq .Labels.severity "critical" }}red{{ else if eq .Labels.severity "warning" }}orange{{ else }}blue{{ end }};">
+              {{ .Annotations.summary }}
+            </h3>
+            <p><strong>描述:</strong> {{ .Annotations.description }}</p>
+            <p><strong>嚴重程度:</strong> {{ .Labels.severity }}</p>
+            <p><strong>服務:</strong> {{ .Labels.service }}</p>
+            <p><strong>實例:</strong> {{ .Labels.instance }}</p>
+            <p><strong>時間:</strong> {{ .StartsAt.Format "2006-01-02 15:04:05" }}</p>
+            {{ if .Annotations.runbook_url }}
+            <p><a href="{{ .Annotations.runbook_url }}">查看處理手冊</a></p>
+            {{ end }}
+          </div>
+          {{ end }}
+
+  # 嚴重告警接收器
+  - name: 'critical-alerts'
+    email_configs:
+      - to: '${CRITICAL_EMAIL:-admin@example.com}'
+        subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        body: |
+          ⚠️ 嚴重告警 ⚠️
+          
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          描述: {{ .Annotations.description }}
+          服務: {{ .Labels.service }}
+          實例: {{ .Labels.instance }}
+          時間: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          
+          請立即處理！
+          {{ end }}
+    
+    slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#alerts-critical'
+        title: '🚨 嚴重告警: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *告警:* {{ .Annotations.summary }}
+          *描述:* {{ .Annotations.description }}
+          *服務:* {{ .Labels.service }}
+          *實例:* {{ .Labels.instance }}
+          *嚴重程度:* {{ .Labels.severity }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+  # 警告級別接收器
+  - name: 'warning-alerts'
+    email_configs:
+      - to: '${WARNING_EMAIL:-team@example.com}'
+        subject: '⚠️ Warning: {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#alerts-warning'
+        title: '⚠️ 警告: {{ .GroupLabels.alertname }}'
+        color: 'warning'
+        send_resolved: true
+
+  # 系統告警接收器
+  - name: 'system-alerts'
+    email_configs:
+      - to: '${SYSTEM_EMAIL:-ops@example.com}'
+        subject: '🖥️ System Alert: {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#system-alerts'
+        title: '🖥️ 系統告警: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+  # 應用告警接收器
+  - name: 'application-alerts'
+    email_configs:
+      - to: '${APP_EMAIL:-dev@example.com}'
+        subject: '🔧 Application Alert: {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#app-alerts'
+        title: '🔧 應用告警: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+  # 業務告警接收器
+  - name: 'business-alerts'
+    email_configs:
+      - to: '${BUSINESS_EMAIL:-business@example.com}'
+        subject: '📊 Business Alert: {{ .GroupLabels.alertname }}'
+    
+    slack_configs:
+      - api_url: '${SLACK_API_URL}'
+        channel: '#business-alerts'
+        title: '📊 業務告警: {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+# 時間窗口
+time_intervals:
+  - name: business-hours
+    time_intervals:
+      - times:
+        - start_time: '09:00'
+          end_time: '18:00'
+        weekdays: ['monday:friday']
+        location: 'Asia/Taipei'
+  
+  - name: weekends
+    time_intervals:
+      - weekdays: ['saturday', 'sunday']
+        location: 'Asia/Taipei'

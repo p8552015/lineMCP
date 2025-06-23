@@ -1,0 +1,403 @@
+# ==============================================================================
+# Docker Compose - LINE MCP Bot (優化版)
+# 支援多環境部署：開發、測試、生產
+# ==============================================================================
+
+version: '3.8'
+
+# ================================
+# 共用服務
+# ================================
+x-common-variables: &common-variables
+  PYTHONUNBUFFERED: 1
+  PYTHONUTF8: 1
+  ASYNCIO_FORCE_SELECT_SELECTOR: 1
+
+x-common-logging: &common-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# ================================
+# 網路定義
+# ================================
+networks:
+  line-mcp-network:
+    driver: bridge
+    name: line-mcp-network
+
+# ================================
+# 數據卷定義
+# ================================
+volumes:
+  # 應用數據
+  app-data:
+    name: line-mcp-app-data
+  
+  # 日誌數據
+  app-logs:
+    name: line-mcp-logs
+  
+  # 快取數據
+  app-cache:
+    name: line-mcp-cache
+  
+  # PostgreSQL 數據
+  postgres-data:
+    name: line-mcp-postgres-data
+  
+  # Redis 數據
+  redis-data:
+    name: line-mcp-redis-data
+
+# ================================
+# 服務定義
+# ================================
+services:
+  
+  # ============================
+  # LINE MCP Bot - 生產環境
+  # ============================
+  line-mcp-bot:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile.optimized
+      target: production
+      args:
+        APP_USER: appuser
+        APP_UID: 1000
+        APP_GID: 1000
+      cache_from:
+        - line-mcp-bot:latest
+        - python:3.11-slim-bookworm
+    image: line-mcp-bot:latest
+    container_name: line-mcp-bot-prod
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+      ENVIRONMENT: production
+      
+      # LINE 配置
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET}
+      
+      # AI 模型配置
+      AI_MODEL_PROVIDER: ${AI_MODEL_PROVIDER:-google}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      
+      # 資料庫配置
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/line_mcp
+      REDIS_URL: redis://redis:6379/0
+      
+      # 應用配置
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: ${DEBUG:-false}
+      WORKERS: ${WORKERS:-1}
+    
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    
+    volumes:
+      - app-data:/app/data
+      - app-logs:/app/logs
+      - app-cache:/app/cache
+    
+    networks:
+      - line-mcp-network
+    
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    logging: *common-logging
+    
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.line-mcp.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.services.line-mcp.loadbalancer.server.port=8000"
+
+  # ============================
+  # LINE MCP Bot - 開發環境
+  # ============================
+  line-mcp-bot-dev:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile.optimized
+      target: development
+      args:
+        APP_USER: appuser
+        APP_UID: 1000
+        APP_GID: 1000
+    image: line-mcp-bot:dev
+    container_name: line-mcp-bot-dev
+    environment:
+      <<: *common-variables
+      ENVIRONMENT: development
+      DEBUG: true
+      LOG_LEVEL: DEBUG
+      
+      # LINE 配置（開發環境）
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN_DEV}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET_DEV}
+      
+      # AI 模型配置
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      
+      # 本地資料庫
+      DATABASE_URL: sqlite:///app/data/dev.db
+      REDIS_URL: redis://redis:6379/1
+    
+    ports:
+      - "${DEV_PORT:-8001}:8000"
+      - "${DEBUG_PORT:-5678}:5678"  # Python debugger
+    
+    volumes:
+      - ./apps/bot:/app  # 熱重載
+      - app-logs:/app/logs
+    
+    networks:
+      - line-mcp-network
+    
+    depends_on:
+      - redis
+    
+    logging: *common-logging
+    
+    profiles:
+      - development
+
+  # ============================
+  # 測試環境
+  # ============================
+  line-mcp-bot-test:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile.optimized
+      target: testing
+      args:
+        APP_USER: appuser
+        APP_UID: 1000
+        APP_GID: 1000
+    image: line-mcp-bot:test
+    container_name: line-mcp-bot-test
+    environment:
+      <<: *common-variables
+      ENVIRONMENT: testing
+      
+      # 測試資料庫
+      DATABASE_URL: sqlite:///app/data/test.db
+      REDIS_URL: redis://redis:6379/2
+    
+    volumes:
+      - ./apps/bot:/app
+      - app-logs:/app/logs
+    
+    networks:
+      - line-mcp-network
+    
+    depends_on:
+      - redis
+    
+    logging: *common-logging
+    
+    profiles:
+      - testing
+
+  # ============================
+  # PostgreSQL 資料庫
+  # ============================
+  postgres:
+    image: postgres:15-alpine
+    container_name: line-mcp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: line_mcp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    
+    networks:
+      - line-mcp-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d line_mcp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    logging: *common-logging
+    
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=100
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+
+  # ============================
+  # Redis 快取
+  # ============================
+  redis:
+    image: redis:7-alpine
+    container_name: line-mcp-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    
+    volumes:
+      - redis-data:/data
+    
+    networks:
+      - line-mcp-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    
+    logging: *common-logging
+
+  # ============================
+  # MCP SQLite 服務器
+  # ============================
+  mcp-sqlite:
+    build:
+      context: ./apps/servers
+      dockerfile: Dockerfile
+    image: mcp-sqlite:latest
+    container_name: line-mcp-sqlite
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_PATH: /data/manufacturing.db
+    
+    ports:
+      - "${MCP_PORT:-3003}:3003"
+    
+    volumes:
+      - app-data:/data
+    
+    networks:
+      - line-mcp-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    logging: *common-logging
+
+  # ============================
+  # Nginx 反向代理
+  # ============================
+  nginx:
+    image: nginx:alpine
+    container_name: line-mcp-nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+      - app-logs:/var/log/nginx
+    
+    networks:
+      - line-mcp-network
+    
+    depends_on:
+      - line-mcp-bot
+    
+    logging: *common-logging
+    
+    profiles:
+      - production
+
+  # ============================
+  # Prometheus 監控
+  # ============================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: line-mcp-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+    
+    networks:
+      - line-mcp-network
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    
+    logging: *common-logging
+    
+    profiles:
+      - monitoring
+
+  # ============================
+  # Grafana 儀表板
+  # ============================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: line-mcp-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+    
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    networks:
+      - line-mcp-network
+    
+    depends_on:
+      - prometheus
+    
+    logging: *common-logging
+    
+    profiles:
+      - monitoring

@@ -1,0 +1,371 @@
+# ==============================================================================
+# Docker Compose - 監控與日誌整合
+# Prometheus + Grafana + AlertManager + Loki 完整監控方案
+# ==============================================================================
+
+version: '3.8'
+
+# ================================
+# 網路定義
+# ================================
+networks:
+  monitoring:
+    driver: bridge
+    name: line-mcp-monitoring
+
+# ================================
+# 數據卷定義
+# ================================
+volumes:
+  prometheus-data:
+    name: line-mcp-prometheus-data
+  grafana-data:
+    name: line-mcp-grafana-data
+  loki-data:
+    name: line-mcp-loki-data
+  alertmanager-data:
+    name: line-mcp-alertmanager-data
+
+# ================================
+# 服務定義
+# ================================
+services:
+
+  # ============================
+  # Prometheus 監控服務
+  # ============================
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: line-mcp-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--log.level=info'
+    
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    
+    volumes:
+      - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    
+    networks:
+      - monitoring
+      - line-mcp-network
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9090"
+      - "prometheus.path=/metrics"
+
+  # ============================
+  # Grafana 儀表板服務
+  # ============================
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: line-mcp-grafana
+    restart: unless-stopped
+    environment:
+      # 基本配置
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: false
+      
+      # 安全配置
+      GF_SECURITY_SECRET_KEY: ${GRAFANA_SECRET_KEY:-your_secret_key_here}
+      GF_SECURITY_COOKIE_SECURE: false
+      GF_SECURITY_COOKIE_SAMESITE: lax
+      
+      # 數據源配置
+      GF_DATASOURCES_DEFAULT_DATASOURCE: prometheus
+      
+      # 外觀配置
+      GF_ANALYTICS_REPORTING_ENABLED: false
+      GF_ANALYTICS_CHECK_FOR_UPDATES: false
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
+      
+      # 日誌配置
+      GF_LOG_LEVEL: info
+      
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    
+    networks:
+      - monitoring
+    
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================
+  # AlertManager 告警管理
+  # ============================
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: line-mcp-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+      - '--log.level=info'
+    
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    
+    volumes:
+      - ./config/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    
+    networks:
+      - monitoring
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================
+  # Loki 日誌聚合
+  # ============================
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: line-mcp-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    
+    volumes:
+      - ./config/monitoring/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    
+    networks:
+      - monitoring
+    
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================
+  # Promtail 日誌收集
+  # ============================
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: line-mcp-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    
+    volumes:
+      - ./config/monitoring/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    
+    networks:
+      - monitoring
+    
+    depends_on:
+      loki:
+        condition: service_healthy
+
+  # ============================
+  # Node Exporter 系統監控
+  # ============================
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: line-mcp-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    
+    networks:
+      - monitoring
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9100"
+
+  # ============================
+  # cAdvisor 容器監控
+  # ============================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: line-mcp-cadvisor
+    restart: unless-stopped
+    privileged: true
+    
+    ports:
+      - "${CADVISOR_PORT:-8080}:8080"
+    
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    
+    devices:
+      - /dev/kmsg
+    
+    networks:
+      - monitoring
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=8080"
+
+  # ============================
+  # Redis Exporter
+  # ============================
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.52.0
+    container_name: line-mcp-redis-exporter
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+      REDIS_PASSWORD: ""
+    
+    ports:
+      - "${REDIS_EXPORTER_PORT:-9121}:9121"
+    
+    networks:
+      - monitoring
+      - line-mcp-network
+    
+    depends_on:
+      - redis
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9121"
+
+  # ============================
+  # PostgreSQL Exporter
+  # ============================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.13.2
+    container_name: line-mcp-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/line_mcp?sslmode=disable"
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+    
+    ports:
+      - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+    
+    networks:
+      - monitoring
+      - line-mcp-network
+    
+    depends_on:
+      - postgres
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9187"
+
+  # ============================
+  # Nginx Exporter
+  # ============================
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.11.0
+    container_name: line-mcp-nginx-exporter
+    restart: unless-stopped
+    command:
+      - '-nginx.scrape-uri=http://nginx:8080/nginx_status'
+    
+    ports:
+      - "${NGINX_EXPORTER_PORT:-9113}:9113"
+    
+    networks:
+      - monitoring
+      - line-mcp-network
+    
+    depends_on:
+      - nginx
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9113"
+
+  # ============================
+  # Blackbox Exporter 健康檢查
+  # ============================
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.24.0
+    container_name: line-mcp-blackbox-exporter
+    restart: unless-stopped
+    
+    ports:
+      - "${BLACKBOX_EXPORTER_PORT:-9115}:9115"
+    
+    volumes:
+      - ./config/monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    
+    networks:
+      - monitoring
+      - line-mcp-network
+    
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9115"
+
+# ================================
+# 外部網路連接
+# ================================
+networks:
+  line-mcp-network:
+    external: true
+    name: line-mcp-network
+
+# ================================
+# 外部服務依賴
+# ================================
+services:
+  redis:
+    external: true
+  postgres:
+    external: true
+  nginx:
+    external: true

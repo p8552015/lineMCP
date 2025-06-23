@@ -1,0 +1,407 @@
+name: 🚀 Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: 'Custom release notes (optional)'
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+  BOT_DIR: 'apps/bot'
+
+jobs:
+  version-bump:
+    name: 📈 Version Bump
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    outputs:
+      new_tag: ${{ steps.version.outputs.new_tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 🔢 Calculate New Version
+        id: version
+        run: |
+          cd ${{ env.BOT_DIR }}
+          current_version=$(poetry version -s)
+          echo "Current version: $current_version"
+          
+          # Bump version based on input
+          poetry version ${{ github.event.inputs.version_type }}
+          new_version=$(poetry version -s)
+          new_tag="v$new_version"
+          
+          echo "New version: $new_version"
+          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: 📝 Generate Changelog
+        id: changelog
+        run: |
+          # Get the latest tag
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$latest_tag" ]; then
+            echo "No previous tags found, generating changelog from first commit"
+            changelog=$(git log --pretty=format:"- %s (%h)" --no-merges)
+          else
+            echo "Generating changelog since $latest_tag"
+            changelog=$(git log ${latest_tag}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # Create changelog with categorization
+          {
+            echo "## 🎉 What's Changed"
+            echo ""
+            
+            # Features
+            features=$(echo "$changelog" | grep -i "feat\|add\|new" || true)
+            if [ ! -z "$features" ]; then
+              echo "### ✨ Features"
+              echo "$features"
+              echo ""
+            fi
+            
+            # Fixes
+            fixes=$(echo "$changelog" | grep -i "fix\|bug\|patch" || true)
+            if [ ! -z "$fixes" ]; then
+              echo "### 🐛 Bug Fixes"
+              echo "$fixes"
+              echo ""
+            fi
+            
+            # Improvements
+            improvements=$(echo "$changelog" | grep -i "improve\|enhance\|update\|refactor" || true)
+            if [ ! -z "$improvements" ]; then
+              echo "### 🚀 Improvements"
+              echo "$improvements"
+              echo ""
+            fi
+            
+            # Documentation
+            docs=$(echo "$changelog" | grep -i "docs\|doc\|readme" || true)
+            if [ ! -z "$docs" ]; then
+              echo "### 📚 Documentation"
+              echo "$docs"
+              echo ""
+            fi
+            
+            # Other changes
+            others=$(echo "$changelog" | grep -v -i "feat\|add\|new\|fix\|bug\|patch\|improve\|enhance\|update\|refactor\|docs\|doc\|readme" || true)
+            if [ ! -z "$others" ]; then
+              echo "### 🔧 Other Changes"
+              echo "$others"
+              echo ""
+            fi
+            
+            echo "---"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${latest_tag}...${{ steps.version.outputs.new_tag }}"
+            
+          } > changelog.md
+          
+          # Output for next step
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: 💾 Commit Version Bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add ${{ env.BOT_DIR }}/pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_tag }}"
+
+      - name: 🏷️ Create and Push Tag
+        run: |
+          git tag ${{ steps.version.outputs.new_tag }}
+          git push origin main
+          git push origin ${{ steps.version.outputs.new_tag }}
+
+  build-and-test:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+    needs: [version-bump]
+    if: always() && (needs.version-bump.result == 'success' || github.event_name == 'push')
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 🔧 Install Dependencies
+        run: |
+          cd ${{ env.BOT_DIR }}
+          poetry install --with dev
+
+      - name: 🧪 Run Tests
+        run: |
+          cd ${{ env.BOT_DIR }}
+          poetry run pytest --cov=src --cov-report=xml --cov-report=html -v
+
+      - name: 📊 Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${{ env.BOT_DIR }}/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 🏗️ Build Package
+        run: |
+          cd ${{ env.BOT_DIR }}
+          poetry build
+
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: ${{ env.BOT_DIR }}/dist/
+          retention-days: 30
+
+  docker-build:
+    name: 🐳 Docker Build
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always() && needs.build-and-test.result == 'success'
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Extract Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION=${{ needs.version-bump.outputs.new_tag }}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build and Push Docker Image (Optimized)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/bot
+          file: ./apps/bot/Dockerfile.optimized
+          target: production
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/line-mcp-bot:latest
+            ghcr.io/${{ github.repository_owner }}/line-mcp-bot:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            APP_USER=appuser
+            APP_UID=1000
+            APP_GID=1000
+          labels: |
+            org.opencontainers.image.title=LINE MCP Bot
+            org.opencontainers.image.description=Production-ready LINE Bot with MCP
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            org.opencontainers.image.vendor=LINE MCP Team
+            org.opencontainers.image.licenses=MIT
+            build.target=production
+            build.type=ci
+
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: always() && needs.docker-build.result == 'success'
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/line-mcp-bot:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📤 Upload Trivy Scan Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  create-release:
+    name: 🎉 Create Release
+    runs-on: ubuntu-latest
+    needs: [version-bump, build-and-test, docker-build, security-scan]
+    if: always() && needs.build-and-test.result == 'success' && needs.docker-build.result == 'success'
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: ./artifacts
+
+      - name: 🏷️ Get Release Info
+        id: release_info
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            echo "tag=$VERSION" >> $GITHUB_OUTPUT
+            
+            # Generate changelog for tag push
+            latest_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+            if [ -z "$latest_tag" ]; then
+              changelog=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            else
+              changelog=$(git log ${latest_tag}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            fi
+            
+            {
+              echo "## 🎉 What's Changed"
+              echo ""
+              echo "$changelog"
+              echo ""
+              echo "---"
+              echo ""
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${latest_tag}...$VERSION"
+            } > release_notes.md
+            
+          else
+            echo "tag=${{ needs.version-bump.outputs.new_tag }}" >> $GITHUB_OUTPUT
+            echo "${{ needs.version-bump.outputs.changelog }}" > release_notes.md
+          fi
+          
+          # Add custom release notes if provided
+          if [ ! -z "${{ github.event.inputs.release_notes }}" ]; then
+            echo "" >> release_notes.md
+            echo "## 📝 Additional Notes" >> release_notes.md
+            echo "" >> release_notes.md
+            echo "${{ github.event.inputs.release_notes }}" >> release_notes.md
+          fi
+
+      - name: 🎉 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: Release ${{ steps.release_info.outputs.tag }}
+          body_path: release_notes.md
+          files: |
+            ./artifacts/*
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 Notify Deployment
+        run: |
+          echo "🎉 Release ${{ steps.release_info.outputs.tag }} created successfully!"
+          echo "🐳 Docker Image: ghcr.io/${{ github.repository_owner }}/line-mcp-bot:${{ steps.release_info.outputs.tag }}"
+          echo "📦 Artifacts available in release"
+
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: always() && needs.create-release.result == 'success'
+    environment: staging
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to Staging Environment
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "This step would typically:"
+          echo "  - Update Kubernetes manifests"
+          echo "  - Deploy to staging cluster"
+          echo "  - Run smoke tests"
+          echo "  - Verify deployment health"
+          
+          # Placeholder for actual deployment logic
+          echo "✅ Staging deployment simulated successfully"
+
+  notify:
+    name: 📬 Notify Team
+    runs-on: ubuntu-latest
+    needs: [create-release, deploy-staging]
+    if: always()
+    
+    steps:
+      - name: 📬 Send Notification
+        run: |
+          if [ "${{ needs.create-release.result }}" == "success" ]; then
+            echo "✅ Release pipeline completed successfully!"
+            echo "📦 New release available"
+            echo "🚀 Staging deployment completed"
+          else
+            echo "❌ Release pipeline failed"
+            echo "Please check the workflow logs for details"
+          fi
+          
+          # This would typically integrate with:
+          # - Slack/Discord notifications
+          # - Email notifications
+          # - Teams/messaging platforms

@@ -27,6 +27,9 @@
 - **🔐 企業級安全** - JWT 認證 + 簽章驗證 + 環境變數管理
 - **🎯 代碼優化** - 漸進式重構移除 1416 行未使用代碼
 - **🛡️ 生產級穩定性** - v5 緊急修復：解決空查詢問題和類型安全錯誤
+- **🚀 完整 CI/CD 自動化** - GitHub Actions 工作流程，自動化發布與部署
+- **🐳 多階段容器化** - 優化 Docker 建構，安全掃描，多平台支援
+- **📊 監控與告警** - Prometheus + Grafana + AlertManager 完整監控體系
 
 ## 🚀 快速啟動
 
@@ -46,6 +49,36 @@
 
 # 手動啟動（適用於開發調試）
 cd apps/bot && poetry run uvicorn src.main:app --reload --port 8000
+```
+
+### 🐳 容器化部署
+
+#### 單容器部署
+```bash
+# 建構並運行生產容器
+docker build -f apps/bot/Dockerfile.optimized --target production -t line-mcp-bot .
+docker run -d --name line-mcp-bot -p 8000:8000 --env-file .env line-mcp-bot
+```
+
+#### Docker Compose 部署
+```bash
+# 生產環境（推薦）
+docker-compose -f docker-compose.optimized.yml up -d
+
+# 開發環境
+docker-compose -f docker-compose.optimized.yml --profile development up -d
+
+# 完整監控堆疊
+docker-compose -f docker-compose.monitoring.yml up -d
+```
+
+#### 腳本化部署
+```bash
+# 使用優化腳本
+./scripts/docker-optimize.sh v1.0.0 production
+
+# 開發建構
+./scripts/docker-optimize.sh latest development
 ```
 
 ## 🔧 系統管理
@@ -452,8 +485,107 @@ cp apps/bot/.env.example apps/bot/.env
 
 ### 🔮 **未來發展**
 - ✅ **技術債務管理**: FlexBuilder 重構完成，架構更清晰
+- ✅ **持續改進**: CI/CD 管線與自動化測試完成
 - 🎯 **擴展能力**: 微服務化準備，多租戶架構支援
-- 🎯 **持續改進**: CI/CD 管線與自動化測試
+
+## 🚀 CI/CD 自動化
+
+### 📋 工作流程概覽
+- **代碼品質檢查** - Black, Ruff, MyPy, Bandit 自動檢查
+- **自動化測試** - 單元測試 + 整合測試 + 覆蓋率報告
+- **安全掃描** - 依賴檢查 + 祕密掃描 + 容器安全
+- **效能測試** - Locust 負載測試自動化
+- **自動發布** - 語義化版本 + 自動 changelog + GitHub Release
+- **容器建構** - 多平台 Docker 映像 + 安全掃描
+- **自動部署** - Staging 環境自動部署
+
+### 🔧 版本發布
+```bash
+# 手動版本管理
+python scripts/version-manager.py status
+python scripts/version-manager.py release --type patch
+
+# GitHub Actions 自動發布
+# 推送標籤觸發： git tag v1.0.0 && git push origin v1.0.0
+# 或使用 GitHub UI 手動觸發工作流程
+```
+
+### 🛡️ 安全掃描
+- **Trivy** - 容器映像漏洞掃描
+- **Hadolint** - Dockerfile 最佳實踐檢查
+- **Bandit** - Python 安全代碼掃描
+- **Safety** - 依賴套件安全檢查
+
+## 📊 監控與可觀測性
+
+### 🔍 健康檢查端點
+```bash
+# 基本健康檢查
+curl http://localhost:8000/health/ping
+
+# 完整系統檢查
+curl http://localhost:8000/health/
+
+# 就緒檢查（K8s ready probe）
+curl http://localhost:8000/health/ready
+
+# 存活檢查（K8s liveness probe）
+curl http://localhost:8000/health/live
+```
+
+### 📈 Prometheus 指標
+```bash
+# 應用指標
+curl http://localhost:8000/metrics
+
+# 指標摘要
+curl http://localhost:8000/metrics/summary
+```
+
+### 📊 Grafana 儀表板
+- **服務概覽** - 系統狀態、HTTP 請求、回應時間
+- **資源監控** - CPU、記憶體、磁碟使用率
+- **業務指標** - LINE 訊息處理、AI 模型調用、MCP 查詢
+- **告警管理** - 即時告警與歷史記錄
+
+### 🚨 告警配置
+- **服務下線** - 1分鐘內立即通知
+- **高錯誤率** - 5分鐘內錯誤率 > 10%
+- **高延遲** - 95% 請求延遲 > 2秒
+- **資源使用** - CPU/記憶體 > 80%
+- **業務指標** - LINE 訊息/AI 調用失敗率異常
+
+## 🐳 容器化架構
+
+### 🏗️ 多階段建構優勢
+- **安全性** - 非 root 用戶、最小權限原則
+- **體積優化** - 分層快取、依賴分離
+- **多環境支援** - production/development/testing
+- **快取優化** - 依賴層與應用層分離
+
+### 📦 映像標籤策略
+- `latest` - 最新穩定版本
+- `v1.2.3` - 語義化版本標籤
+- `main` - 主分支最新建構
+- `dev` - 開發環境版本
+
+### 🔒 安全掃描自動化
+- **建構時掃描** - Dockerfile 最佳實踐檢查
+- **映像掃描** - 已知漏洞檢測
+- **執行時掃描** - 容器行為分析
+- **合規性檢查** - 安全政策驗證
+
+## 📚 相關文檔
+
+### 🔧 部署指南
+- [容器化部署指南](docs/containerization-guide.md)
+- [發布流程指南](docs/release-guide.md)
+- [監控配置指南](config/monitoring/)
+
+### 🛠️ 開發文檔
+- [開發環境設置](apps/bot/README.md)
+- [API 文檔](docs/api/)
+- [架構設計文檔](docs/architecture/)
 
 ---
 

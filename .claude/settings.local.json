@@ -52,7 +52,8 @@
       "Bash(poetry lock:*)",
       "Bash(poetry install:*)",
       "Bash(pip install:*)",
-      "Bash(detect-secrets:*)"
+      "Bash(detect-secrets:*)",
+      "Bash(./scripts/test-release.sh:*)"
     ],
     "deny": []
   }

@@ -1,9 +1,15 @@
-[tool.poetry]
+[project]
 name = "line-mcp-webhook"
 version = "0.1.0"
 description = "LINE OA integration with Remote MCP via OpenAI"
-authors = ["Your Name <your.email@example.com>"]
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
 readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]

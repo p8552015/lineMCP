@@ -209,7 +209,7 @@ python code_lifecycle_manager.py --mark-retention \
 ### AI 記憶備份原則
 
 每隔30分鐘自動
-git add.
+git add .  
 git commit -m"自動總結訊息"
 
 參考：[代碼審查流程文檔](./代碼審查流程文檔.md)

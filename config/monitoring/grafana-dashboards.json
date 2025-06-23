@@ -1,0 +1,290 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "LINE MCP Bot 監控儀表板",
+    "tags": ["line-mcp", "monitoring", "production"],
+    "timezone": "Asia/Taipei",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "schemaVersion": 30,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "服務狀態概覽",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=\"line-mcp-bot\"}",
+            "legendFormat": "LINE MCP Bot",
+            "refId": "A"
+          },
+          {
+            "expr": "up{job=\"mcp-sqlite\"}",
+            "legendFormat": "MCP SQLite",
+            "refId": "B"
+          },
+          {
+            "expr": "up{job=\"postgres-exporter\"}",
+            "legendFormat": "PostgreSQL",
+            "refId": "C"
+          },
+          {
+            "expr": "up{job=\"redis-exporter\"}",
+            "legendFormat": "Redis",
+            "refId": "D"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"options": {"0": {"text": "下線"}}, "type": "value"},
+              {"options": {"1": {"text": "正常"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "HTTP 請求量",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"line-mcp-bot\"}[5m])",
+            "legendFormat": "{{method}} {{status}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {"label": "Requests/sec", "min": 0},
+          {"show": false}
+        ],
+        "xAxis": {"show": true},
+        "legend": {"show": true, "values": false}
+      },
+      {
+        "id": 3,
+        "title": "HTTP 回應時間",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"line-mcp-bot\"}[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"line-mcp-bot\"}[5m]))",
+            "legendFormat": "50th percentile",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Seconds", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "記憶體使用量",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{name=\"line-mcp-bot\"} / 1024 / 1024",
+            "legendFormat": "Memory Usage (MB)",
+            "refId": "A"
+          },
+          {
+            "expr": "container_spec_memory_limit_bytes{name=\"line-mcp-bot\"} / 1024 / 1024",
+            "legendFormat": "Memory Limit (MB)",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Megabytes", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "CPU 使用率",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{name=\"line-mcp-bot\"}[5m]) * 100",
+            "legendFormat": "CPU Usage %",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {"label": "Percent", "min": 0, "max": 100},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "LINE 訊息處理統計",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(line_message_processing_total[5m])",
+            "legendFormat": "訊息處理成功",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(line_message_processing_failures_total[5m])",
+            "legendFormat": "訊息處理失敗",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Messages/sec", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "AI 模型調用統計",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "targets": [
+          {
+            "expr": "rate(ai_model_requests_total[5m])",
+            "legendFormat": "{{provider}} 請求",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(ai_model_request_failures_total[5m])",
+            "legendFormat": "{{provider}} 失敗",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Requests/sec", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "MCP 查詢統計",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "targets": [
+          {
+            "expr": "rate(mcp_queries_total[5m])",
+            "legendFormat": "MCP 查詢成功",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(mcp_query_failures_total[5m])",
+            "legendFormat": "MCP 查詢失敗",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {"label": "Queries/sec", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "資料庫連接池",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends",
+            "legendFormat": "{{datname}} 連接數",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {"label": "Connections", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "系統負載",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "node_load1",
+            "legendFormat": "1分鐘負載",
+            "refId": "A"
+          },
+          {
+            "expr": "node_load5",
+            "legendFormat": "5分鐘負載",
+            "refId": "B"
+          },
+          {
+            "expr": "node_load15",
+            "legendFormat": "15分鐘負載",
+            "refId": "C"
+          }
+        ],
+        "yAxes": [
+          {"label": "Load", "min": 0},
+          {"show": false}
+        ]
+      },
+      {
+        "id": 11,
+        "title": "磁碟使用率",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+        "targets": [
+          {
+            "expr": "(1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100",
+            "legendFormat": "{{mountpoint}} 使用率",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {"label": "Percent", "min": 0, "max": 100},
+          {"show": false}
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "instance",
+          "type": "query",
+          "query": "label_values(up{job=\"line-mcp-bot\"}, instance)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": false
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "部署事件",
+          "datasource": "Prometheus",
+          "expr": "changes(up[1m]) > 0",
+          "titleFormat": "服務重啟",
+          "textFormat": "{{instance}} 服務狀態變更"
+        }
+      ]
+    }
+  }
+}
