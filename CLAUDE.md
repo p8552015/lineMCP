@@ -206,4 +206,10 @@ python code_lifecycle_manager.py --mark-retention \
 - **B類條件保留**: 管理功能、擴展接口、配置管理  
 - **C類候選移除**: 實驗性功能、重複實現、臨時工具
 
+### AI 記憶備份原則
+
+每隔30分鐘自動
+git add.
+git commit -m"自動總結訊息"
+
 參考：[代碼審查流程文檔](./代碼審查流程文檔.md)

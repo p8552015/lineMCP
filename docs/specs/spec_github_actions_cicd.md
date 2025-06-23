@@ -13,16 +13,16 @@
 | T-03 | 分析現有 CI/CD | 詳細分析現有 .github/workflows/ 配置 | 中 | Claude | DONE | 2025-06-23 19:53 | 2025-06-23 20:15 |
 | T-04 | 設計增強方案 | 規劃代碼品質、安全掃描、多環境部署流程 | 高 | Claude | DONE | 2025-06-23 20:15 | 2025-06-23 20:35 |
 | T-05 | 實施代碼品質工作流程 | 新增 quality.yml (black, ruff, mypy, bandit) | 高 | Claude | DONE | 2025-06-23 20:35 | 2025-06-23 20:55 |
-| T-06 | 實施效能測試工作流程 | 新增 performance.yml (locust 負載測試) | 中 | Claude | TODO | | |
+| T-06 | 實施效能測試工作流程 | 新增 performance.yml (locust 負載測試) | 中 | Claude | DONE | 2025-06-23 22:10 | 2025-06-23 22:30 |
 | T-07 | 改進現有 CI 流程 | 增強 ci.yml 加入測試覆蓋率和 MCP 測試 | 高 | Claude | DONE | 2025-06-23 20:55 | 2025-06-23 21:25 |
-| T-08 | 實施多環境部署 | 配置 dev/staging/prod 環境的 Docker Compose | 中 | Claude | TODO | | |
+| T-08 | 實施多環境部署 | 配置 dev/staging/prod 環境的 Docker Compose | 中 | Claude | DONE | 2025-06-23 22:30 | 2025-06-23 22:55 |
 | T-09 | 設置發布自動化 | 新增 release.yml 語義化版本和自動 changelog | 中 | Claude | TODO | | |
 | T-10 | 安全與合規檢查 | 整合祕密掃描、依賴檢查、SBOM 生成 | 高 | Claude | DONE | 2025-06-23 21:25 | 2025-06-23 21:45 |
 | T-11 | 容器化優化 | 多階段建構、快取優化、安全掃描 | 中 | Claude | TODO | | |
 | T-12 | 監控與日誌整合 | Prometheus、Grafana、健康檢查端點 | 低 | Claude | TODO | | |
 | T-13 | 文檔與模板 | 環境變數模板、README、API 文檔生成 | 低 | Claude | TODO | | |
 | T-14 | 執行完整測試 | 運行所有新工作流程並驗證功能 | 高 | Claude | DONE | 2025-06-23 21:45 | 2025-06-23 22:05 |
-| T-15 | 提交代碼變更 | 創建 PR 並合併到主分支 | 低 | Claude | TODO | | |
+| T-15 | 提交代碼變更 | 創建 PR 並合併到主分支 | 低 | Claude | DONE | 2025-06-23 22:05 | 2025-06-23 22:10 |
 <!-- TASKS END -->
 
 ## 零風險遷移策略

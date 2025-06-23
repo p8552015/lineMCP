@@ -1,0 +1,169 @@
+# 多階段建構優化版 Dockerfile
+# 大幅減少映像大小並提升安全性
+
+# =============================================================================
+# 階段 1: 基礎建構環境
+# =============================================================================
+FROM python:3.11-slim-bookworm as base
+
+# 設定非 root 用戶 (安全性)
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
+# 安裝系統依賴 (最小化)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 設定工作目錄
+WORKDIR /app
+
+# 安裝 Poetry
+ENV POETRY_HOME="/opt/poetry" \
+    POETRY_CACHE_DIR="/opt/poetry/cache" \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VERSION=1.8.0
+
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
+
+# =============================================================================
+# 階段 2: 依賴建構階段
+# =============================================================================
+FROM base as dependencies
+
+# 複製依賴定義檔案
+COPY pyproject.toml poetry.lock ./
+
+# 安裝生產依賴 (不包含開發依賴)
+RUN poetry install --only main --no-root --no-cache \
+    && poetry cache clear . --all
+
+# =============================================================================
+# 階段 3: 開發階段 (包含開發工具)
+# =============================================================================
+FROM dependencies as development
+
+# 安裝所有依賴 (包含開發依賴)
+RUN poetry install --no-root --no-cache \
+    && poetry cache clear . --all
+
+# 安裝開發工具
+RUN pip install --no-cache-dir debugpy watchdog
+
+# 複製應用程式碼
+COPY --chown=appuser:appuser . .
+
+# 切換到非 root 用戶
+USER appuser
+
+# 暴露端口
+EXPOSE 8000 5678
+
+# 健康檢查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 開發環境啟動命令 (支援熱重載)
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# =============================================================================
+# 階段 4: 生產建構階段
+# =============================================================================
+FROM dependencies as builder
+
+# 複製應用程式碼
+COPY . .
+
+# 安裝應用程式
+RUN poetry install --only main --no-cache \
+    && poetry cache clear . --all
+
+# 編譯 Python 檔案 (加速啟動)
+RUN python -m compileall src/
+
+# 清理不必要的檔案
+RUN find /usr/local/lib/python3.11/site-packages -name "*.pyc" -delete \
+    && find /usr/local/lib/python3.11/site-packages -name "__pycache__" -type d -exec rm -rf {} + || true
+
+# =============================================================================
+# 階段 5: 生產運行階段 (最小化)
+# =============================================================================
+FROM python:3.11-slim-bookworm as production
+
+# 安裝運行時依賴 (最小化)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# 建立非 root 用戶
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
+# 設定工作目錄
+WORKDIR /app
+
+# 從建構階段複製 Python 依賴
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# 複製應用程式碼
+COPY --from=builder --chown=appuser:appuser /app/src ./src
+COPY --from=builder --chown=appuser:appuser /app/pyproject.toml ./
+
+# 建立必要目錄
+RUN mkdir -p /app/data /app/logs /app/tmp \
+    && chown -R appuser:appuser /app
+
+# 設定環境變數
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PYTHONPATH=/app/src:$PYTHONPATH \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# 切換到非 root 用戶
+USER appuser
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康檢查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 生產環境啟動命令
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+
+# =============================================================================
+# 映像標籤和元資料
+# =============================================================================
+LABEL maintainer="LINE MCP Team" \
+      version="1.0.0" \
+      description="LINE MCP Bot - Optimized Multi-stage Build" \
+      org.opencontainers.image.source="https://github.com/your-org/line-mcp" \
+      org.opencontainers.image.documentation="https://docs.line-mcp.com" \
+      org.opencontainers.image.vendor="Your Organization" \
+      org.opencontainers.image.licenses="MIT"
+
+# =============================================================================
+# 建構說明
+# =============================================================================
+# 建構指令範例:
+# 
+# 開發環境:
+# docker build --target development -t line-mcp-bot:dev .
+# 
+# 生產環境:
+# docker build --target production -t line-mcp-bot:prod .
+# 
+# 多平台建構:
+# docker buildx build --platform linux/amd64,linux/arm64 --target production -t line-mcp-bot:latest .
+# =============================================================================

@@ -1,0 +1,306 @@
+version: '3.8'
+
+# 測試環境 Docker Compose 配置
+# 使用方式: docker-compose -f docker-compose.staging.yml up
+
+services:
+  # LINE Bot 應用 - 測試環境
+  bot:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile
+      target: production
+    image: line-mcp-bot:staging
+    container_name: line-mcp-bot-staging
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis-staging:6379/0
+      - MCP_SQLITE_SERVER_URL=http://mcp-sqlite-staging:3000
+      - ASYNCIO_FORCE_SELECT_SELECTOR=1
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger-staging:14268
+      - METRICS_ENABLED=true
+      - TRACING_ENABLED=true
+    env_file:
+      - .env.staging
+    volumes:
+      - ./data:/app/data:ro
+      - staging-logs:/app/logs
+    depends_on:
+      redis-staging:
+        condition: service_healthy
+      mcp-sqlite-staging:
+        condition: service_started
+      postgres-staging:
+        condition: service_healthy
+    networks:
+      - line-mcp-staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "localhost:24224"
+        tag: "staging.bot"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot-staging.rule=Host(`staging.line-mcp.com`)"
+      - "traefik.http.routers.bot-staging.tls=true"
+      - "traefik.http.routers.bot-staging.tls.certresolver=letsencrypt"
+
+  # MCP SQLite 服務器 - 測試環境
+  mcp-sqlite-staging:
+    build:
+      context: ./apps/servers/src/sqlite
+      dockerfile: Dockerfile
+    image: mcp-sqlite:staging
+    container_name: mcp-sqlite-staging
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=INFO
+      - DB_PATH=/data/staging.db
+      - BACKUP_ENABLED=true
+      - BACKUP_SCHEDULE="0 2 * * *"  # 每日凌晨2點備份
+    volumes:
+      - ./data/sqlite:/data
+      - staging-logs:/app/logs
+      - staging-backups:/backups
+    networks:
+      - line-mcp-staging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: "localhost:24224"
+        tag: "staging.mcp-sqlite"
+
+  # PostgreSQL - 測試環境主資料庫
+  postgres-staging:
+    image: postgres:15-alpine
+    container_name: postgres-staging
+    restart: always
+    environment:
+      - POSTGRES_DB=line_mcp_staging
+      - POSTGRES_USER=line_mcp
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme123}
+      - POSTGRES_INITDB_ARGS=--auth-host=md5
+    volumes:
+      - postgres-staging-data:/var/lib/postgresql/data
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+      - staging-backups:/backups
+    networks:
+      - line-mcp-staging
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "line_mcp", "-d", "line_mcp_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # Redis - 測試環境
+  redis-staging:
+    image: redis:7-alpine
+    container_name: redis-staging
+    restart: always
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-changeme123}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme123} --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-staging-data:/data
+      - ./config/redis/redis.staging.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - line-mcp-staging
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-changeme123}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  # Nginx 反向代理
+  nginx-staging:
+    image: nginx:1.25-alpine
+    container_name: nginx-staging
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/staging.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - staging-logs:/var/log/nginx
+    depends_on:
+      - bot
+    networks:
+      - line-mcp-staging
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus - 指標收集
+  prometheus-staging:
+    image: prom/prometheus:latest
+    container_name: prometheus-staging
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.staging.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-staging-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - line-mcp-staging
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+
+  # Grafana - 監控儀表板
+  grafana-staging:
+    image: grafana/grafana:latest
+    container_name: grafana-staging
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-staging-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus-staging
+    networks:
+      - line-mcp-staging
+
+  # Jaeger - 分散式追蹤
+  jaeger-staging:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger-staging
+    restart: always
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=badger
+      - BADGER_EPHEMERAL=false
+      - BADGER_DIRECTORY_VALUE=/badger/data
+      - BADGER_DIRECTORY_KEY=/badger/key
+    volumes:
+      - jaeger-staging-data:/badger
+    networks:
+      - line-mcp-staging
+
+  # Fluentd - 日誌聚合
+  fluentd-staging:
+    build:
+      context: ./infra/fluentd
+      dockerfile: Dockerfile
+    container_name: fluentd-staging
+    restart: always
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - staging-logs:/fluentd/log
+      - ./config/fluentd/fluent.staging.conf:/fluentd/etc/fluent.conf:ro
+    networks:
+      - line-mcp-staging
+
+  # 健康檢查服務
+  healthcheck-staging:
+    build:
+      context: ./infra/healthcheck
+      dockerfile: Dockerfile
+    container_name: healthcheck-staging
+    restart: always
+    environment:
+      - CHECK_INTERVAL=30
+      - NOTIFICATION_WEBHOOK=${SLACK_WEBHOOK_URL}
+    volumes:
+      - ./config/healthcheck/staging.yml:/app/config.yml:ro
+    depends_on:
+      - bot
+      - mcp-sqlite-staging
+      - redis-staging
+      - postgres-staging
+    networks:
+      - line-mcp-staging
+
+volumes:
+  postgres-staging-data:
+    driver: local
+  redis-staging-data:
+    driver: local
+  prometheus-staging-data:
+    driver: local
+  grafana-staging-data:
+    driver: local
+  jaeger-staging-data:
+    driver: local
+  staging-logs:
+    driver: local
+  staging-backups:
+    driver: local
+
+networks:
+  line-mcp-staging:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+# 服務健康檢查配置
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
