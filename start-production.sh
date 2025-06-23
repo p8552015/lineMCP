@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================
-# LINE MCP Bot 生產級啟動腳本 v2.3
+# LINE MCP Bot 生產級啟動腳本 v2.4
 # 系統優化強化完成版本 (2025-06-23)
 # 
 # 🏆 優化強化總結 (15個任務 100% 完成)：
@@ -41,7 +41,7 @@ BOT_DIR="$PROJECT_ROOT/apps/bot"
 SERVERS_DIR="$PROJECT_ROOT/apps/servers"
 
 echo -e "${PURPLE}==============================================\n${NC}"
-echo -e "${PURPLE}🚀 LINE MCP Bot 生產級啟動器 v2.2${NC}"
+echo -e "${PURPLE}🚀 LINE MCP Bot 生產級啟動器 v2.4${NC}"
 echo -e "${PURPLE}🏗️  基於模組化重構的企業級系統 + v5 穩定性修復${NC}"
 echo -e "${PURPLE}==============================================\n${NC}"
 
@@ -753,6 +753,40 @@ except Exception as e:
     fi
 }
 
+# 函數：生產查詢測試
+run_production_query_test() {
+    echo -e "${BLUE}🏭 執行生產查詢測試...${NC}"
+    
+    cd "$BOT_DIR"
+    export PYTHONPATH="$BOT_DIR/src:$PYTHONPATH"
+    
+    # 檢查測試腳本是否存在
+    if [ ! -f "$PROJECT_ROOT/test_production_queries.py" ]; then
+        echo -e "${YELLOW}⚠️ 生產查詢測試腳本不存在，建立中...${NC}"
+        echo -e "${CYAN}📝 正在創建 test_production_queries.py...${NC}"
+        
+        # 這裡可以提示用戶如何創建測試腳本
+        echo -e "${RED}❌ 測試腳本不存在：$PROJECT_ROOT/test_production_queries.py${NC}"
+        echo -e "${YELLOW}💡 請確保測試腳本已創建並可執行${NC}"
+        return 1
+    fi
+    
+    echo -e "${CYAN}🎯 執行 M001機台稼動率 和 查看所有機台 查詢測試...${NC}"
+    
+    # 執行生產查詢測試
+    if python3 "$PROJECT_ROOT/test_production_queries.py"; then
+        echo -e "${GREEN}✅ 生產查詢測試完全通過${NC}"
+        echo -e "${CYAN}📊 測試結果詳情請查看：${NC}"
+        echo -e "  📁 測試腳本：$PROJECT_ROOT/test_production_queries.py"
+        echo -e "  📋 測試報告：$PROJECT_ROOT/test_results.json"
+        return 0
+    else
+        echo -e "${RED}❌ 生產查詢測試失敗${NC}"
+        echo -e "${YELLOW}💡 建議檢查系統狀態和配置${NC}"
+        return 1
+    fi
+}
+
 # 函數：啟動服務（生產級）
 start_services() {
     echo -e "\n${BLUE}🚀 啟動生產級 LINE Bot 服務...${NC}"
@@ -804,7 +838,7 @@ start_services() {
 
 # 函數：顯示幫助信息
 show_help() {
-    echo -e "${PURPLE}🎯 LINE MCP Bot 生產啟動器 v2.1${NC}"
+    echo -e "${PURPLE}🎯 LINE MCP Bot 生產啟動器 v2.4${NC}"
     echo -e ""
     echo -e "${PURPLE}使用方法：${NC}"
     echo -e "  $0 [選項]"
@@ -814,6 +848,7 @@ show_help() {
     echo -e "  ${GREEN}quick${NC}          快速啟動（跳過測試）"
     echo -e "  ${GREEN}test${NC}           僅運行系統測試"
     echo -e "  ${GREEN}test-full${NC}      運行完整測試套件"
+    echo -e "  ${GREEN}test-production${NC} 運行生產查詢測試"
     echo -e "  ${GREEN}install${NC}        智能安裝依賴"
     echo -e "  ${GREEN}install-dev${NC}    安裝開發依賴（含測試）"
     echo -e "  ${GREEN}install-force${NC}  強制重新安裝"
@@ -826,6 +861,7 @@ show_help() {
     echo -e "  $0                # 完整啟動"
     echo -e "  $0 quick          # 快速啟動"
     echo -e "  $0 test           # 僅測試"
+    echo -e "  $0 test-production # 生產查詢測試"
     echo -e "  $0 install-dev    # 安裝開發環境"
     echo -e ""
     echo -e "${PURPLE}✨ v2.1 新特性：${NC}"
@@ -888,6 +924,12 @@ case "${1:-start}" in
         install_dependencies
         run_system_self_test
         run_full_test_suite
+        ;;
+    "test-production")
+        echo -e "${BLUE}🏭 執行生產查詢測試${NC}"
+        check_python_env
+        install_dependencies
+        run_production_query_test
         ;;
     "install")
         echo -e "${BLUE}📦 智能安裝依賴${NC}"
