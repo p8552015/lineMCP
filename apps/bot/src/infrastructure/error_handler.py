@@ -85,9 +85,22 @@ class UnifiedErrorHandler:
         return TextMessage(text=message)
     
     def _handle_system_exception(self, error: Exception) -> TextMessage:
-        """處理系統異常"""
+        """處理系統異常 - 增強 MCP 錯誤處理"""
+        error_str = str(error).lower()
+        
+        # MCP 相關錯誤的特殊處理
+        if "mcp" in error_str or "connection broken" in error_str:
+            if "connection broken" in error_str:
+                return TextMessage(text="🔌 資料庫連接中斷，系統正在重新連接...")
+            elif "no response" in error_str or "timeout" in error_str:
+                return TextMessage(text="⏰ 資料庫回應逾時，請稍後再試")
+            elif "invalid response format" in error_str:
+                return TextMessage(text="📡 資料傳輸格式錯誤，請重新嘗試")
+            else:
+                return TextMessage(text="🗄️ 資料庫服務暫時不可用，請稍後再試")
+        
         # 針對常見的系統異常提供特定處理
-        if isinstance(error, TimeoutError):
+        elif isinstance(error, TimeoutError):
             return TextMessage(text="⏰ 操作逾時，請稍後再試")
         elif isinstance(error, ConnectionError):
             return TextMessage(text="🔌 網路連接失敗，請檢查網路狀態")
@@ -97,6 +110,10 @@ class UnifiedErrorHandler:
             return TextMessage(text="⚠️ 輸入值錯誤，請檢查輸入格式")
         elif isinstance(error, KeyError):
             return TextMessage(text="🔍 找不到指定的資源")
+        elif "json" in error_str and ("decode" in error_str or "parse" in error_str):
+            return TextMessage(text="📄 資料格式錯誤，請重新嘗試")
+        elif "sql" in error_str or "database" in error_str:
+            return TextMessage(text="🗄️ 資料庫查詢錯誤，請檢查查詢條件")
         else:
             # 未知異常
             message = "💥 系統發生未知錯誤"

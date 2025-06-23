@@ -237,57 +237,130 @@ class ProductionMCPClient:
             return False
     
     async def call_tool(self, server_name: str, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """調用工具 - 使用配置管理的超時設定"""
+        """調用工具 - 增強錯誤處理和重試機制"""
         server_config = get_server_config(server_name)
         timeout = server_config.timeout if server_config else 10
+        max_retries = 2  # 最多重試2次
         
-        try:
-            logger.info(f"🛠️ 調用工具：{server_name}.{tool_name}")
-            
-            # 確保連接
-            if not await self.connect_to_server(server_name):
-                return {"success": False, "error": f"無法連接到服務器：{server_name}"}
-            
-            process = self.processes[server_name]
-            
-            # 檢查連接狀態
-            if not self.connections.get(server_name):
-                return {"success": False, "error": "未連接"}
-            
-            # 與 ultimate-stdio-test.py 相同的請求格式
-            request = {
-                "jsonrpc": "2.0",
-                "id": "tool-call",
-                "method": "tools/call",
-                "params": {
-                    "name": tool_name,
-                    "arguments": parameters
+        for attempt in range(max_retries + 1):
+            try:
+                if attempt > 0:
+                    logger.info(f"🔄 重試工具調用 (第{attempt}次)：{server_name}.{tool_name}")
+                else:
+                    logger.info(f"🛠️ 調用工具：{server_name}.{tool_name}")
+                
+                # 確保連接
+                if not await self.connect_to_server(server_name):
+                    error_msg = f"無法連接到服務器：{server_name}"
+                    if attempt < max_retries:
+                        logger.warning(f"⚠️ {error_msg}，準備重試...")
+                        await asyncio.sleep(1)  # 等待1秒後重試
+                        continue
+                    return {"success": False, "error": error_msg}
+                
+                process = self.processes[server_name]
+                
+                # 檢查進程狀態
+                if process.returncode is not None:
+                    logger.error(f"❌ 服務器進程已退出，返回碼：{process.returncode}")
+                    # 重置連接狀態，強制重新連接
+                    self.connections[server_name] = False
+                    if attempt < max_retries:
+                        continue
+                    return {"success": False, "error": f"服務器進程已退出 (code: {process.returncode})"}
+                
+                # 檢查連接狀態
+                if not self.connections.get(server_name):
+                    error_msg = "連接狀態異常"
+                    if attempt < max_retries:
+                        logger.warning(f"⚠️ {error_msg}，準備重新連接...")
+                        self.connections[server_name] = False
+                        continue
+                    return {"success": False, "error": error_msg}
+                
+                # 構建請求
+                request = {
+                    "jsonrpc": "2.0",
+                    "id": f"tool-call-{attempt}",
+                    "method": "tools/call",
+                    "params": {
+                        "name": tool_name,
+                        "arguments": parameters
+                    }
                 }
-            }
-            
-            request_json = json.dumps(request) + '\n'
-            process.stdin.write(request_json.encode())
-            await process.stdin.drain()
-            
-            response_line = await asyncio.wait_for(
-                process.stdout.readline(),
-                timeout=timeout
-            )
-            
-            if response_line:
-                response = json.loads(response_line.decode().strip())
-                if 'result' in response:
-                    logger.info(f"✅ 工具調用成功：{server_name}.{tool_name}")
-                    return {"success": True, "data": response['result']}
-                elif 'error' in response:
-                    logger.error(f"❌ 工具調用錯誤：{response['error']['message']}")
-                    return {"success": False, "error": response['error']['message']}
-            
-            return {"success": False, "error": "無響應"}
-            
-        except Exception as e:
-            logger.error(f"❌ 工具調用失敗 {server_name}.{tool_name}：{e}")
-            return {"success": False, "error": str(e)}
+                
+                # 發送請求
+                try:
+                    request_json = json.dumps(request) + '\n'
+                    process.stdin.write(request_json.encode())
+                    await process.stdin.drain()
+                except (BrokenPipeError, ConnectionError) as e:
+                    logger.error(f"❌ 寫入失敗：{e}")
+                    self.connections[server_name] = False
+                    if attempt < max_retries:
+                        continue
+                    return {"success": False, "error": f"通信失敗：{str(e)}"}
+                
+                # 等待響應
+                try:
+                    response_line = await asyncio.wait_for(
+                        process.stdout.readline(),
+                        timeout=timeout
+                    )
+                    
+                    if response_line:
+                        response_text = response_line.decode().strip()
+                        if not response_text:
+                            logger.warning("⚠️ 收到空響應")
+                            if attempt < max_retries:
+                                continue
+                            return {"success": False, "error": "空響應"}
+                        
+                        try:
+                            response = json.loads(response_text)
+                        except json.JSONDecodeError as e:
+                            logger.error(f"❌ JSON 解析失敗：{e}, 響應：{response_text[:100]}...")
+                            if attempt < max_retries:
+                                continue
+                            return {"success": False, "error": f"響應格式錯誤：{str(e)}"}
+                        
+                        if 'result' in response:
+                            logger.info(f"✅ 工具調用成功：{server_name}.{tool_name}")
+                            return {"success": True, "data": response['result']}
+                        elif 'error' in response:
+                            error_info = response['error']
+                            error_msg = error_info.get('message', '未知錯誤')
+                            error_code = error_info.get('code', 0)
+                            logger.error(f"❌ 工具調用錯誤 (code: {error_code})：{error_msg}")
+                            # 對於某些錯誤不重試
+                            if error_code in [-32600, -32601, -32602]:  # 無效請求、方法不存在、參數錯誤
+                                return {"success": False, "error": error_msg}
+                            elif attempt < max_retries:
+                                continue
+                            return {"success": False, "error": error_msg}
+                        else:
+                            logger.warning(f"⚠️ 意外的響應格式：{response}")
+                            if attempt < max_retries:
+                                continue
+                            return {"success": False, "error": "意外的響應格式"}
+                    else:
+                        logger.warning("⚠️ 無響應數據")
+                        if attempt < max_retries:
+                            continue
+                        return {"success": False, "error": "無響應數據"}
+                        
+                except asyncio.TimeoutError:
+                    logger.warning(f"⚠️ 響應超時 ({timeout}s)")
+                    if attempt < max_retries:
+                        continue
+                    return {"success": False, "error": f"響應超時 ({timeout}s)"}
+                
+            except Exception as e:
+                logger.error(f"❌ 工具調用異常 {server_name}.{tool_name} (嘗試 {attempt + 1})：{e}")
+                if attempt < max_retries:
+                    await asyncio.sleep(1)  # 等待後重試
+                    continue
+                return {"success": False, "error": f"工具調用失敗：{str(e)}"}
     
     async def list_tools(self, server_name: str = 'sqlite') -> Dict[str, Any]:
         """列出服務器工具"""
