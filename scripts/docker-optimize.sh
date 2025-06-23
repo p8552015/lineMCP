@@ -173,11 +173,11 @@ build_image() {
     )
     
     echo "執行建構命令:"
-    echo "docker buildx build ${build_args[@]} $BOT_DIR"
+    echo "docker buildx build ${build_args[@]} $PROJECT_ROOT"
     echo ""
     
-    # 執行建構
-    if docker buildx build "${build_args[@]}" "$BOT_DIR"; then
+    # 執行建構 (從專案根目錄)
+    if docker buildx build "${build_args[@]}" "$PROJECT_ROOT"; then
         print_success "$target 映像建構完成: $full_tag"
         
         # 顯示映像大小

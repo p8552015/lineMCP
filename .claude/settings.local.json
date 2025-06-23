@@ -57,7 +57,8 @@
       "Bash(./scripts/docker-optimize.sh:*)",
       "Bash(docker build:*)",
       "Bash(docker run:*)",
-      "Bash(docker stop:*)"
+      "Bash(docker stop:*)",
+      "Bash(DOCKER_PLATFORMS=\"linux/arm64\" ./scripts/docker-optimize.sh latest development)"
     ],
     "deny": []
   }
