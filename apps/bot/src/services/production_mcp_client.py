@@ -10,6 +10,7 @@ import os
 import selectors
 import json
 import structlog
+import time
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import sys
@@ -21,6 +22,7 @@ if str(config_path) not in sys.path:
     sys.path.insert(0, str(config_path))
 
 from ..config.mcp_config import get_mcp_config, get_server_config, validate_server_config
+from .mcp_connection_pool import get_connection_pool, ConnectionStatus
 
 logger = structlog.get_logger()
 mcp_config = get_mcp_config()
@@ -58,15 +60,33 @@ class ProductionMCPClient:
         self.processes: Dict[str, asyncio.subprocess.Process] = {}
         self.connections: Dict[str, bool] = {}
         
+        # 🏊 初始化連接池
+        self.connection_pool = get_connection_pool()
+        self._pool_started = False
+        
         # 應用 macOS 修復
         apply_macos_stdio_fix()
         
-        logger.info("✅ 生產級 MCP 客戶端初始化完成")
+        logger.info("✅ 生產級 MCP 客戶端初始化完成（含連接池）")
+    
+    async def _ensure_pool_started(self):
+        """確保連接池已啟動"""
+        if not self._pool_started:
+            await self.connection_pool.start()
+            self._pool_started = True
     
     async def connect_to_server(self, server_name: str = 'sqlite') -> bool:
-        """連接到 MCP 服務器 - 使用配置管理"""
-        if server_name in self.connections and self.connections[server_name]:
-            logger.info(f"🔄 重用現有連接：{server_name}")
+        """連接到 MCP 服務器 - 使用連接池管理"""
+        await self._ensure_pool_started()
+        
+        # 🏊 檢查連接池中的連接
+        connection_info = await self.connection_pool.get_connection(server_name)
+        if connection_info and connection_info.status == ConnectionStatus.CONNECTED:
+            # 同步到舊有的狀態管理
+            if connection_info.process:
+                self.processes[server_name] = connection_info.process
+                self.connections[server_name] = True
+            logger.info(f"🔄 重用連接池連接：{server_name}")
             return True
         
         # 獲取服務器配置
@@ -115,9 +135,19 @@ class ProductionMCPClient:
             if await self._test_communication(process, server_name):
                 self.processes[server_name] = process
                 self.connections[server_name] = True
+                
+                # 🏊 同步到連接池
+                if connection_info:
+                    connection_info.process = process
+                    connection_info.status = ConnectionStatus.CONNECTED
+                    connection_info.metrics.connection_count += 1
+                
                 logger.info(f"✅ MCP 連接成功：{server_name}")
                 return True
             else:
+                # 🏊 標記連接池失敗
+                if connection_info:
+                    connection_info.status = ConnectionStatus.FAILED
                 await self._cleanup_process(process)
                 return False
                 
@@ -237,10 +267,13 @@ class ProductionMCPClient:
             return False
     
     async def call_tool(self, server_name: str, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """調用工具 - 增強錯誤處理和重試機制"""
+        """調用工具 - 增強錯誤處理和重試機制 + 連接池監控"""
+        await self._ensure_pool_started()
+        
         server_config = get_server_config(server_name)
         timeout = server_config.timeout if server_config else 10
         max_retries = 2  # 最多重試2次
+        start_time = time.time()
         
         for attempt in range(max_retries + 1):
             try:
@@ -325,6 +358,10 @@ class ProductionMCPClient:
                             return {"success": False, "error": f"響應格式錯誤：{str(e)}"}
                         
                         if 'result' in response:
+                            # 🏊 記錄成功操作到連接池
+                            response_time = time.time() - start_time
+                            await self.connection_pool.record_success(server_name, response_time)
+                            
                             logger.info(f"✅ 工具調用成功：{server_name}.{tool_name}")
                             return {"success": True, "data": response['result']}
                         elif 'error' in response:
@@ -356,6 +393,9 @@ class ProductionMCPClient:
                     return {"success": False, "error": f"響應超時 ({timeout}s)"}
                 
             except Exception as e:
+                # 🏊 記錄失敗操作到連接池
+                await self.connection_pool.record_failure(server_name, str(e))
+                
                 logger.error(f"❌ 工具調用異常 {server_name}.{tool_name} (嘗試 {attempt + 1})：{e}")
                 if attempt < max_retries:
                     await asyncio.sleep(1)  # 等待後重試
@@ -432,7 +472,7 @@ class ProductionMCPClient:
         logger.info(f"✅ 已關閉連接：{server_name}")
     
     async def close_all_connections(self):
-        """關閉所有連接 - 與 ultimate-stdio-test.py 相同的邏輯"""
+        """關閉所有連接 - 與 ultimate-stdio-test.py 相同的邏輯 + 連接池清理"""
         logger.info("🔌 關閉所有 MCP 連接...")
         
         for server_name in list(self.processes.keys()):
@@ -441,7 +481,17 @@ class ProductionMCPClient:
         self.processes.clear()
         self.connections.clear()
         
-        logger.info("✅ 所有 MCP 連接已關閉（生產級清理完成）")
+        # 🏊 停止連接池
+        if self._pool_started:
+            await self.connection_pool.stop()
+            self._pool_started = False
+        
+        logger.info("✅ 所有 MCP 連接已關閉（生產級清理完成 + 連接池清理）")
+    
+    async def get_connection_pool_status(self) -> Dict[str, Any]:
+        """獲取連接池狀態"""
+        await self._ensure_pool_started()
+        return await self.connection_pool.get_pool_status()
 
 
 # 單例模式

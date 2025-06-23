@@ -173,6 +173,147 @@ async def test_endpoint():
     )
 
 
+@router.get("/health")
+async def health_check():
+    """
+    健康檢查端點 - T-08 實施
+    提供詳細的服務狀態、進程存活檢查和依賴服務監控
+    """
+    try:
+        health_status = {
+            "status": "healthy",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "service": "LINE MCP Bot",
+            "version": "v2.2",
+            "checks": {}
+        }
+        
+        # 1. 基本進程檢查
+        health_status["checks"]["process"] = {
+            "status": "ok",
+            "message": "Process is running"
+        }
+        
+        # 2. 服務工廠健康檢查
+        try:
+            factory_health = enhanced_factory.get_health_status()
+            health_status["checks"]["service_factory"] = {
+                "status": "ok" if factory_health.get("healthy", False) else "warning",
+                "services_count": factory_health.get("services_count", 0),
+                "message": f"Service factory operational with {factory_health.get('services_count', 0)} services"
+            }
+        except Exception as e:
+            health_status["checks"]["service_factory"] = {
+                "status": "error",
+                "message": f"Service factory check failed: {str(e)}"
+            }
+            health_status["status"] = "degraded"
+        
+        # 3. 訊息處理器健康檢查
+        try:
+            # 測試訊息處理器是否可用
+            if message_handler:
+                health_status["checks"]["message_handler"] = {
+                    "status": "ok",
+                    "message": "Message handler is available"
+                }
+            else:
+                health_status["checks"]["message_handler"] = {
+                    "status": "error", 
+                    "message": "Message handler not initialized"
+                }
+                health_status["status"] = "degraded"
+        except Exception as e:
+            health_status["checks"]["message_handler"] = {
+                "status": "error",
+                "message": f"Message handler check failed: {str(e)}"
+            }
+            health_status["status"] = "degraded"
+            
+        # 4. LINE API 配置檢查
+        try:
+            if settings.line_channel_access_token and settings.line_channel_secret:
+                health_status["checks"]["line_config"] = {
+                    "status": "ok",
+                    "message": "LINE API configuration is present"
+                }
+            else:
+                health_status["checks"]["line_config"] = {
+                    "status": "error",
+                    "message": "LINE API configuration missing"
+                }
+                health_status["status"] = "unhealthy"
+        except Exception as e:
+            health_status["checks"]["line_config"] = {
+                "status": "error",
+                "message": f"LINE config check failed: {str(e)}"
+            }
+            health_status["status"] = "degraded"
+        
+        # 5. AI 服務健康檢查
+        try:
+            ai_service = enhanced_factory.get_ai_service()
+            if ai_service:
+                health_status["checks"]["ai_service"] = {
+                    "status": "ok",
+                    "message": "AI service is available"
+                }
+            else:
+                health_status["checks"]["ai_service"] = {
+                    "status": "warning",
+                    "message": "AI service not available"
+                }
+                health_status["status"] = "degraded" if health_status["status"] == "healthy" else health_status["status"]
+        except Exception as e:
+            health_status["checks"]["ai_service"] = {
+                "status": "warning",
+                "message": f"AI service check failed: {str(e)}"
+            }
+            health_status["status"] = "degraded" if health_status["status"] == "healthy" else health_status["status"]
+        
+        # 6. NL-to-SQL 服務健康檢查
+        try:
+            nl_service = enhanced_factory.get_nl_service()
+            if nl_service:
+                health_status["checks"]["nl_to_sql"] = {
+                    "status": "ok",
+                    "message": "NL-to-SQL service is available"
+                }
+            else:
+                health_status["checks"]["nl_to_sql"] = {
+                    "status": "warning",
+                    "message": "NL-to-SQL service not available"
+                }
+                health_status["status"] = "degraded" if health_status["status"] == "healthy" else health_status["status"]
+        except Exception as e:
+            health_status["checks"]["nl_to_sql"] = {
+                "status": "warning",
+                "message": f"NL-to-SQL service check failed: {str(e)}"
+            }
+            health_status["status"] = "degraded" if health_status["status"] == "healthy" else health_status["status"]
+        
+        # 設置 HTTP 狀態碼
+        status_code = 200
+        if health_status["status"] == "degraded":
+            status_code = 200  # 仍可服務，但有警告
+        elif health_status["status"] == "unhealthy":
+            status_code = 503  # 服務不可用
+            
+        return JSONResponse(content=health_status, status_code=status_code)
+        
+    except Exception as e:
+        logger.error("Health check failed", error=str(e), exc_info=e)
+        return JSONResponse(
+            content={
+                "status": "unhealthy",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "error": "Health check system failure",
+                "message": str(e)
+            },
+            status_code=503
+        )
+
+
 async def handle_text_message_async(event: dict):
     """非同步處理 LINE 文字訊息事件 - 快速回應版本"""
     try:

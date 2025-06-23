@@ -120,18 +120,18 @@
 | T-01 | 環境準備與分支管理 | 創建 optimization-v1 分支，備份當前狀態，設置 Git 標記點 baseline-optimization-2025-06-23 | HIGH | Claude | DONE | 2025-06-23 14:15 | 2025-06-23 14:18 |
 | T-02 | 建立測試基線 | 執行完整測試套件，記錄當前效能基線，確保系統穩定 | HIGH | Claude | DONE | 2025-06-23 14:18 | 2025-06-23 14:30 |
 | T-03 | 錯誤處理鏈強化 | 修復 bot → http_bridge → server 錯誤傳遞鏈，實施統一異常格式，增加關鍵路徑 try-catch | HIGH | Claude | DONE | 2025-06-23 14:30 | 2025-06-23 14:45 |
-| T-04 | 空查詢防護機制 | 在 NL-to-SQL 解析前加入防護邏輯，實施輸入驗證機制，確保無空查詢問題 | HIGH | Claude | DOING | 2025-06-23 14:45 |  |
-| T-05 | MCP 連接穩定性監控 | 實施連接池管理，增加重試機制，加入連接狀態監控與自動恢復 | HIGH | Claude | TODO |  |  |
-| T-06 | 第一階段測試驗證 | 執行完整測試套件，驗證穩定性修復效果，確保錯誤率下降 50% | HIGH | Claude | TODO |  |  |
-| T-07 | NL-to-SQL 單元測試強化 | 為 parsers 目錄下各解析器編寫單元測試，專注邊界條件和回歸測試 | MEDIUM | Claude | TODO |  |  |
-| T-08 | 服務健康檢查端點 | 在 http_bridge.py 新增 /health 端點，實施進程存活檢查，建立健康監控機制 | MEDIUM | Claude | TODO |  |  |
-| T-09 | 統計服務類型安全強化 | 確保 QueryStatisticsService 的 timestamp/result 鍵一致性，實施防護機制 | MEDIUM | Claude | TODO |  |  |
-| T-10 | 第二階段測試驗證 | 執行完整回歸測試，驗證核心邏輯強化效果，確保測試覆蓋率達 85% | MEDIUM | Claude | TODO |  |  |
-| T-11 | 設定管理統一化 | 將 nl_to_sql YAML 設定整合到 mcp_config.py，實施環境變數標準化 | MEDIUM | Claude | TODO |  |  |
-| T-12 | DI 容器文件化 | 為 EnhancedServiceFactory 撰寫 ADR 文檔，建立新人上手指南與範例 | LOW | Claude | TODO |  |  |
-| T-13 | OpenAPI 規格評估 | 分析 bot 與 servers 通訊標準化的成本效益，制定實施計劃 | LOW | Claude | TODO |  |  |
-| T-14 | 最終測試與生產驗證 | 執行完整系統測試，運行 M001機台稼動率和查看所有機台查詢，確保生產就緒 | HIGH | Claude | TODO |  |  |
-| T-15 | 文檔更新與總結 | 更新 start-production.sh、CLAUDE.md 等文檔，產生優化總結報告 | LOW | Claude | TODO |  |  |
+| T-04 | 空查詢防護機制 | 在 NL-to-SQL 解析前加入防護邏輯，實施輸入驗證機制，確保無空查詢問題 | HIGH | Claude | DONE | 2025-06-23 14:45 | 2025-06-23 15:00 |
+| T-05 | MCP 連接穩定性監控 | 實施連接池管理，增加重試機制，加入連接狀態監控與自動恢復 | HIGH | Claude | DONE | 2025-06-23 15:40 | 2025-06-23 16:05 |
+| T-06 | 第一階段測試驗證 | 執行完整測試套件，驗證穩定性修復效果，確保錯誤率下降 50% | HIGH | Claude | DONE | 2025-06-23 16:05 | 2025-06-23 16:25 |
+| T-07 | NL-to-SQL 單元測試強化 | 為 parsers 目錄下各解析器編寫單元測試，專注邊界條件和回歸測試 | MEDIUM | Claude | DONE | 2025-06-23 16:25 | 2025-06-23 16:45 |
+| T-08 | 服務健康檢查端點 | 在 http_bridge.py 新增 /health 端點，實施進程存活檢查，建立健康監控機制 | MEDIUM | Claude | DONE | 2025-06-23 17:30 | 2025-06-23 17:35 |
+| T-09 | 統計服務類型安全強化 | 確保 QueryStatisticsService 的 timestamp/result 鍵一致性，實施防護機制 | MEDIUM | Claude | DONE | 2025-06-23 17:35 | 2025-06-23 17:40 |
+| T-10 | 第二階段測試驗證 | 執行完整回歸測試，驗證核心邏輯強化效果，確保測試覆蓋率達 85% | MEDIUM | Claude | DONE | 2025-06-23 17:40 | 2025-06-23 17:45 |
+| T-11 | 設定管理統一化 | 將 nl_to_sql YAML 設定整合到 mcp_config.py，實施環境變數標準化 | MEDIUM | Claude | DONE | 2025-06-23 17:45 | 2025-06-23 17:55 |
+| T-12 | DI 容器文件化 | 為 EnhancedServiceFactory 撰寫 ADR 文檔，建立新人上手指南與範例 | LOW | Claude | DONE | 2025-06-23 17:55 | 2025-06-23 18:05 |
+| T-13 | OpenAPI 規格評估 | 分析 bot 與 servers 通訊標準化的成本效益，制定實施計劃 | LOW | Claude | DONE | 2025-06-23 18:05 | 2025-06-23 18:15 |
+| T-14 | 最終測試與生產驗證 | 執行完整系統測試，運行 M001機台稼動率和查看所有機台查詢，確保生產就緒 | HIGH | Claude | DONE | 2025-06-23 18:15 | 2025-06-23 18:25 |
+| T-15 | 文檔更新與總結 | 更新 start-production.sh、CLAUDE.md 等文檔，產生優化總結報告 | LOW | Claude | DONE | 2025-06-23 18:25 | 2025-06-23 18:35 |
 <!-- TASKS END -->
 
 ## 回滾機制

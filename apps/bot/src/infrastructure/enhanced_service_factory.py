@@ -223,6 +223,29 @@ class EnhancedServiceFactory(IServiceFactory):
     def get_statistics(self) -> IStatistics:
         """獲取統計服務介面"""
         return self.get_required_service(IStatistics)
+    
+    def get_health_status(self) -> Dict[str, Any]:
+        """獲取服務工廠健康狀態"""
+        try:
+            registry_info = self.get_registry_info()
+            return {
+                "healthy": self._initialized and self._provider is not None,
+                "services_count": registry_info.get("total_services", 0),
+                "details": registry_info
+            }
+        except Exception as e:
+            return {
+                "healthy": False,
+                "services_count": 0,
+                "error": str(e)
+            }
+    
+    def get_ai_service(self) -> Optional[AIModelService]:
+        """獲取 AI 服務（用於健康檢查）"""
+        try:
+            return self.get_service(AIModelService)
+        except Exception:
+            return None
 
 
 # 全域增強版服務工廠實例
