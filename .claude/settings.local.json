@@ -41,7 +41,10 @@
       "mcp__zen__debug",
       "Bash(python test_t02_empty_query_fix.py)",
       "Bash(python:*)",
-      "Bash(# 暫時重命名有問題的測試文件，讓測試能跑起來\ncd apps/bot/tests\n\n# 備份有問題的測試\nmkdir -p .disabled_tests\n\n# 移動有問題的測試文件\nmv infrastructure/test_service_configuration.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_command_pattern_integration.py .disabled_tests/ 2>/dev/null || true  \nmv integration/test_error_handling_integration.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_error_handling_simple.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_flexbuilder_isolation.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_message_flow.py .disabled_tests/ 2>/dev/null || true\nmv unit/test_message_handler.py .disabled_tests/ 2>/dev/null || true\nmv unit/test_message_handler_di.py .disabled_tests/ 2>/dev/null || true\n\necho \"已禁用有問題的測試文件\")"
+      "Bash(# 暫時重命名有問題的測試文件，讓測試能跑起來\ncd apps/bot/tests\n\n# 備份有問題的測試\nmkdir -p .disabled_tests\n\n# 移動有問題的測試文件\nmv infrastructure/test_service_configuration.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_command_pattern_integration.py .disabled_tests/ 2>/dev/null || true  \nmv integration/test_error_handling_integration.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_error_handling_simple.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_flexbuilder_isolation.py .disabled_tests/ 2>/dev/null || true\nmv integration/test_message_flow.py .disabled_tests/ 2>/dev/null || true\nmv unit/test_message_handler.py .disabled_tests/ 2>/dev/null || true\nmv unit/test_message_handler_di.py .disabled_tests/ 2>/dev/null || true\n\necho \"已禁用有問題的測試文件\")",
+      "Bash(git restore:*)",
+      "Bash(git tag:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
