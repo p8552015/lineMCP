@@ -146,6 +146,15 @@ ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
   - M001機台稼動率查詢：✅ 通過 (信心度0.90)
   - 查看所有機台查詢：✅ 通過 (信心度0.85)
 
+### MCP KeyError 修復 (2025-06-23) ✅
+- **問題修復**: 解決 LINE Bot 實際接收訊息時出現的 `'sqlite'` KeyError
+- **根本原因**: 連接池狀態與實際進程狀態不同步
+- **修復內容**:
+  - 在 `call_tool` 方法中添加進程存在性檢查
+  - 修復 `connect_to_server` 方法的連接池同步邏輯
+  - 添加自動恢復機制和進程健康檢查
+- **測試驗證**: 通過系統自檢、生產測試和單元測試
+
 ### 測試策略
 - 使用 pytest + pytest-asyncio
 - Mock IServiceFactory 進行單元測試

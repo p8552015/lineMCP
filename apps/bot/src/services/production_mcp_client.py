@@ -79,6 +79,11 @@ class ProductionMCPClient:
         """連接到 MCP 服務器 - 使用連接池管理"""
         await self._ensure_pool_started()
         
+        # 先檢查現有進程健康狀態
+        if await self._verify_process_health(server_name):
+            logger.info(f"✅ 現有連接健康：{server_name}")
+            return True
+        
         # 🏊 檢查連接池中的連接
         connection_info = await self.connection_pool.get_connection(server_name)
         if connection_info and connection_info.status == ConnectionStatus.CONNECTED:
@@ -86,8 +91,13 @@ class ProductionMCPClient:
             if connection_info.process:
                 self.processes[server_name] = connection_info.process
                 self.connections[server_name] = True
-            logger.info(f"🔄 重用連接池連接：{server_name}")
-            return True
+                logger.info(f"🔄 重用連接池連接：{server_name}")
+                return True
+            else:
+                # 連接池狀態不一致，標記為斷開並繼續建立新連接
+                logger.warning(f"⚠️ 連接池返回 CONNECTED 但無進程，重建連接：{server_name}")
+                connection_info.status = ConnectionStatus.DISCONNECTED
+                # 繼續執行下面的連接邏輯
         
         # 獲取服務器配置
         server_config = get_server_config(server_name)
@@ -291,6 +301,19 @@ class ProductionMCPClient:
                         continue
                     return {"success": False, "error": error_msg}
                 
+                # 檢查進程是否存在於字典中
+                if server_name not in self.processes:
+                    logger.warning(f"⚠️ 進程不存在於字典中：{server_name}，強制重新連接")
+                    self.connections[server_name] = False
+                    # 清理連接池狀態
+                    connection_info = await self.connection_pool.get_connection(server_name)
+                    if connection_info:
+                        connection_info.status = ConnectionStatus.DISCONNECTED
+                    if attempt < max_retries:
+                        await asyncio.sleep(1)  # 等待1秒後重試
+                        continue
+                    return {"success": False, "error": f"進程未找到：{server_name}"}
+                
                 process = self.processes[server_name]
                 
                 # 檢查進程狀態
@@ -444,6 +467,28 @@ class ProductionMCPClient:
         except Exception as e:
             logger.error(f"❌ 列出工具失敗 {server_name}：{e}")
             return {"success": False, "error": str(e)}
+    
+    async def _verify_process_health(self, server_name: str) -> bool:
+        """驗證進程健康狀態"""
+        if server_name not in self.processes:
+            logger.debug(f"🔍 進程不存在於字典中：{server_name}")
+            return False
+        
+        process = self.processes[server_name]
+        if process.returncode is not None:
+            # 進程已退出
+            logger.warning(f"⚠️ 進程已退出：{server_name}，返回碼：{process.returncode}")
+            del self.processes[server_name]
+            self.connections[server_name] = False
+            # 同步更新連接池狀態
+            connection_info = await self.connection_pool.get_connection(server_name)
+            if connection_info:
+                connection_info.status = ConnectionStatus.FAILED
+                connection_info.process = None
+            return False
+        
+        logger.debug(f"✅ 進程健康：{server_name}")
+        return True
     
     async def _cleanup_process(self, process: asyncio.subprocess.Process):
         """清理進程 - 與 ultimate-stdio-test.py 相同的邏輯"""
