@@ -50,14 +50,13 @@ ENV POETRY_NO_INTERACTION=1 \
 # ================================
 FROM base AS deps-builder
 
-# 切換到應用用戶
-USER ${APP_USER}
+# 繼續以 root 身份安裝依賴
 
 # 複製 Poetry 配置檔案（利用 Docker 快取）
-COPY --chown=${APP_USER}:${APP_USER} pyproject.toml poetry.lock ./
+COPY apps/bot/pyproject.toml apps/bot/poetry.lock ./
 
 # 安裝生產依賴（無 dev 依賴）
-RUN poetry install --no-dev --no-interaction --no-ansi && \
+RUN poetry install --only main --no-interaction --no-ansi && \
     rm -rf $POETRY_CACHE_DIR
 
 # ================================
@@ -75,9 +74,9 @@ RUN poetry install --with dev --no-interaction --no-ansi && \
 FROM deps-builder AS app-builder
 
 # 複製應用程式碼
-COPY --chown=${APP_USER}:${APP_USER} src/ ./src/
-COPY --chown=${APP_USER}:${APP_USER} tests/ ./tests/
-COPY --chown=${APP_USER}:${APP_USER} *.py ./
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/src/ ./src/
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/tests/ ./tests/
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/*.py ./
 
 # 創建必要目錄
 RUN mkdir -p logs data temp && \
@@ -85,7 +84,7 @@ RUN mkdir -p logs data temp && \
 
 # 安裝應用（如果需要）
 RUN if [ -f "setup.py" ] || grep -q "build-backend" pyproject.toml; then \
-        poetry install --no-dev --no-interaction --no-ansi; \
+        poetry install --only main --no-interaction --no-ansi; \
     fi
 
 # ================================
@@ -167,7 +166,7 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 
 # 複製應用程式碼
-COPY --chown=${APP_USER}:${APP_USER} . .
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/ .
 
 # 切換到應用用戶
 USER ${APP_USER}
@@ -195,7 +194,7 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 
 # 複製應用程式碼
-COPY --chown=${APP_USER}:${APP_USER} . .
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/ .
 
 # 切換到應用用戶  
 USER ${APP_USER}

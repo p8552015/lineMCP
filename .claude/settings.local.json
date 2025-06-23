@@ -53,7 +53,11 @@
       "Bash(poetry install:*)",
       "Bash(pip install:*)",
       "Bash(detect-secrets:*)",
-      "Bash(./scripts/test-release.sh:*)"
+      "Bash(./scripts/test-release.sh:*)",
+      "Bash(./scripts/docker-optimize.sh:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker stop:*)"
     ],
     "deny": []
   }
