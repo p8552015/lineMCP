@@ -149,33 +149,29 @@ jobs:
       uses: snok/install-poetry@v1
       with:
         version: 1.8.0
-    
-    - name: Install dependencies
+
+    - name: Install bot dependencies
       working-directory: apps/bot
       run: poetry install --no-interaction --no-ansi
-    
-    - name: Set up Node.js for MCP servers
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: apps/servers/package-lock.json
+
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
     
     - name: Install MCP server dependencies
-      working-directory: apps/servers
-      run: npm ci
-    
-    - name: Build MCP servers
-      working-directory: apps/servers
-      run: npm run build --workspaces --if-present
-    
+      working-directory: apps/servers/src/sqlite
+      run: /home/runner/.cargo/bin/uv pip install -e .
+
     - name: Start SQLite MCP server in background
-      working-directory: apps/servers
+      working-directory: apps/servers/src/sqlite
       run: |
-        npm start --workspace=@mcp/sqlite &
+        /home/runner/.cargo/bin/uv run python http_bridge.py /tmp/test.db &
         echo $! > sqlite-mcp.pid
         sleep 5
     
+    - name: Wait for MCP service to be ready
+      run: |
+        timeout 30 bash -c 'until curl -f http://localhost:3003/health; do sleep 1; done'
+
     - name: Create MCP test environment
       working-directory: apps/bot
       run: |
@@ -187,7 +183,7 @@ jobs:
         AI_MODEL_PROVIDER=google
         REDIS_URL=redis://localhost:6379/1
         ASYNCIO_FORCE_SELECT_SELECTOR=1
-        MCP_SQLITE_SERVER_URL=stdio://npx @mcp/sqlite
+        MCP_SQLITE_SERVER_URL=http://localhost:3003
         EOF
     
     - name: Run MCP connection tests
@@ -205,8 +201,8 @@ jobs:
     - name: Stop MCP server
       if: always()
       run: |
-        if [ -f apps/servers/sqlite-mcp.pid ]; then
-          kill $(cat apps/servers/sqlite-mcp.pid) || true
+        if [ -f apps/servers/sqlite/sqlite-mcp.pid ]; then
+          kill $(cat apps/servers/sqlite/sqlite-mcp.pid) || true
         fi
     
     - name: Upload MCP test results

@@ -1,0 +1,60 @@
+{
+  "report_metadata": {
+    "generated_at": "2025-06-24T15:35:02.993424",
+    "report_type": "CI_MONITORING_REPAIR",
+    "version": "2.0",
+    "run_id": 15843833016
+  },
+  "workflow_info": {
+    "id": 15843833016,
+    "name": "Performance Testing",
+    "status": "completed",
+    "conclusion": "failure",
+    "head_branch": "main",
+    "head_sha": "d42bab7f",
+    "started_at": "2025-06-24T07:13:08Z",
+    "completed_at": "2025-06-24T07:14:39Z",
+    "html_url": "https://github.com/p8552015/lineMCP/actions/runs/15843833016"
+  },
+  "analysis": {
+    "total_jobs": 4,
+    "failed_jobs": [
+      {
+        "name": "Memory & Resource Profiling",
+        "conclusion": "failure",
+        "started_at": "2025-06-24T07:13:27Z",
+        "completed_at": "2025-06-24T07:13:50Z",
+        "html_url": "https://github.com/p8552015/lineMCP/actions/runs/15843833016/job/44661442439"
+      },
+      {
+        "name": "API Load Testing",
+        "conclusion": "failure",
+        "started_at": "2025-06-24T07:13:27Z",
+        "completed_at": "2025-06-24T07:14:29Z",
+        "html_url": "https://github.com/p8552015/lineMCP/actions/runs/15843833016/job/44661442445"
+      }
+    ],
+    "success_jobs": [
+      "Performance Test Setup",
+      "Performance Test Summary"
+    ],
+    "failure_patterns": {
+      "api_issues": true
+    },
+    "recommendations": [
+      "檢查 API 應用程式啟動和健康檢查"
+    ]
+  },
+  "repair_status": {
+    "architecture_fix_applied": true,
+    "mcp_server_fix_applied": true,
+    "health_check_improvements": true,
+    "error_handling_enhanced": true
+  },
+  "next_actions": [
+    "監控新的 CI 執行結果",
+    "驗證 MCP 整合測試穩定性",
+    "檢查 API 健康檢查性能",
+    "持續優化測試覆蓋率"
+  ]
+}

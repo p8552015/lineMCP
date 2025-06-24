@@ -363,6 +363,7 @@ class AutoFixGenerator:
                 actions=actions,
                 estimated_success_rate=0.4,
                 risk_assessment="low",
+                prerequisites=[],
                 rollback_plan="使用git revert回滾變更"
             )
             
@@ -508,6 +509,7 @@ class AutoFixGenerator:
             actions=actions,
             estimated_success_rate=0.9,
             risk_assessment="medium",
+            prerequisites=["Poetry環境可用"],
             rollback_plan="使用poetry.lock回滾依賴狀態"
         )
     
@@ -895,7 +897,10 @@ async def main():
         step_name="Run tests",
         problems=[test_problem],
         raw_logs="",
-        analysis_time=datetime.now().isoformat()
+        analysis_time=datetime.now().isoformat(),
+        total_problems=0,
+        critical_problems=0,
+        high_problems=0
     )
     
     print("🔧 開始測試自動修復生成器...")
