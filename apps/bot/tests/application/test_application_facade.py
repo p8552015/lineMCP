@@ -101,11 +101,11 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_process_message_with_metrics(self, application_facade):
         """測試訊息處理的監控指標"""
-        with patch.object(application_facade, "initialize"), patch.object(
-            application_facade, "_messaging_service"
-        ) as mock_msg_service, patch.object(
-            application_facade, "_monitoring_service"
-        ) as mock_mon_service:
+        with (
+            patch.object(application_facade, "initialize"),
+            patch.object(application_facade, "_messaging_service") as mock_msg_service,
+            patch.object(application_facade, "_monitoring_service") as mock_mon_service,
+        ):
             # 設置模擬
             mock_msg_service.process_message = AsyncMock(
                 return_value=TextMessage(text="test")
@@ -154,9 +154,10 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_get_system_health(self, application_facade):
         """測試系統健康檢查"""
-        with patch.object(application_facade, "initialize"), patch.object(
-            application_facade, "_monitoring_service"
-        ) as mock_service:
+        with (
+            patch.object(application_facade, "initialize"),
+            patch.object(application_facade, "_monitoring_service") as mock_service,
+        ):
             # 設置模擬
             expected_health = {
                 "overall_status": "healthy",
@@ -175,23 +176,15 @@ class TestApplicationFacade:
 
     def test_get_dashboard_data(self, application_facade):
         """測試儀表板數據獲取"""
-        with patch.object(
-            application_facade, "_monitoring_service"
-        ) as mock_mon_service, patch.object(
-            application_facade, "_messaging_service"
-        ) as mock_msg_service, patch.object(
-            application_facade, "_query_service"
-        ) as mock_query_service:
+        with (
+            patch.object(application_facade, "_monitoring_service") as mock_mon_service,
+            patch.object(application_facade, "_messaging_service") as mock_msg_service,
+            patch.object(application_facade, "_query_service") as mock_query_service,
+        ):
             # 設置模擬
-            mock_mon_service.get_dashboard_data.return_value = {
-                "metrics": "test"
-            }
-            mock_msg_service.get_processing_stats.return_value = {
-                "messages": 100
-            }
-            mock_query_service.get_query_statistics.return_value = {
-                "queries": 50
-            }
+            mock_mon_service.get_dashboard_data.return_value = {"metrics": "test"}
+            mock_msg_service.get_processing_stats.return_value = {"messages": 100}
+            mock_query_service.get_query_statistics.return_value = {"queries": 50}
             application_facade._initialized = True
 
             # 執行
@@ -282,11 +275,11 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_process_message_error_handling(self, application_facade):
         """測試處理訊息時的錯誤處理"""
-        with patch.object(application_facade, "initialize"), patch.object(
-            application_facade, "_messaging_service"
-        ) as mock_msg_service, patch.object(
-            application_facade, "_monitoring_service"
-        ) as mock_mon_service:
+        with (
+            patch.object(application_facade, "initialize"),
+            patch.object(application_facade, "_messaging_service") as mock_msg_service,
+            patch.object(application_facade, "_monitoring_service") as mock_mon_service,
+        ):
             # 設置服務拋出異常
             test_error = Exception("Test error")
             mock_msg_service.process_message = AsyncMock(side_effect=test_error)

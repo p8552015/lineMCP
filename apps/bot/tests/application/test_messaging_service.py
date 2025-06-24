@@ -75,9 +75,11 @@ class TestMessagingApplicationService:
     @pytest.mark.asyncio
     async def test_process_command_message(self, messaging_service):
         """測試處理指令訊息"""
-        with patch("src.models.commands.parse_command") as mock_parse, patch(
-            "src.application.messaging_service.CommandExecutor"
-        ) as MockExecutor, patch("src.utils.observability.get_tracer"):
+        with (
+            patch("src.models.commands.parse_command") as mock_parse,
+            patch("src.application.messaging_service.CommandExecutor") as MockExecutor,
+            patch("src.utils.observability.get_tracer"),
+        ):
             # 設置模擬
             mock_command = Mock(spec=Command)
             mock_command.name = "help"
@@ -101,9 +103,7 @@ class TestMessagingApplicationService:
             # 驗證
             assert isinstance(result, TextMessage)
             assert messaging_service._stats["command_messages"] == 1
-            mock_executor.execute_command.assert_called_once_with(
-                "test_user", "/help"
-            )
+            mock_executor.execute_command.assert_called_once_with("test_user", "/help")
 
     @pytest.mark.asyncio
     async def test_process_natural_language_message_success(
@@ -199,11 +199,13 @@ class TestMessagingApplicationService:
     @pytest.mark.asyncio
     async def test_process_message_error_handling(self, messaging_service):
         """測試訊息處理錯誤處理"""
-        with patch(
-            "src.infrastructure.error_handler.handle_error_gracefully"
-        ) as mock_handler, patch(
-            "src.application.messaging_service.CommandExecutor"
-        ) as MockExecutor, patch("src.utils.observability.get_tracer"):
+        with (
+            patch(
+                "src.infrastructure.error_handler.handle_error_gracefully"
+            ) as mock_handler,
+            patch("src.application.messaging_service.CommandExecutor") as MockExecutor,
+            patch("src.utils.observability.get_tracer"),
+        ):
             # 設置模擬拋出異常 - 讓 _update_user_session 拋出異常來觸發主 try-catch
             mock_handler.return_value = TextMessage(text="錯誤處理")
 

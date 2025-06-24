@@ -57,6 +57,11 @@ class QueryApplicationService(BaseApplicationService):
         self._query_history: list[dict[str, Any]] = []
         self._max_history_size = 100
 
+    async def _initialize_service(self) -> None:
+        """初始化查詢服務"""
+        # 初始化查詢快取和統計
+        self.logger.info("查詢服務初始化完成")
+
     async def execute_sql_query(
         self,
         query: str,
@@ -170,7 +175,7 @@ class QueryApplicationService(BaseApplicationService):
             )
 
             # 拋出領域異常
-            raise create_db_error(query, str(e), "SELECT")
+            raise create_db_error(query, str(e), "SELECT") from e
 
     def _validate_query(self, query: str) -> None:
         """

@@ -17,7 +17,7 @@ logger = structlog.get_logger()
 class MessageFormatter:
     """訊息格式化服務"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # 狀態圖示映射
         self.status_icons = {
             "high": "🟢",  # 高效率

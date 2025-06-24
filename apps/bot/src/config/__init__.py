@@ -2,6 +2,8 @@
 配置管理模組
 """
 
+import importlib.util
+
 from .mcp_config import (
     MCPClientConfig,
     MCPConfigManager,
@@ -15,7 +17,6 @@ from .mcp_config import (
 # 重新導出原配置模組的函數以保持向後相容
 def get_settings():
     """保持向後相容的設定函數"""
-    import sys
     from pathlib import Path
 
     # 動態導入避免循環依賴
@@ -25,9 +26,6 @@ def get_settings():
     spec.loader.exec_module(config_module)
 
     return config_module.get_settings()
-
-
-import importlib.util
 
 __all__ = [
     "get_settings",

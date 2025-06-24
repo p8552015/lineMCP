@@ -56,7 +56,11 @@ class InfoCommandHandler(CommandHandler):
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "system": {
                 "platform": platform.system(),
-                "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                "python_version": (
+                    f"{sys.version_info.major}."
+                    f"{sys.version_info.minor}."
+                    f"{sys.version_info.micro}"
+                ),
                 "architecture": platform.machine(),
             },
             "application": {

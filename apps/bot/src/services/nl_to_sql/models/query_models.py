@@ -31,7 +31,7 @@ class ParsedQuery:
     confidence: float  # 0-1，查詢解析的信心度
     explanation: str  # 查詢說明
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """資料驗證"""
         if not 0 <= self.confidence <= 1:
             raise ValueError(f"信心度必須在 0-1 範圍內，獲得: {self.confidence}")

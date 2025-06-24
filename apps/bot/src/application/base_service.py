@@ -3,7 +3,7 @@
 定義應用服務層的通用介面和行為
 """
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any
 
 import structlog
@@ -49,6 +49,7 @@ class BaseApplicationService(ABC):
         self._initialized = True
         self.logger.info("應用服務初始化完成")
 
+    @abstractmethod
     async def _initialize_service(self) -> None:
         """
         具體的初始化邏輯，由子類實現
@@ -141,6 +142,7 @@ class BaseApplicationService(ABC):
             self._initialized = False
             self.logger.info("應用服務已關閉")
 
+    @abstractmethod
     async def _shutdown_service(self) -> None:
         """
         具體的關閉邏輯，由子類實現

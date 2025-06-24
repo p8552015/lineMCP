@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import time
+from typing import Optional
 
 
 class SignatureValidator:
@@ -12,7 +13,7 @@ class SignatureValidator:
         self.is_development = env.lower() in ["development", "dev", "test"]
 
     def validate(
-        self, body: bytes, signature: str, timestamp: int = None
+        self, body: bytes, signature: str, timestamp: Optional[int] = None
     ) -> tuple[bool, str]:
         """
         驗證請求簽章

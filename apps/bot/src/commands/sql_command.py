@@ -107,7 +107,7 @@ class SqlCommandHandler(CommandHandler):
         except Exception as e:
             logger.error(f"SQL查詢執行失敗: {e}", exc_info=True)
             # 拋出領域異常，讓統一錯誤處理器處理
-            raise create_db_error(sql_query, str(e), "SELECT")
+            raise create_db_error(sql_query, str(e), "SELECT") from e
 
     def _format_sql_result(self, query: str, data: list[dict]) -> TextMessage:
         """格式化 SQL 查詢結果"""

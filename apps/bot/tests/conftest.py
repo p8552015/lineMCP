@@ -80,7 +80,6 @@ def mock_nl_service():
     """模擬自然語言處理服務"""
     from apps.bot.backup.nl_to_sql_service import QueryType
 
-
     service = AsyncMock()
     service.parse_natural_language.return_value = Mock(
         query_type=QueryType.MACHINE_STATUS,

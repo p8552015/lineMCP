@@ -51,7 +51,7 @@ class TablesCommandHandler(CommandHandler):
 
         except Exception as e:
             logger.error(f"資料表查詢失敗: {e}", exc_info=True)
-            raise create_db_error("SHOW TABLES", str(e), "SCHEMA")
+            raise create_db_error("SHOW TABLES", str(e), "SCHEMA") from e
 
     async def _list_all_tables(self) -> TextMessage:
         """列出所有資料表"""
