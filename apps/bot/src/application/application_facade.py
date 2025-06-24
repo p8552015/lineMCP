@@ -74,13 +74,26 @@ class ApplicationFacade:
     async def _create_application_services(self) -> None:
         """創建所有應用服務"""
         # 使用增強版服務工廠
-        self._messaging_service = self.service_factory.get_service(
-            MessagingApplicationService
-        )
-        self._query_service = self.service_factory.get_service(QueryApplicationService)
-        self._monitoring_service = self.service_factory.get_service(
-            MonitoringApplicationService
-        )
+        try:
+            self._messaging_service = self.service_factory.get_required_service(
+                MessagingApplicationService
+            )
+            self._query_service = self.service_factory.get_required_service(
+                QueryApplicationService
+            )
+            self._monitoring_service = self.service_factory.get_required_service(
+                MonitoringApplicationService
+            )
+        except Exception as e:
+            logger.error("創建應用服務失敗", error=str(e))
+            # 使用 get_service 作為回退
+            self._messaging_service = self.service_factory.get_service(
+                MessagingApplicationService
+            )
+            self._query_service = self.service_factory.get_service(QueryApplicationService)
+            self._monitoring_service = self.service_factory.get_service(
+                MonitoringApplicationService
+            )
 
     def _register_services(self) -> None:
         """註冊所有服務到應用上下文"""
@@ -349,17 +362,21 @@ class ApplicationFacade:
 _application_facade: ApplicationFacade | None = None
 
 
-def get_application_facade(service_factory: IServiceFactory) -> ApplicationFacade:
+def get_application_facade(service_factory: IServiceFactory | None = None) -> ApplicationFacade:
     """
     獲取全域應用門面實例
 
     Args:
-        service_factory: 實現 IServiceFactory 介面的服務工廠
+        service_factory: 實現 IServiceFactory 介面的服務工廠（可選）
 
     Returns:
         應用門面實例
     """
     global _application_facade
     if _application_facade is None:
+        if service_factory is None:
+            # 使用預設的增強版服務工廠
+            from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
+            service_factory = get_enhanced_service_factory()
         _application_facade = ApplicationFacade(service_factory)
     return _application_facade

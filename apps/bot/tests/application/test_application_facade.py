@@ -6,11 +6,19 @@ from unittest.mock import Mock, AsyncMock, patch
 from linebot.v3.messaging import Message, TextMessage
 
 from src.application.application_facade import ApplicationFacade, get_application_facade
+from src.application.messaging_service import MessagingApplicationService
+from src.application.monitoring_service import MonitoringApplicationService
+from src.application.query_service import QueryApplicationService
 from src.infrastructure.service_factory_interface import IServiceFactory
 
 
 class TestApplicationFacade:
     """應用服務門面測試"""
+    
+    def setup_method(self):
+        """每個測試前清理全域狀態"""
+        import src.application.application_facade
+        src.application.application_facade._application_facade = None
     
     @pytest.fixture
     def mock_service_factory(self):
@@ -21,6 +29,23 @@ class TestApplicationFacade:
         factory.initialize = Mock()
         factory.get_service = Mock()
         factory.get_required_service = Mock()
+        
+        # 設置唯一的服務名稱
+        mock_messaging = Mock()
+        mock_messaging.name = "test_messaging_service"
+        mock_messaging.initialize = AsyncMock()
+        mock_query = Mock()
+        mock_query.name = "test_query_service"
+        mock_query.initialize = AsyncMock()
+        mock_monitoring = Mock()
+        mock_monitoring.name = "test_monitoring_service"
+        mock_monitoring.initialize = AsyncMock()
+        
+        factory.get_required_service.side_effect = lambda service_type: {
+            MessagingApplicationService: mock_messaging,
+            QueryApplicationService: mock_query,
+            MonitoringApplicationService: mock_monitoring
+        }.get(service_type, Mock())
         
         return factory
     
@@ -270,15 +295,20 @@ class TestApplicationFacade:
         """測試全域門面實例"""
         # 清除現有實例
         import src.application.application_facade
+        original_facade = src.application.application_facade._application_facade
         src.application.application_facade._application_facade = None
         
-        # 獲取實例
-        facade1 = get_application_facade()
-        facade2 = get_application_facade()
-        
-        # 驗證單例模式
-        assert facade1 is facade2
-        assert isinstance(facade1, ApplicationFacade)
+        try:
+            # 獲取實例
+            facade1 = get_application_facade()
+            facade2 = get_application_facade()
+            
+            # 驗證單例模式
+            assert facade1 is facade2
+            assert isinstance(facade1, ApplicationFacade)
+        finally:
+            # 恢復原實例
+            src.application.application_facade._application_facade = original_facade
 
 
 class TestApplicationFacadeIntegration:
@@ -288,37 +318,47 @@ class TestApplicationFacadeIntegration:
     async def test_full_message_processing_flow(self):
         """測試完整的訊息處理流程"""
         # 使用真實的服務工廠但模擬底層依賴
-        with patch('src.infrastructure.service_factory.ServiceFactory') as MockFactory:
-            # 創建模擬工廠
-            mock_factory = Mock()
-            MockFactory.return_value = mock_factory
+        with patch('src.infrastructure.enhanced_service_factory.get_enhanced_service_factory') as mock_get_factory:
+            # 創建模擬工廠，實現 IServiceFactory 介面
+            mock_factory = Mock(spec=IServiceFactory)
+            mock_get_factory.return_value = mock_factory
             
-            # 設置模擬服務
-            mock_factory.get_mcp_client_factory = AsyncMock()
-            mock_factory.get_ai_model_service.return_value = Mock()
-            mock_factory.get_nl_service.return_value = Mock()
-            mock_factory.get_database_service.return_value = Mock()
-            mock_factory.get_message_formatter.return_value = Mock()
-            mock_factory.get_flex_builder.return_value = Mock()
-            mock_factory.get_openai_client.return_value = Mock()
+            # 設置 IServiceFactory 介面方法
+            mock_factory.initialize = Mock()
+            mock_factory.get_service = Mock()
+            mock_factory.get_required_service = Mock()
             
-            # 創建門面
-            facade = ApplicationFacade()
+            # 設置服務返回
+            mock_messaging_service = Mock(spec=MessagingApplicationService)
+            mock_messaging_service.name = "messaging_service"
+            mock_messaging_service.initialize = AsyncMock()
+            mock_query_service = Mock(spec=QueryApplicationService) 
+            mock_query_service.name = "query_service"
+            mock_query_service.initialize = AsyncMock()
+            mock_monitoring_service = Mock(spec=MonitoringApplicationService)
+            mock_monitoring_service.name = "monitoring_service"
+            mock_monitoring_service.initialize = AsyncMock()
             
-            # 模擬應用上下文
-            with patch('src.application.application_facade.get_application_context') as mock_context:
-                mock_context.return_value.initialize_all = AsyncMock()
-                mock_context.return_value.register_service = Mock()
-                
-                # 模擬 MCPResponseParser
-                with patch('src.services.mcp_response_parser.MCPResponseParser'):
-                    # 初始化門面
-                    await facade.initialize()
-                    
-                    # 驗證初始化成功
-                    assert facade.is_initialized
-                    
-                    # 驗證服務創建
-                    assert facade._messaging_service is not None
-                    assert facade._query_service is not None
-                    assert facade._monitoring_service is not None
+            mock_factory.get_required_service.side_effect = lambda service_type: {
+                MessagingApplicationService: mock_messaging_service,
+                QueryApplicationService: mock_query_service,
+                MonitoringApplicationService: mock_monitoring_service
+            }.get(service_type, Mock())
+            
+            # 清理全域狀態
+            import src.application.application_facade
+            src.application.application_facade._application_facade = None
+            
+            # 創建門面 - 使用全域函數
+            facade = get_application_facade()
+            
+            # 初始化門面
+            await facade.initialize()
+            
+            # 驗證初始化成功
+            assert facade.is_initialized
+            
+            # 驗證服務創建
+            assert facade._messaging_service is not None
+            assert facade._query_service is not None
+            assert facade._monitoring_service is not None
