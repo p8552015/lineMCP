@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "LINE OA integration with Remote MCP via OpenAI"
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -41,6 +42,7 @@ isort = "^5.13.0"
 radon = "^6.0.1"
 xenon = "^0.9.0"
 requests-mock = "^1.11.0"
+pytest-timeout = "^2.4.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -353,7 +353,9 @@ class MCPConfigManager:
             "ai_enhanced_parser_weight": (
                 self._nl_to_sql_config.ai_enhanced_parser_weight
             ),
-            "fallback_strategy_enabled": self._nl_to_sql_config.fallback_strategy_enabled,
+            "fallback_strategy_enabled": (
+                self._nl_to_sql_config.fallback_strategy_enabled
+            ),
             "fallback_threshold": self._nl_to_sql_config.fallback_threshold,
             "ai_service_timeout": self._nl_to_sql_config.ai_service_timeout,
             "ai_service_max_retries": self._nl_to_sql_config.ai_service_max_retries,
@@ -413,7 +415,9 @@ class MCPConfigManager:
                 "fallback_enabled": self._client_config.fallback_enabled,
             },
             "nl_to_sql": {
-                "confidence_threshold": self._nl_to_sql_config.default_confidence_threshold,
+                "confidence_threshold": (
+                    self._nl_to_sql_config.default_confidence_threshold
+                ),
                 "max_parse_time": self._nl_to_sql_config.max_parse_time,
                 "parallel_parsing": self._nl_to_sql_config.parallel_parsing_enabled,
                 "max_concurrent_parsers": self._nl_to_sql_config.max_concurrent_parsers,
@@ -449,7 +453,7 @@ def get_mcp_config() -> MCPConfigManager:
             import os
             from pathlib import Path
 
-            from pydantic_settings import BaseSettings, SettingsConfigDict
+            # from pydantic_settings import BaseSettings, SettingsConfigDict  # noqa: F401
 
             # 直接在這裡定義基本設定
             project_root = str(Path(__file__).parent.parent.parent.parent.parent)

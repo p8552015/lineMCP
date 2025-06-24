@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-06-25T00:30:00Z",
+  "environment": "ci",
+  "baselines": {
+    "api_endpoints": {
+      "/health": {
+        "p50_response_time_ms": 15,
+        "p95_response_time_ms": 50,
+        "p99_response_time_ms": 100,
+        "max_error_rate_percent": 0.1
+      },
+      "/webhook": {
+        "p50_response_time_ms": 200,
+        "p95_response_time_ms": 800,
+        "p99_response_time_ms": 1500,
+        "max_error_rate_percent": 1.0
+      },
+      "/status": {
+        "p50_response_time_ms": 100,
+        "p95_response_time_ms": 300,
+        "p99_response_time_ms": 600,
+        "max_error_rate_percent": 0.5
+      }
+    },
+    "database_queries": {
+      "machine_status": {
+        "p50_response_time_ms": 50,
+        "p95_response_time_ms": 200,
+        "p99_response_time_ms": 500,
+        "max_error_rate_percent": 0.1
+      },
+      "production_stats": {
+        "p50_response_time_ms": 100,
+        "p95_response_time_ms": 400,
+        "p99_response_time_ms": 800,
+        "max_error_rate_percent": 0.5
+      }
+    },
+    "system_resources": {
+      "memory_usage_percent": 75,
+      "cpu_usage_percent": 60,
+      "disk_usage_percent": 50
+    }
+  },
+  "test_configuration": {
+    "duration_seconds": 300,
+    "concurrent_users": 10,
+    "ramp_up_time_seconds": 30,
+    "think_time_seconds": 1
+  },
+  "notes": [
+    "Baseline established from initial CI/CD optimization project",
+    "Values represent acceptable performance thresholds",
+    "Should be updated quarterly or after major system changes"
+  ]
+}

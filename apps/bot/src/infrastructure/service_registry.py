@@ -375,7 +375,8 @@ class ServiceProvider(IServiceProvider):
             try:
                 sig = inspect.signature(implementation)
                 if len(sig.parameters) > 0:
-                    # 函數需要參數但這裡是 _auto_wire 路徑，可能應該使用 register_factory
+                    # 函數需要參數但這裡是 _auto_wire 路徑，
+                    # 可能應該使用 register_factory
                     # 降級為 debug 級別，避免干擾正常日誌
                     logger.debug(
                         "函數需要參數但使用了 _auto_wire 路徑",

@@ -157,9 +157,10 @@ class TestAPIEndpoints:
 
                     if response.status_code == 200:
                         content_type = response.headers.get("content-type", "")
-                        assert (
-                            expected_content_type in content_type
-                        ), f"端點 {endpoint} 的內容類型錯誤: 期望 {expected_content_type}, 實際 {content_type}"
+                        assert expected_content_type in content_type, (
+                            f"端點 {endpoint} 的內容類型錯誤: "
+                            f"期望 {expected_content_type}, 實際 {content_type}"
+                        )
 
             except httpx.ConnectError:
                 pytest.skip("應用程式未運行，跳過內容類型測試")

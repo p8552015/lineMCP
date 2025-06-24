@@ -3,15 +3,15 @@ FROM python:3.11-slim-bookworm
 WORKDIR /app
 
 # 安裝系統依賴
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    git \
-    curl \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc=4:12.2.0-3 \
+    g++=4:12.2.0-3 \
+    git=1:2.39.2-1.1 \
+    curl=7.88.1-10+deb12u8 \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 Poetry
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir poetry==1.8.3
 
 # 複製 Poetry 配置檔案
 COPY pyproject.toml poetry.lock ./

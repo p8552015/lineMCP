@@ -27,6 +27,7 @@ def get_settings():
 
     return config_module.get_settings()
 
+
 __all__ = [
     "get_settings",
     "MCPServerConfig",

@@ -79,7 +79,11 @@
       "Bash(./github-actions-detector.sh:*)",
       "Bash(PYTHONPATH:*)",
       "Bash(./analyze-github-errors.sh:*)",
-      "Bash(./fix-ci-issues.sh:*)"
+      "Bash(./fix-ci-issues.sh:*)",
+      "Bash(./auto-fix-quality.sh)",
+      "Bash(poetry add:*)",
+      "Bash(brew install:*)",
+      "Bash(hadolint:*)"
     ],
     "deny": []
   }

@@ -3,16 +3,16 @@ FROM python:3.11-slim-bookworm
 WORKDIR /app
 
 # 安裝系統依賴
-RUN apt-get update && apt-get install -y \
-    gcc \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc=4:12.2.0-3 \
     && rm -rf /var/lib/apt/lists/*
 
 # 安裝 Python 依賴
 RUN pip install --no-cache-dir \
-    mcp \
-    aiosqlite \
-    pydantic \
-    aiohttp
+    mcp==1.9.4 \
+    aiosqlite==0.20.0 \
+    pydantic==2.10.3 \
+    aiohttp==3.11.10
 
 # 複製 MCP SQLite 服務器代碼
 COPY . /app/

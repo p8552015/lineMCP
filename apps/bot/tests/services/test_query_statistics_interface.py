@@ -99,9 +99,7 @@ class TestQueryStatisticsInterface(unittest.TestCase):
 
         stats = self.service.get_parser_performance("test_parser")
         # 應該轉換為 1500 毫秒
-        self.assertAlmostEqual(
-            stats["performance_metrics"]["avg_parse_time"], 1500.0, places=1
-        )
+        assert abs(stats["performance_metrics"]["avg_parse_time"] - 1500.0) < 0.1
 
     def test_error_categorization(self):
         """測試錯誤分類功能"""
