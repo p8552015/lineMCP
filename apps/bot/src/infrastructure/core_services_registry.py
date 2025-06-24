@@ -7,6 +7,7 @@ from typing import Any
 
 import structlog
 
+from src.services.ai_model_service import AIModelService
 from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.mcp_response_parser import MCPResponseParser
 from src.services.message_formatter import MessageFormatter
@@ -30,6 +31,13 @@ def register_core_services(registry: ServiceRegistry) -> None:
     # AI 和 OpenAI 服務 - 使用增強版支援重試和備用模型
     registry.register_singleton(
         EnhancedAIModelService, tags=["core", "ai"], metadata={"description": "增強版 AI 模型服務 - 支援重試和備用模型"}
+    )
+    
+    # 註冊基類 AIModelService 指向增強版實現
+    registry.register_factory(
+        AIModelService,
+        lambda provider: provider.get_required_service(EnhancedAIModelService),
+        scope=ServiceScope.SINGLETON
     )
 
     registry.register_singleton(
@@ -58,4 +66,4 @@ def register_core_services(registry: ServiceRegistry) -> None:
         metadata={"description": "MCP 回應解析器"},
     )
 
-    logger.info("核心服務註冊完成", service_count=5)
+    logger.info("核心服務註冊完成", service_count=6)
