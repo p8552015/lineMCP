@@ -13,7 +13,6 @@ from src.domain.command_handler import (
     get_command_registry,
 )
 from src.domain.exceptions import create_command_error, create_validation_error
-from src.models.commands import parse_command
 
 logger = structlog.get_logger()
 
@@ -97,8 +96,10 @@ class CommandExecutor:
         if not self._initialized:
             self.initialize()
 
-        # 解析指令
-        command = parse_command(message_text)
+        # 解析指令（動態導入以便於測試中的 patch 生效）
+        from src.models import commands as _cmd_mod  # 延遲導入，避免靜態綁定
+
+        command = _cmd_mod.parse_command(message_text)
         if not command:
             raise create_command_error(message_text, "無法解析為有效指令")
 
