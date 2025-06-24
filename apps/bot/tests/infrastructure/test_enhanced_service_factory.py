@@ -9,7 +9,7 @@ from src.infrastructure.enhanced_service_factory import (
     get_enhanced_service_factory
 )
 from src.infrastructure.service_registry import ServiceRegistry, ServiceScope
-from src.services.ai_model_service import AIModelService
+from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.message_formatter import MessageFormatter
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 from src.application.messaging_service import MessagingApplicationService
@@ -53,11 +53,11 @@ class TestEnhancedServiceFactory:
         factory._register_core_services()
         
         # 驗證核心服務已註冊
-        assert registry.has_service(AIModelService)
+        assert registry.has_service(EnhancedAIModelService)
         assert registry.has_service(MessageFormatter)
         
         # 驗證標籤
-        ai_service_desc = registry.get_descriptor(AIModelService)
+        ai_service_desc = registry.get_descriptor(EnhancedAIModelService)
         assert "core" in ai_service_desc.tags
         assert "ai" in ai_service_desc.tags
     
@@ -67,9 +67,9 @@ class TestEnhancedServiceFactory:
         factory.initialize()
         
         # 獲取服務
-        ai_service = factory.get_service(AIModelService)
+        ai_service = factory.get_service(EnhancedAIModelService)
         assert ai_service is not None
-        assert isinstance(ai_service, AIModelService)
+        assert isinstance(ai_service, EnhancedAIModelService)
         
         # 獲取不存在的服務
         result = factory.get_service(str)  # 未註冊的服務
@@ -144,12 +144,12 @@ class TestEnhancedServiceFactory:
         factory.initialize()
         
         # 檢查單例服務
-        ai_desc = registry.get_descriptor(AIModelService)
+        ai_desc = registry.get_descriptor(EnhancedAIModelService)
         assert ai_desc.scope == ServiceScope.SINGLETON
         
         # 獲取單例服務多次應返回同一實例
-        ai1 = factory.get_service(AIModelService)
-        ai2 = factory.get_service(AIModelService)
+        ai1 = factory.get_service(EnhancedAIModelService)
+        ai2 = factory.get_service(EnhancedAIModelService)
         assert ai1 is ai2
     
     def test_service_tags_and_metadata(self, factory, registry):
@@ -170,7 +170,7 @@ class TestEnhancedServiceFactory:
         # 未初始化時調用 get_service 應自動初始化
         assert not factory._initialized
         
-        service = factory.get_service(AIModelService)
+        service = factory.get_service(EnhancedAIModelService)
         
         assert factory._initialized
         assert service is not None
@@ -252,10 +252,10 @@ class TestConfigurationIntegration:
         factory.initialize()
         
         # 驗證服務已註冊到自定義註冊表
-        assert custom_registry.has_service(AIModelService)
+        assert custom_registry.has_service(EnhancedAIModelService)
         
         # 獲取服務
-        service = factory.get_service(AIModelService)
+        service = factory.get_service(EnhancedAIModelService)
         assert service is not None
     
     def test_service_resolution_chain(self):
@@ -269,4 +269,4 @@ class TestConfigurationIntegration:
         # 驗證依賴鏈
         assert nl_service is not None
         assert nl_service.ai_model_service is not None
-        assert isinstance(nl_service.ai_model_service, AIModelService)
+        assert isinstance(nl_service.ai_model_service, EnhancedAIModelService)

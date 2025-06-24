@@ -8,8 +8,8 @@ import sys
 # 添加 src 到路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
 
-from services.production_mcp_client import ProductionMCPClient
-from infrastructure.enhanced_service_factory import EnhancedServiceFactory
+from src.services.production_mcp_client import ProductionMCPClient
+from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
 
 
 @pytest.fixture

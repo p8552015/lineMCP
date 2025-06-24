@@ -20,7 +20,7 @@ config_path = Path(__file__).parent.parent / "config"
 if str(config_path) not in sys.path:
     sys.path.insert(0, str(config_path))
 
-from ..config.mcp_config import (
+from src.config.mcp_config import (
     get_mcp_config,
     get_server_config,
     validate_server_config,

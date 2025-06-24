@@ -60,7 +60,10 @@
       "Bash(docker stop:*)",
       "Bash(DOCKER_PLATFORMS=\"linux/arm64\" ./scripts/docker-optimize.sh latest development)",
       "Bash(poetry show:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git branch:*)",
+      "Bash(git stash show:*)",
+      "Bash(git stash drop:*)"
     ],
     "deny": []
   }

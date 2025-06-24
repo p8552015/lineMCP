@@ -8,7 +8,7 @@ from typing import Any
 
 import structlog
 
-from src.services.ai_model_service import AIModelService
+from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.database_service import DatabaseService
 from src.services.message_formatter import MessageFormatter
 
@@ -163,9 +163,9 @@ class EnhancedServiceFactory(IServiceFactory):
         return info
 
     # 保持與原有 ServiceFactory 的兼容性
-    def get_ai_model_service(self) -> AIModelService:
+    def get_ai_model_service(self) -> EnhancedAIModelService:
         """獲取 AI 模型服務實例"""
-        return self.get_required_service(AIModelService)
+        return self.get_required_service(EnhancedAIModelService)
 
     def get_openai_client(self) -> OpenAIClient:
         """獲取 OpenAI 客戶端實例"""
@@ -245,10 +245,10 @@ class EnhancedServiceFactory(IServiceFactory):
         except Exception as e:
             return {"healthy": False, "services_count": 0, "error": str(e)}
 
-    def get_ai_service(self) -> AIModelService | None:
+    def get_ai_service(self) -> EnhancedAIModelService | None:
         """獲取 AI 服務（用於健康檢查）"""
         try:
-            return self.get_service(AIModelService)
+            return self.get_service(EnhancedAIModelService)
         except Exception:
             return None
 

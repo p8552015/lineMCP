@@ -191,14 +191,14 @@ class TestMessageHandlerCore:
         
         # 檢查服務類型
         from src.services.openai_client import OpenAIClient
-        from src.services.ai_model_service import AIModelService
+        from src.services.ai_model_service_enhanced import EnhancedAIModelService
         from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
         from src.services.database_service import DatabaseService
         from src.services.message_formatter import MessageFormatter
         from src.services.flex_builder import FlexBuilder
         
         assert isinstance(handler.openai_client, OpenAIClient)
-        assert isinstance(handler.ai_model_service, AIModelService)
+        assert isinstance(handler.ai_model_service, EnhancedAIModelService)
         assert isinstance(handler.nl_service, NaturalLanguageToSQLService)
         assert isinstance(handler.db_service, DatabaseService)
         assert isinstance(handler.formatter, MessageFormatter)

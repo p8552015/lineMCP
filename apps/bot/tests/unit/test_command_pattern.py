@@ -95,7 +95,7 @@ class TestCommandContext:
             nl_service=mock_nl_service,
             db_service=mock_db_service,
             formatter=mock_formatter,
-            flex_builder=mock_flex_builder
+            openai_client=Mock()
         )
         
         assert context.mcp_client_factory == mock_mcp_factory
@@ -103,7 +103,6 @@ class TestCommandContext:
         assert context.nl_service == mock_nl_service
         assert context.db_service == mock_db_service
         assert context.formatter == mock_formatter
-        assert context.flex_builder == mock_flex_builder
     
     @pytest.mark.asyncio
     async def test_command_context_get_mcp_client(self):
@@ -117,7 +116,7 @@ class TestCommandContext:
             nl_service=Mock(),
             db_service=Mock(),
             formatter=Mock(),
-            flex_builder=Mock()
+            openai_client=Mock()
         )
         
         client = await context.get_mcp_client()
@@ -223,7 +222,7 @@ class TestCommandExecutor:
             nl_service=Mock(),
             db_service=Mock(),
             formatter=Mock(),
-            flex_builder=Mock()
+            openai_client=Mock()
         )
     
     def test_command_executor_initialization(self, mock_context):

@@ -7,7 +7,7 @@ from typing import Any
 
 import structlog
 
-from src.services.ai_model_service import AIModelService
+from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.mcp_response_parser import MCPResponseParser
 from src.services.message_formatter import MessageFormatter
 from src.services.openai_client import OpenAIClient
@@ -27,9 +27,9 @@ def register_core_services(registry: ServiceRegistry) -> None:
     """
     logger.debug("開始註冊核心服務")
 
-    # AI 和 OpenAI 服務
+    # AI 和 OpenAI 服務 - 使用增強版支援重試和備用模型
     registry.register_singleton(
-        AIModelService, tags=["core", "ai"], metadata={"description": "AI 模型服務"}
+        EnhancedAIModelService, tags=["core", "ai"], metadata={"description": "增強版 AI 模型服務 - 支援重試和備用模型"}
     )
 
     registry.register_singleton(
