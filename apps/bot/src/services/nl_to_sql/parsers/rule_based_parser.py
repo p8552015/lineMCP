@@ -101,8 +101,14 @@ class RuleBasedParser(IParser):
                 machine_id = f"M{digits}"
             return self._create_machine_query(machine_id, text)
 
-        # 2. 按優先級檢查查詢模式
-        for query_type_name, pattern_config in self._query_patterns.items():
+        # 2. 按優先級檢查查詢模式（按信心度排序，高信心度優先）
+        sorted_patterns = sorted(
+            self._query_patterns.items(), 
+            key=lambda x: x[1].get("confidence", 0.7), 
+            reverse=True
+        )
+        
+        for query_type_name, pattern_config in sorted_patterns:
             try:
                 query_type = QueryType(query_type_name)
                 patterns = pattern_config.get("patterns", [])
