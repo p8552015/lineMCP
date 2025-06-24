@@ -211,26 +211,34 @@ class ProductionMCPClient:
             await process.stdin.drain()
 
             # 等待初始化響應
-            init_response = await asyncio.wait_for(
-                process.stdout.readline(), timeout=timeout
-            )
+            try:
+                init_response = await asyncio.wait_for(
+                    process.stdout.readline(), timeout=timeout
+                )
 
-            if init_response:
-                init_text = init_response.decode().strip()
-                init_data = json.loads(init_text)
-                if "error" in init_data:
-                    logger.error(f"❌ 初始化錯誤：{init_data['error']}")
-                    return False
+                if init_response:
+                    init_text = init_response.decode().strip()
+                    init_data = json.loads(init_text)
+                    if "error" in init_data:
+                        error_code = init_data["error"].get("code", "unknown")
+                        if error_code == -32601:  # Method not found
+                            logger.warning("⚠️ 服務器不支援 initialize 方法，跳過初始化")
+                        else:
+                            logger.error(f"❌ 初始化錯誤：{init_data['error']}")
+                            return False
+                    else:
+                        # 發送 initialized 通知（只有在初始化成功時）
+                        initialized_notif = {
+                            "jsonrpc": "2.0",
+                            "method": "notifications/initialized",
+                        }
 
-            # 發送 initialized 通知
-            initialized_notif = {
-                "jsonrpc": "2.0",
-                "method": "notifications/initialized",
-            }
-
-            notif_json = json.dumps(initialized_notif) + "\n"
-            process.stdin.write(notif_json.encode())
-            await process.stdin.drain()
+                        notif_json = json.dumps(initialized_notif) + "\n"
+                        process.stdin.write(notif_json.encode())
+                        await process.stdin.drain()
+                        
+            except (json.JSONDecodeError, asyncio.TimeoutError) as e:
+                logger.warning(f"⚠️ 初始化響應解析失敗，跳過：{e}")
 
             # 發送工具列表請求
             request = {

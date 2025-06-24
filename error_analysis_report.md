@@ -1,70 +1,40 @@
 # 🔍 GitHub Actions 錯誤分析報告
 
-**生成時間**: 2025-06-24 23:44:36  
+**生成時間**: 2025-06-25 00:43:19  
 **倉庫**: p8552015/lineMCP  
-**Run ID**: 15855015342  
-**Workflow**: Code Quality Checks  
+**Run ID**: 15855939195  
+**Workflow**: Enhanced CI  
 **分支**: hotfix/ci-dependencies-fix  
-**提交**: 7f8845d8  
+**提交**: 580b23c7  
 
 ## 📊 執行摘要
 
-- **總 Jobs**: 6
-- **失敗 Jobs**: 5
+- **總 Jobs**: 5
+- **失敗 Jobs**: 2
 - **觸發事件**: push
-- **執行時間**: 2025-06-24T15:38:29Z
+- **執行時間**: 2025-06-24T16:19:56Z
 
 ## ❌ 失敗的 Jobs
 
-### 🔴 Docker Quality Checks
+### 🔴 Python Tests & Coverage
 
-- **Job ID**: 44697994971
+- **Job ID**: 44701155682
 - **狀態**: completed
 - **結論**: failure
-- **開始時間**: 2025-06-24T15:38:32Z
-- **完成時間**: 2025-06-24T15:38:47Z
+- **開始時間**: 2025-06-24T16:20:00Z
+- **完成時間**: 2025-06-24T16:20:39Z
 
-⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44697994971/logs
+⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44701155682/logs
 
-### 🔴 Python Code Quality
+### 🔴 Test Summary
 
-- **Job ID**: 44697994987
+- **Job ID**: 44701205228
 - **狀態**: completed
 - **結論**: failure
-- **開始時間**: 2025-06-24T15:38:32Z
-- **完成時間**: 2025-06-24T15:39:01Z
+- **開始時間**: 2025-06-24T16:20:41Z
+- **完成時間**: 2025-06-24T16:20:44Z
 
-⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44697994987/logs
-
-### 🔴 Python Code Complexity
-
-- **Job ID**: 44697994999
-- **狀態**: completed
-- **結論**: failure
-- **開始時間**: 2025-06-24T15:38:32Z
-- **完成時間**: 2025-06-24T15:38:39Z
-
-⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44697994999/logs
-
-### 🔴 Documentation Quality
-
-- **Job ID**: 44697995091
-- **狀態**: completed
-- **結論**: failure
-- **開始時間**: 2025-06-24T15:38:32Z
-- **完成時間**: 2025-06-24T15:38:34Z
-
-⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44697995091/logs
-
-### 🔴 Quality Summary
-
-- **Job ID**: 44698038313
-- **狀態**: completed
-- **結論**: failure
-- **開始時間**: 2025-06-24T15:39:07Z
-- **完成時間**: 2025-06-24T15:39:09Z
-
-⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44698038313/logs
+⚠️ 無法分析此 job 的日誌: 403 Client Error: Forbidden for url: https://api.github.com/repos/p8552015/lineMCP/actions/jobs/44701205228/logs
 
 ## 🚀 快速修復
 

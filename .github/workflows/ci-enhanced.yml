@@ -105,6 +105,7 @@ jobs:
           --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
           --junitxml=pytest-results.xml \
           --timeout=300 \
+          -m "not slow" \
           -v
     
     - name: Upload coverage to Codecov

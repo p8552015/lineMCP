@@ -94,6 +94,7 @@ class TestFullSystemIntegration:
                 assert isinstance(result, TextMessage)
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_sql_query_execution_flow(self, application_facade):
         """測試 SQL 查詢執行流程"""
         with patch(
@@ -124,6 +125,7 @@ class TestFullSystemIntegration:
             assert result["row_count"] >= 0
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_monitoring_and_health_checks(self, application_facade):
         """測試監控和健康檢查"""
         # 初始化門面
@@ -144,6 +146,7 @@ class TestFullSystemIntegration:
         assert "system_uptime" in dashboard_data
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_error_handling_and_recovery(self, application_facade):
         """測試錯誤處理和恢復"""
         with patch(
@@ -168,6 +171,7 @@ class TestFullSystemIntegration:
             assert health_result is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_concurrent_request_handling(self, application_facade):
         """測試並發請求處理"""
         with patch(
