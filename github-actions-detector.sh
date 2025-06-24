@@ -48,7 +48,7 @@ log() {
     shift
     local message="$*"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo -e "${timestamp} [${level}] ${message}" | tee -a "${LOG_FILE}"
+    echo -e "${timestamp} [${level}] ${message}" | tee -a "${LOG_FILE}" >&2
 }
 
 log_info() { log "INFO" "$@"; }
@@ -89,7 +89,7 @@ detect_github_config() {
             local remote_url=$(git config --get remote.origin.url 2>/dev/null || echo "")
             if [[ "$remote_url" =~ github\.com[:/]([^/]+)/([^/]+)(\.git)?$ ]]; then
                 GITHUB_OWNER="${BASH_REMATCH[1]}"
-                GITHUB_REPO="${BASH_REMATCH[2]}"
+                GITHUB_REPO="${BASH_REMATCH[2]%.git}"  # 移除 .git 後綴
                 log_info "自動偵測 GitHub 倉庫: ${GITHUB_OWNER}/${GITHUB_REPO}"
             fi
         fi
@@ -104,10 +104,12 @@ detect_github_config() {
 
 check_github_token() {
     if [[ -z "$GITHUB_TOKEN" ]]; then
-        log_error "未設置 GITHUB_TOKEN 環境變數"
-        echo -e "${RED}請設置 GitHub Personal Access Token${NC}"
-        echo -e "${YELLOW}範例: export GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx${NC}"
-        exit 1
+        log_warn "未設置 GITHUB_TOKEN - 使用無認證模式（僅限公開倉庫）"
+        echo -e "${YELLOW}⚠️  使用無認證模式，某些功能可能受限${NC}"
+        echo -e "${YELLOW}建議設置: export GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx${NC}"
+        NO_AUTH_MODE=true
+    else
+        NO_AUTH_MODE=false
     fi
 }
 
@@ -120,12 +122,17 @@ github_api_call() {
     local method="${2:-GET}"
     local extra_headers="${3:-}"
     
-    local auth_header="Authorization: token ${GITHUB_TOKEN}"
     local accept_header="Accept: application/vnd.github.v3+json"
     local user_agent="User-Agent: github-actions-detector/1.0"
     
     local curl_cmd="curl -s -X ${method}"
-    curl_cmd+=" -H '${auth_header}'"
+    
+    # 只在有 token 時添加認證 header
+    if [[ "$NO_AUTH_MODE" != "true" ]] && [[ -n "$GITHUB_TOKEN" ]]; then
+        local auth_header="Authorization: token ${GITHUB_TOKEN}"
+        curl_cmd+=" -H '${auth_header}'"
+    fi
+    
     curl_cmd+=" -H '${accept_header}'"
     curl_cmd+=" -H '${user_agent}'"
     
@@ -142,9 +149,14 @@ github_api_call() {
     fi
     
     # 檢查是否有 API 錯誤
-    if echo "$response" | jq -e '.message' &>/dev/null; then
-        local error_msg=$(echo "$response" | jq -r '.message')
-        log_error "GitHub API 錯誤: ${error_msg}"
+    if echo "$response" | jq empty 2>/dev/null; then
+        if echo "$response" | jq -e '.message' &>/dev/null; then
+            local error_msg=$(echo "$response" | jq -r '.message')
+            log_error "GitHub API 錯誤: ${error_msg}"
+            return 1
+        fi
+    else
+        log_error "API 回應不是有效的 JSON"
         return 1
     fi
     
@@ -173,6 +185,12 @@ download_run_logs() {
     local run_id="$1"
     local output_dir="${SCRIPT_DIR}/logs"
     local zip_file="${output_dir}/run_${run_id}_logs.zip"
+    
+    # 在無認證模式下跳過日誌下載
+    if [[ "$NO_AUTH_MODE" == "true" ]]; then
+        log_warn "無認證模式下無法下載日誌"
+        return 1
+    fi
     
     mkdir -p "$output_dir"
     
@@ -214,7 +232,8 @@ analyze_workflow_status() {
     local workflows_json="$1"
     local total_workflows=0
     local active_workflows=0
-    local failed_workflows=()
+    # 使用全局變數來儲存失敗的 workflows
+    GLOBAL_FAILED_WORKFLOWS=()
     
     print_section "📊 Workflow 狀態分析"
     
@@ -250,7 +269,7 @@ analyze_workflow_status() {
                                 ;;
                             "failure")
                                 echo -e "${RED}❌ 失敗${NC}"
-                                failed_workflows+=("$name:$run_id")
+                                GLOBAL_FAILED_WORKFLOWS+=("$name:$run_id")
                                 ;;
                             "cancelled")
                                 echo -e "${YELLOW}⏹️  取消${NC}"
@@ -277,12 +296,12 @@ analyze_workflow_status() {
     echo -e "📈 統計資訊:"
     echo -e "  總計 workflows: ${total_workflows}"
     echo -e "  啟用中: ${GREEN}${active_workflows}${NC}"
-    echo -e "  失敗的: ${RED}${#failed_workflows[@]}${NC}"
+    echo -e "  失敗的: ${RED}${#GLOBAL_FAILED_WORKFLOWS[@]}${NC}"
     
     # 分析失敗的 workflows
-    if [[ ${#failed_workflows[@]} -gt 0 ]]; then
+    if [[ ${#GLOBAL_FAILED_WORKFLOWS[@]} -gt 0 ]]; then
         print_section "🔍 失敗分析"
-        for failed in "${failed_workflows[@]}"; do
+        for failed in "${GLOBAL_FAILED_WORKFLOWS[@]}"; do
             local workflow_name="${failed%:*}"
             local run_id="${failed#*:}"
             analyze_failed_run "$workflow_name" "$run_id"
@@ -641,19 +660,23 @@ EOF
     > "$LOG_FILE"
     
     # 執行檢測
-    local failed_workflows=()
+    # 初始化全局失敗 workflows 陣列
+    GLOBAL_FAILED_WORKFLOWS=()
     
     if [[ "$generate_report_only" != true ]]; then
         log_info "開始執行 GitHub Actions 檢測..."
         
         local workflows_json
+        
         if workflows_json=$(get_workflows); then
             analyze_workflow_status "$workflows_json"
             
-            # 提取失敗的 workflows 資訊 (這部分需要在 analyze_workflow_status 中收集)
-            # 暫時使用空陣列，實際實作中需要修改 analyze_workflow_status 回傳失敗資訊
-            
-            generate_improvement_suggestions "${failed_workflows[@]}"
+            # 使用全局變數中收集的失敗 workflows
+            if [[ ${#GLOBAL_FAILED_WORKFLOWS[@]} -gt 0 ]]; then
+                generate_improvement_suggestions "${GLOBAL_FAILED_WORKFLOWS[@]}"
+            else
+                generate_improvement_suggestions
+            fi
         else
             log_error "無法取得 workflows 資訊"
             exit 1
@@ -661,14 +684,18 @@ EOF
     fi
     
     # 生成報告
-    generate_report "${failed_workflows[@]}"
+    if [[ ${#GLOBAL_FAILED_WORKFLOWS[@]} -gt 0 ]]; then
+        generate_report "${GLOBAL_FAILED_WORKFLOWS[@]}"
+    else
+        generate_report
+    fi
     
     print_section "✅ 檢測完成"
     echo -e "詳細日誌: ${LOG_FILE}"
     echo -e "狀態報告: ${REPORT_FILE}"
     
-    if [[ ${#failed_workflows[@]} -gt 0 ]]; then
-        echo -e "\\n${RED}⚠️  發現 ${#failed_workflows[@]} 個失敗的 workflows，需要修復${NC}"
+    if [[ ${#GLOBAL_FAILED_WORKFLOWS[@]} -gt 0 ]]; then
+        echo -e "\\n${RED}⚠️  發現 ${#GLOBAL_FAILED_WORKFLOWS[@]} 個失敗的 workflows，需要修復${NC}"
         exit 1
     else
         echo -e "\\n${GREEN}🎉 所有 workflows 狀態正常！${NC}"
