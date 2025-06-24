@@ -1,0 +1,70 @@
+{
+  "fix_solutions": [
+    {
+      "problem_id": "dependency_requests_mock",
+      "description": "添加缺失的requests_mock依賴",
+      "priority": "high",
+      "actions": [
+        {
+          "type": "file_edit",
+          "target": "apps/bot/pyproject.toml",
+          "description": "在dev dependencies中添加requests_mock",
+          "changes": [
+            {
+              "search": "[tool.poetry.group.dev.dependencies]",
+              "replace": "[tool.poetry.group.dev.dependencies]\nrequests-mock = \"^1.11.0\""
+            }
+          ]
+        }
+      ],
+      "test_command": "cd apps/bot && poetry install",
+      "risk_level": "low"
+    },
+    {
+      "problem_id": "pytest_timeout",
+      "description": "修復pytest超時問題",
+      "priority": "high", 
+      "actions": [
+        {
+          "type": "file_edit",
+          "target": ".github/workflows/ci-enhanced.yml",
+          "description": "增加pytest超時設置",
+          "changes": [
+            {
+              "search": "poetry run pytest tests/",
+              "replace": "poetry run pytest tests/ --timeout=600"
+            }
+          ]
+        }
+      ],
+      "test_command": "echo 'CI配置已更新'",
+      "risk_level": "low"
+    },
+    {
+      "problem_id": "test_api_auth",
+      "description": "修復API測試認證問題",
+      "priority": "medium",
+      "actions": [
+        {
+          "type": "file_edit", 
+          "target": "apps/bot/tests/conftest.py",
+          "description": "確保測試環境使用正確的認證設置",
+          "changes": [
+            {
+              "search": "LINE_CHANNEL_ACCESS_TOKEN=test_token",
+              "replace": "LINE_CHANNEL_ACCESS_TOKEN=valid_test_token_with_proper_format"
+            }
+          ]
+        }
+      ],
+      "test_command": "cd apps/bot && poetry run pytest tests/integration/ -v",
+      "risk_level": "medium"
+    }
+  ],
+  "summary": {
+    "total_fixes": 3,
+    "high_priority": 2,
+    "medium_priority": 1,
+    "estimated_time": "15 minutes"
+  }
+}

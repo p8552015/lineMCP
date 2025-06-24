@@ -64,10 +64,10 @@ jobs:
       working-directory: apps/bot
       run: |
         cat > .env.test << EOF
-        LINE_CHANNEL_ACCESS_TOKEN=test_token
-        LINE_CHANNEL_SECRET=test_secret
-        GOOGLE_API_KEY=test_google_key
-        OPENAI_API_KEY=test_openai_key
+        LINE_CHANNEL_ACCESS_TOKEN=test_channel_access_token_with_proper_length_for_testing_purposes_only_not_real
+        LINE_CHANNEL_SECRET=test_channel_secret_32_characters_long
+        GOOGLE_API_KEY=test_google_api_key_for_testing_only
+        OPENAI_API_KEY=sk-test-openai-api-key-for-testing-purposes-only
         AI_MODEL_PROVIDER=google
         REDIS_URL=redis://localhost:6379/1
         ASYNCIO_FORCE_SELECT_SELECTOR=1
@@ -90,6 +90,7 @@ jobs:
           --cov-report=term-missing \
           --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
           --junitxml=pytest-results.xml \
+          --timeout=600 \
           -v
     
     - name: Upload coverage to Codecov
@@ -194,12 +195,14 @@ jobs:
       working-directory: apps/bot
       run: |
         poetry run pytest tests/integration/test_mcp_connection.py -v \
+          --timeout=300 \
           --junitxml=mcp-test-results.xml
     
     - name: Run MCP query tests
       working-directory: apps/bot
       run: |
         poetry run pytest tests/integration/test_mcp_queries.py -v \
+          --timeout=300 \
           --junitxml=mcp-query-results.xml
     
     - name: Stop MCP server
@@ -256,10 +259,10 @@ jobs:
       working-directory: apps/bot
       run: |
         cat > .env.test << EOF
-        LINE_CHANNEL_ACCESS_TOKEN=test_token
-        LINE_CHANNEL_SECRET=test_secret
-        GOOGLE_API_KEY=test_google_key
-        OPENAI_API_KEY=test_openai_key
+        LINE_CHANNEL_ACCESS_TOKEN=test_channel_access_token_with_proper_length_for_testing_purposes_only_not_real
+        LINE_CHANNEL_SECRET=test_channel_secret_32_characters_long
+        GOOGLE_API_KEY=test_google_api_key_for_testing_only
+        OPENAI_API_KEY=sk-test-openai-api-key-for-testing-purposes-only
         AI_MODEL_PROVIDER=google
         REDIS_URL=redis://localhost:6379/1
         ASYNCIO_FORCE_SELECT_SELECTOR=1
@@ -280,12 +283,14 @@ jobs:
       working-directory: apps/bot
       run: |
         poetry run pytest tests/integration/test_api_endpoints.py -v \
+          --timeout=300 \
           --junitxml=api-test-results.xml
     
     - name: Run webhook tests
       working-directory: apps/bot
       run: |
         poetry run pytest tests/integration/test_webhook.py -v \
+          --timeout=300 \
           --junitxml=webhook-test-results.xml
     
     - name: Stop FastAPI application
