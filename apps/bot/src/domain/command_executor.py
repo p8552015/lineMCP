@@ -124,7 +124,7 @@ class CommandExecutor:
 
             return result
 
-        except KeyError:
+        except KeyError as e:
             # 指令不存在
             available_commands = [h.command_name for h in self.registry.list_commands()]
 
@@ -135,7 +135,7 @@ class CommandExecutor:
             raise create_command_error(
                 command.name,
                 f"未知的指令，可用指令：{', '.join(available_commands[:5])}",
-            )
+            ) from e
 
         except Exception as e:
             # 指令執行失敗

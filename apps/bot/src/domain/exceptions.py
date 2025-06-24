@@ -6,7 +6,7 @@
 from typing import Any
 
 
-class BotException(Exception):
+class BotError(Exception):
     """
     Bot 應用的基礎異常類型
     所有自定義異常都應該繼承自此類
@@ -44,7 +44,7 @@ class BotException(Exception):
         }
 
 
-class ValidationException(BotException):
+class ValidationException(BotError):
     """輸入驗證異常"""
 
     def __init__(self, field: str, value: Any, reason: str):
@@ -60,7 +60,7 @@ class ValidationException(BotException):
         )
 
 
-class CommandParsingException(BotException):
+class CommandParsingException(BotError):
     """指令解析異常"""
 
     def __init__(self, command: str, reason: str):
@@ -74,7 +74,7 @@ class CommandParsingException(BotException):
         )
 
 
-class DatabaseQueryException(BotException):
+class DatabaseQueryException(BotError):
     """資料庫查詢異常"""
 
     def __init__(self, query: str, reason: str, query_type: str | None = None):
@@ -92,7 +92,7 @@ class DatabaseQueryException(BotException):
         )
 
 
-class MCPConnectionException(BotException):
+class MCPConnectionException(BotError):
     """MCP 連接異常"""
 
     def __init__(self, server: str, operation: str, reason: str):
@@ -106,7 +106,7 @@ class MCPConnectionException(BotException):
         )
 
 
-class AIServiceException(BotException):
+class AIServiceException(BotError):
     """AI 服務異常"""
 
     def __init__(self, service: str, operation: str, reason: str):
@@ -120,7 +120,7 @@ class AIServiceException(BotException):
         )
 
 
-class AuthenticationException(BotException):
+class AuthenticationException(BotError):
     """認證異常"""
 
     def __init__(self, reason: str):
@@ -134,7 +134,7 @@ class AuthenticationException(BotException):
         )
 
 
-class RateLimitException(BotException):
+class RateLimitException(BotError):
     """速率限制異常"""
 
     def __init__(self, limit: int, window: str, current_count: int):
@@ -148,7 +148,7 @@ class RateLimitException(BotException):
         )
 
 
-class ConfigurationException(BotException):
+class ConfigurationException(BotError):
     """配置異常"""
 
     def __init__(self, config_name: str, reason: str):
@@ -162,7 +162,7 @@ class ConfigurationException(BotException):
         )
 
 
-class BusinessLogicException(BotException):
+class BusinessLogicException(BotError):
     """業務邏輯異常"""
 
     def __init__(self, operation: str, reason: str, user_message: str | None = None):
@@ -176,7 +176,7 @@ class BusinessLogicException(BotException):
         )
 
 
-class ExternalServiceException(BotException):
+class ExternalServiceException(BotError):
     """外部服務異常"""
 
     def __init__(

@@ -3,27 +3,39 @@ from typing import Any
 
 def get_mcp_manifest() -> dict[str, Any]:
     """
-    Returns the MCP tools manifest for Context7 documentation queries and PostgreSQL database operations.
+    Returns the MCP tools manifest for Context7 documentation queries
+    and PostgreSQL database operations.
     This defines the available tools that can be called via OpenAI's function calling.
     """
     return {
         "search_docs": {
-            "description": "Search for up-to-date documentation and code examples using Context7",
+            "description": (
+                "Search for up-to-date documentation and code examples using Context7"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Search query for documentation (e.g., 'Next.js app router', 'React hooks', 'Python FastAPI')",
+                        "description": (
+                            "Search query for documentation (e.g., 'Next.js app router', "
+                            "'React hooks', 'Python FastAPI')"
+                        ),
                     },
                     "framework": {
                         "type": "string",
-                        "description": "Optional framework or technology to focus on (e.g., 'react', 'nextjs', 'python', 'fastapi')",
+                        "description": (
+                            "Optional framework or technology to focus on "
+                            "(e.g., 'react', 'nextjs', 'python', 'fastapi')"
+                        ),
                         "default": "",
                     },
                     "language": {
                         "type": "string",
-                        "description": "Programming language to focus on (e.g., 'javascript', 'python', 'typescript')",
+                        "description": (
+                            "Programming language to focus on "
+                            "(e.g., 'javascript', 'python', 'typescript')"
+                        ),
                         "default": "",
                     },
                 },

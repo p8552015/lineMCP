@@ -4,6 +4,7 @@ MCP 配置管理
 統一管理所有 MCP 相關配置，取代分散的配置文件
 """
 
+import contextlib
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -207,11 +208,8 @@ class MCPConfigManager:
 
         for env_var, (config_key, converter) in env_mappings.items():
             if env_var in os.environ:
-                try:
+                with contextlib.suppress(ValueError, TypeError):
                     env_config[config_key] = converter(os.environ[env_var])
-                except (ValueError, TypeError):
-                    # 靜默忽略轉換錯誤，保持預設值
-                    pass
 
         return env_config
 
@@ -341,14 +339,20 @@ class MCPConfigManager:
     def get_nl_to_sql_config_dict(self) -> dict[str, Any]:
         """獲取 NL-to-SQL 配置的字典格式"""
         return {
-            "default_confidence_threshold": self._nl_to_sql_config.default_confidence_threshold,
+            "default_confidence_threshold": (
+                self._nl_to_sql_config.default_confidence_threshold
+            ),
             "max_parse_time": self._nl_to_sql_config.max_parse_time,
             "verbose_logging": self._nl_to_sql_config.verbose_logging,
             "parallel_parsing_enabled": self._nl_to_sql_config.parallel_parsing_enabled,
             "max_concurrent_parsers": self._nl_to_sql_config.max_concurrent_parsers,
             "timeout_per_parser": self._nl_to_sql_config.timeout_per_parser,
-            "rule_based_parser_weight": self._nl_to_sql_config.rule_based_parser_weight,
-            "ai_enhanced_parser_weight": self._nl_to_sql_config.ai_enhanced_parser_weight,
+            "rule_based_parser_weight": (
+                self._nl_to_sql_config.rule_based_parser_weight
+            ),
+            "ai_enhanced_parser_weight": (
+                self._nl_to_sql_config.ai_enhanced_parser_weight
+            ),
             "fallback_strategy_enabled": self._nl_to_sql_config.fallback_strategy_enabled,
             "fallback_threshold": self._nl_to_sql_config.fallback_threshold,
             "ai_service_timeout": self._nl_to_sql_config.ai_service_timeout,

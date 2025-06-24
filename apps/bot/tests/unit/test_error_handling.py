@@ -8,7 +8,7 @@ from linebot.v3.messaging import TextMessage
 
 from src.domain.exceptions import (
     AIServiceException,
-    BotException,
+    BotError,
     CommandParsingException,
     DatabaseQueryException,
     MCPConnectionException,
@@ -33,7 +33,7 @@ class TestCustomExceptions:
 
     def test_bot_exception_basic(self):
         """測試基礎 Bot 異常"""
-        error = BotException("Technical error", "User friendly message")
+        error = BotError("Technical error", "User friendly message")
 
         assert str(error) == "Technical error"
         assert error.user_message == "User friendly message"
@@ -43,7 +43,7 @@ class TestCustomExceptions:
     def test_bot_exception_with_details(self):
         """測試帶詳細資訊的 Bot 異常"""
         details = {"field": "email", "value": "invalid"}
-        error = BotException(
+        error = BotError(
             "Validation failed",
             "輸入格式錯誤",
             details=details,
@@ -54,7 +54,7 @@ class TestCustomExceptions:
         assert error.error_code == "VALIDATION_001"
 
         error_dict = error.to_dict()
-        assert error_dict["error_type"] == "BotException"
+        assert error_dict["error_type"] == "BotError"
         assert error_dict["message"] == "Validation failed"
         assert error_dict["user_message"] == "輸入格式錯誤"
         assert error_dict["details"] == details

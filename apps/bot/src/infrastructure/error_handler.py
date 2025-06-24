@@ -12,7 +12,7 @@ from linebot.v3.messaging import TextMessage
 from src.domain.exceptions import (
     AIServiceException,
     AuthenticationException,
-    BotException,
+    BotError,
     BusinessLogicException,
     CommandParsingException,
     ConfigurationException,
@@ -72,12 +72,12 @@ class UnifiedErrorHandler:
         self._log_error(error, context)
 
         # 生成用戶回應
-        if isinstance(error, BotException):
+        if isinstance(error, BotError):
             return self._handle_bot_exception(error)
         else:
             return self._handle_system_exception(error)
 
-    def _handle_bot_exception(self, error: BotException) -> TextMessage:
+    def _handle_bot_exception(self, error: BotError) -> TextMessage:
         """處理自定義 Bot 異常"""
         icon = self._error_icons.get(type(error), "❌")
         message = f"{icon} {error.user_message}"
@@ -135,7 +135,7 @@ class UnifiedErrorHandler:
         }
 
         # 如果是自定義異常，記錄額外資訊
-        if isinstance(error, BotException):
+        if isinstance(error, BotError):
             error_data.update(error.to_dict())
 
         # 對於嚴重錯誤，記錄完整的堆疊追蹤

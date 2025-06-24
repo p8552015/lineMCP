@@ -6,7 +6,7 @@
 from .exceptions import (
     AIServiceException,
     AuthenticationException,
-    BotException,
+    BotError,
     BusinessLogicException,
     CommandParsingException,
     ConfigurationException,
@@ -23,7 +23,7 @@ from .exceptions import (
 )
 
 __all__ = [
-    "BotException",
+    "BotError",
     "ValidationException",
     "CommandParsingException",
     "DatabaseQueryException",
