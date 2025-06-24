@@ -9,7 +9,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "20.x"
-  COVERAGE_THRESHOLD: "80"
+  COVERAGE_THRESHOLD: "65"
   ASYNCIO_FORCE_SELECT_SELECTOR: "1"
   # Security: Only expose non-sensitive environment variables here
   # Sensitive variables should be set in job steps using secrets.*

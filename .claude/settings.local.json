@@ -67,7 +67,8 @@
       "Bash(gh api:*)",
       "Bash(gh run list:*)",
       "Bash(open https://github.com/p8552015/lineMCP/actions)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(poetry --version)"
     ],
     "deny": []
   }
