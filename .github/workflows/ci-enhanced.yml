@@ -11,6 +11,8 @@ env:
   NODE_VERSION: "20.x"
   COVERAGE_THRESHOLD: "80"
   ASYNCIO_FORCE_SELECT_SELECTOR: "1"
+  # Security: Only expose non-sensitive environment variables here
+  # Sensitive variables should be set in job steps using secrets.*
 
 jobs:
   python-tests:
@@ -73,6 +75,13 @@ jobs:
     
     - name: Run unit tests with coverage
       working-directory: apps/bot
+      env:
+        # Test environment variables from secrets
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       run: |
         poetry run pytest tests/ \
           --cov=src \

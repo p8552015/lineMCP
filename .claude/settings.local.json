@@ -63,7 +63,11 @@
       "Bash(bash:*)",
       "Bash(git branch:*)",
       "Bash(git stash show:*)",
-      "Bash(git stash drop:*)"
+      "Bash(git stash drop:*)",
+      "Bash(gh api:*)",
+      "Bash(gh run list:*)",
+      "Bash(open https://github.com/p8552015/lineMCP/actions)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
