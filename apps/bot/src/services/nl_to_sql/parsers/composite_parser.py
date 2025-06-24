@@ -91,7 +91,7 @@ class CompositeParser(IParser):
         """
         for i, parser in enumerate(self._parsers):
             if parser.__class__.__name__ == parser_class_name:
-                removed_parser = self._parsers.pop(i)
+                self._parsers.pop(i)
                 self._strategy_weights.pop(parser_class_name, None)
 
                 logger.info(

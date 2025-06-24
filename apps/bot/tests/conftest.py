@@ -3,10 +3,11 @@ Pytest 配置和共用 fixtures
 """
 
 import asyncio
-import pytest
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
+
+import pytest
 
 # 添加 src 到 Python path
 src_path = Path(__file__).parent.parent / "src"
@@ -78,7 +79,7 @@ def mock_database_service():
 def mock_nl_service():
     """模擬自然語言處理服務"""
     from apps.bot.backup.nl_to_sql_service import QueryType
-    from src.models.commands import Command
+
 
     service = AsyncMock()
     service.parse_natural_language.return_value = Mock(

@@ -2,8 +2,9 @@
 測試訊息處理應用服務
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from linebot.v3.messaging import TextMessage
 
 from src.application.messaging_service import MessagingApplicationService
@@ -74,37 +75,35 @@ class TestMessagingApplicationService:
     @pytest.mark.asyncio
     async def test_process_command_message(self, messaging_service):
         """測試處理指令訊息"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            with patch(
-                "src.application.messaging_service.CommandExecutor"
-            ) as MockExecutor:
-                with patch("src.utils.observability.get_tracer"):
-                    # 設置模擬
-                    mock_command = Mock(spec=Command)
-                    mock_command.name = "help"
-                    mock_parse.return_value = mock_command
+        with patch("src.models.commands.parse_command") as mock_parse, patch(
+            "src.application.messaging_service.CommandExecutor"
+        ) as MockExecutor, patch("src.utils.observability.get_tracer"):
+            # 設置模擬
+            mock_command = Mock(spec=Command)
+            mock_command.name = "help"
+            mock_parse.return_value = mock_command
 
-                    mock_executor = Mock()
-                    mock_executor.execute_command = AsyncMock(
-                        return_value=TextMessage(text="help response")
-                    )
-                    MockExecutor.return_value = mock_executor
-                    messaging_service._command_executor = mock_executor
-                    messaging_service._initialized = True
+            mock_executor = Mock()
+            mock_executor.execute_command = AsyncMock(
+                return_value=TextMessage(text="help response")
+            )
+            MockExecutor.return_value = mock_executor
+            messaging_service._command_executor = mock_executor
+            messaging_service._initialized = True
 
-                    # 執行
-                    result = await messaging_service.process_message(
-                        user_id="test_user",
-                        message_text="/help",
-                        reply_token="test_token",
-                    )
+            # 執行
+            result = await messaging_service.process_message(
+                user_id="test_user",
+                message_text="/help",
+                reply_token="test_token",
+            )
 
-                    # 驗證
-                    assert isinstance(result, TextMessage)
-                    assert messaging_service._stats["command_messages"] == 1
-                    mock_executor.execute_command.assert_called_once_with(
-                        "test_user", "/help"
-                    )
+            # 驗證
+            assert isinstance(result, TextMessage)
+            assert messaging_service._stats["command_messages"] == 1
+            mock_executor.execute_command.assert_called_once_with(
+                "test_user", "/help"
+            )
 
     @pytest.mark.asyncio
     async def test_process_natural_language_message_success(
@@ -202,43 +201,41 @@ class TestMessagingApplicationService:
         """測試訊息處理錯誤處理"""
         with patch(
             "src.infrastructure.error_handler.handle_error_gracefully"
-        ) as mock_handler:
-            with patch(
-                "src.application.messaging_service.CommandExecutor"
-            ) as MockExecutor:
-                with patch("src.utils.observability.get_tracer"):
-                    # 設置模擬拋出異常 - 讓 _update_user_session 拋出異常來觸發主 try-catch
-                    mock_handler.return_value = TextMessage(text="錯誤處理")
+        ) as mock_handler, patch(
+            "src.application.messaging_service.CommandExecutor"
+        ) as MockExecutor, patch("src.utils.observability.get_tracer"):
+            # 設置模擬拋出異常 - 讓 _update_user_session 拋出異常來觸發主 try-catch
+            mock_handler.return_value = TextMessage(text="錯誤處理")
 
-                    # 創建模擬的指令執行器
-                    mock_executor = Mock()
-                    mock_executor.initialize = Mock()
-                    MockExecutor.return_value = mock_executor
+            # 創建模擬的指令執行器
+            mock_executor = Mock()
+            mock_executor.initialize = Mock()
+            MockExecutor.return_value = mock_executor
 
-                    messaging_service._initialized = True
-                    messaging_service._command_executor = mock_executor
+            messaging_service._initialized = True
+            messaging_service._command_executor = mock_executor
 
-                    # 讓 _update_user_session 拋出異常來測試錯誤處理
-                    original_update_session = messaging_service._update_user_session
-                    messaging_service._update_user_session = Mock(
-                        side_effect=Exception("Session update error")
-                    )
+            # 讓 _update_user_session 拋出異常來測試錯誤處理
+            original_update_session = messaging_service._update_user_session
+            messaging_service._update_user_session = Mock(
+                side_effect=Exception("Session update error")
+            )
 
-                    try:
-                        # 執行
-                        result = await messaging_service.process_message(
-                            user_id="test_user",
-                            message_text="test message",
-                            reply_token="test_token",
-                        )
+            try:
+                # 執行
+                result = await messaging_service.process_message(
+                    user_id="test_user",
+                    message_text="test message",
+                    reply_token="test_token",
+                )
 
-                        # 驗證
-                        assert isinstance(result, TextMessage)
-                        assert messaging_service._stats["error_messages"] == 1
-                        mock_handler.assert_called_once()
-                    finally:
-                        # 恢復原始方法
-                        messaging_service._update_user_session = original_update_session
+                # 驗證
+                assert isinstance(result, TextMessage)
+                assert messaging_service._stats["error_messages"] == 1
+                mock_handler.assert_called_once()
+            finally:
+                # 恢復原始方法
+                messaging_service._update_user_session = original_update_session
 
     def test_classify_message_command(self, messaging_service):
         """測試訊息分類 - 指令"""
@@ -346,7 +343,7 @@ class TestMessagingApplicationService:
     @pytest.mark.asyncio
     async def test_health_checks(self, messaging_service):
         """測試健康檢查"""
-        with patch("src.domain.command_executor.CommandExecutor") as MockExecutor:
+        with patch("src.domain.command_executor.CommandExecutor"):
             # 設置模擬指令執行器
             mock_executor = Mock()
             mock_executor.get_command_info.return_value = {

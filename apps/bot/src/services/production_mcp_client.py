@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-生產級 MCP 客戶端 
+生產級 MCP 客戶端
 基於 ultimate-stdio-test.py 的成功模式 1:1 複製而成
 """
 
@@ -25,6 +25,7 @@ from src.config.mcp_config import (
     get_server_config,
     validate_server_config,
 )
+
 from .mcp_connection_pool import ConnectionStatus, get_connection_pool
 
 logger = structlog.get_logger()

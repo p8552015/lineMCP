@@ -95,10 +95,7 @@ class RuleBasedParser(IParser):
         if machine_match:
             # 2-3位數補零到3位，4位數保持原樣
             digits = machine_match.group(1)
-            if len(digits) <= 3:
-                machine_id = f"M{digits.zfill(3)}"
-            else:
-                machine_id = f"M{digits}"
+            machine_id = f"M{digits.zfill(3)}" if len(digits) <= 3 else f"M{digits}"
             return self._create_machine_query(machine_id, text)
 
         # 2. 按優先級檢查查詢模式（按信心度排序，高信心度優先）
@@ -155,7 +152,7 @@ class RuleBasedParser(IParser):
 
         # 檢查查詢模式匹配
         max_confidence = 0.0
-        for query_type_name, pattern_config in self._query_patterns.items():
+        for _query_type_name, pattern_config in self._query_patterns.items():
             patterns = pattern_config.get("patterns", [])
             confidence = pattern_config.get("confidence", 0.7)
 
@@ -337,7 +334,7 @@ class RuleBasedParser(IParser):
             List[QueryType]: 支援的查詢類型列表
         """
         supported_types = []
-        for query_type_name in self._query_patterns.keys():
+        for query_type_name in self._query_patterns:
             try:
                 query_type = QueryType(query_type_name)
                 supported_types.append(query_type)

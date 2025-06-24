@@ -1,10 +1,11 @@
 """API 端點整合測試"""
 
-import pytest
-import httpx
 import asyncio
 import os
 import sys
+
+import httpx
+import pytest
 
 # 添加 src 到路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
@@ -199,7 +200,7 @@ class TestAPIEndpoints:
             try:
                 # 發送多個併發請求
                 tasks = []
-                for i in range(5):
+                for _i in range(5):
                     task = client.get(f"{self.BASE_URL}/health")
                     tasks.append(task)
 
@@ -214,7 +215,7 @@ class TestAPIEndpoints:
                         and response.status_code == 200
                     ):
                         successful_responses += 1
-                    elif isinstance(response, (httpx.ConnectError, Exception)):
+                    elif isinstance(response, httpx.ConnectError | Exception):
                         connection_errors += 1
 
                 # 如果所有請求都是連接錯誤，跳過測試

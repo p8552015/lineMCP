@@ -2,15 +2,14 @@
 測試服務註冊表
 """
 
-import pytest
 from typing import Protocol
-from unittest.mock import Mock
+
+import pytest
 
 from src.infrastructure.service_registry import (
-    ServiceRegistry,
     ServiceProvider,
+    ServiceRegistry,
     ServiceScope,
-    ServiceDescriptor,
     get_service_registry,
 )
 

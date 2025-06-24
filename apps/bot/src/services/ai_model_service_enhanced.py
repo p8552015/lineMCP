@@ -77,10 +77,7 @@ class RateLimiter:
             return False
 
         # 檢查每小時限制
-        if len(calls) >= config.rate_limit_per_hour:
-            return False
-
-        return True
+        return not len(calls) >= config.rate_limit_per_hour
 
     def record_call(self, model_name: str):
         """記錄 API 調用"""
@@ -246,7 +243,7 @@ class EnhancedAIModelService:
 
                 # 如果還有其他模型可以嘗試，繼續
                 if attempt_model != models_to_try[-1]:
-                    logger.info(f"🔄 切換到下一個備用模型")
+                    logger.info("🔄 切換到下一個備用模型")
                     continue
 
         # 所有模型都失敗了

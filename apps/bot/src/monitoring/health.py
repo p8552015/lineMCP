@@ -3,17 +3,17 @@
 提供詳細的系統健康狀態監控
 """
 
-import asyncio
 import time
-from typing import Dict, Any, Optional
-from datetime import datetime, timezone
-import psutil
+from datetime import UTC, datetime
+from typing import Any
+
 import httpx
-from fastapi import APIRouter, HTTPException, Depends
+import psutil
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ..infrastructure.i_service_factory import IServiceFactory
 from ..infrastructure.enhanced_service_factory import EnhancedServiceFactory
+from ..infrastructure.i_service_factory import IServiceFactory
 
 
 class HealthStatus(BaseModel):
@@ -23,8 +23,8 @@ class HealthStatus(BaseModel):
     timestamp: datetime
     version: str
     uptime: float
-    checks: Dict[str, Any]
-    metrics: Dict[str, Any]
+    checks: dict[str, Any]
+    metrics: dict[str, Any]
 
 
 class HealthChecker:
@@ -72,14 +72,14 @@ class HealthChecker:
 
         return HealthStatus(
             status=overall_status,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             version="0.1.0",  # TODO: 從配置或環境變數讀取
             uptime=time.time() - self.start_time,
             checks=checks,
             metrics=metrics,
         )
 
-    async def _check_system(self) -> Dict[str, Any]:
+    async def _check_system(self) -> dict[str, Any]:
         """檢查系統資源"""
         try:
             # CPU 使用率
@@ -106,7 +106,7 @@ class HealthChecker:
         except Exception as e:
             return {"healthy": False, "error": str(e)}
 
-    async def _check_database(self) -> Dict[str, Any]:
+    async def _check_database(self) -> dict[str, Any]:
         """檢查資料庫連接"""
         try:
             # TODO: 實現實際資料庫檢查
@@ -119,7 +119,7 @@ class HealthChecker:
         except Exception as e:
             return {"healthy": False, "error": str(e)}
 
-    async def _check_redis(self) -> Dict[str, Any]:
+    async def _check_redis(self) -> dict[str, Any]:
         """檢查 Redis 連接"""
         try:
             # TODO: 實現實際 Redis 檢查
@@ -132,11 +132,11 @@ class HealthChecker:
         except Exception as e:
             return {"healthy": False, "error": str(e)}
 
-    async def _check_mcp(self) -> Dict[str, Any]:
+    async def _check_mcp(self) -> dict[str, Any]:
         """檢查 MCP 服務連接"""
         try:
             # 嘗試連接 MCP 服務
-            mcp_client = self.service_factory.get_unified_mcp_client()
+            self.service_factory.get_unified_mcp_client()
 
             # 簡單的連接測試
             start_time = time.time()
@@ -152,10 +152,10 @@ class HealthChecker:
         except Exception as e:
             return {"healthy": False, "error": str(e)}
 
-    async def _check_ai_models(self) -> Dict[str, Any]:
+    async def _check_ai_models(self) -> dict[str, Any]:
         """檢查 AI 模型服務"""
         try:
-            ai_service = self.service_factory.get_ai_service()
+            self.service_factory.get_ai_service()
 
             # 測試模型可用性
             start_time = time.time()
@@ -171,7 +171,7 @@ class HealthChecker:
         except Exception as e:
             return {"healthy": False, "error": str(e)}
 
-    async def _check_external_apis(self) -> Dict[str, Any]:
+    async def _check_external_apis(self) -> dict[str, Any]:
         """檢查外部 API 連接"""
         checks = {}
 
@@ -216,7 +216,7 @@ class HealthChecker:
 
         return {"healthy": healthy, "checks": checks}
 
-    async def _collect_metrics(self) -> Dict[str, Any]:
+    async def _collect_metrics(self) -> dict[str, Any]:
         """收集系統指標"""
         try:
             # 進程信息
@@ -240,7 +240,7 @@ class HealthChecker:
                     / 1024,
                     "disk_total_gb": psutil.disk_usage("/").total / 1024 / 1024 / 1024,
                     "boot_time": datetime.fromtimestamp(
-                        psutil.boot_time(), tz=timezone.utc
+                        psutil.boot_time(), tz=UTC
                     ).isoformat(),
                 },
             }
@@ -290,7 +290,7 @@ async def ping():
     簡單的 ping 端點
     用於快速存活檢查
     """
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc)}
+    return {"status": "ok", "timestamp": datetime.now(UTC)}
 
 
 @router.get("/ready")
@@ -325,7 +325,7 @@ async def readiness_check(checker: HealthChecker = Depends(get_health_checker)):
                 },
             )
 
-        return {"ready": True, "timestamp": datetime.now(timezone.utc)}
+        return {"ready": True, "timestamp": datetime.now(UTC)}
     except HTTPException:
         raise
     except Exception as e:
@@ -340,6 +340,6 @@ async def liveness_check():
     """
     return {
         "alive": True,
-        "timestamp": datetime.now(timezone.utc),
+        "timestamp": datetime.now(UTC),
         "pid": psutil.Process().pid,
     }

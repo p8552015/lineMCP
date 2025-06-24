@@ -7,24 +7,24 @@ import pytest
 from linebot.v3.messaging import TextMessage
 
 from src.domain.exceptions import (
+    AIServiceException,
     BotException,
-    ValidationException,
     CommandParsingException,
     DatabaseQueryException,
     MCPConnectionException,
-    AIServiceException,
-    create_validation_error,
+    ValidationException,
+    create_ai_error,
     create_command_error,
     create_db_error,
     create_mcp_error,
-    create_ai_error,
+    create_validation_error,
 )
 from src.infrastructure.error_handler import (
-    UnifiedErrorHandler,
     ErrorHandlerMiddleware,
+    UnifiedErrorHandler,
+    create_error_middleware,
     get_error_handler,
     handle_error_gracefully,
-    create_error_middleware,
 )
 
 
@@ -255,7 +255,6 @@ class TestUnifiedErrorHandler:
 
     def test_error_logging(self, error_handler, caplog):
         """測試錯誤日誌記錄"""
-        import logging
 
         # 由於我們使用 structlog，這個測試主要驗證不會拋出異常
         # 並且可以看到 stdout 中有日誌輸出（已在測試輸出中確認）

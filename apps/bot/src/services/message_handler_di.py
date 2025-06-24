@@ -8,10 +8,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 import structlog
-from linebot.v3.messaging import (
-    Message,
-    TextMessage,
-)
+from linebot.v3.messaging import Message, TextMessage
 
 from src.models.commands import Command, parse_command
 from src.utils.observability import get_tracer
@@ -89,7 +86,7 @@ class MessageHandlerDI:
         """同步版本的訊息處理，避免 event loop 衝突"""
         try:
             # 如果已經在 event loop 中，直接處理
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             return TextMessage(
                 text=f"收到您的訊息：{message_text}\\n正在處理中，請稍後..."
             )

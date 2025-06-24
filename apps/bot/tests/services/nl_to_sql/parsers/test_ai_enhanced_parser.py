@@ -3,12 +3,13 @@ AI 增強解析器測試
 專注於 AI 增強邏輯、邊界條件和錯誤處理
 """
 
-import pytest
 import json
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
+import pytest
+
+from src.services.nl_to_sql.models.query_models import QueryType
 from src.services.nl_to_sql.parsers.ai_enhanced_parser import AIEnhancedParser
-from src.services.nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 
 class TestAIEnhancedParser:
@@ -301,7 +302,7 @@ class TestAIEnhancedParser:
             assert "AI 解析錯誤" in result.explanation
             assert "AI 服務錯誤" in result.explanation
             # 檢查錯誤是否在參數中（可能在 error 鍵或說明中）
-            has_error = (
+            (
                 "AI 服務錯誤" in result.parameters.get("error", "")
                 or "AI 服務錯誤" in result.explanation
             )

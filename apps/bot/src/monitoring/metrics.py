@@ -4,19 +4,18 @@ Prometheus 指標收集器
 """
 
 import time
-from typing import Dict, Any, Optional
 from functools import wraps
+
+import psutil
+from fastapi import APIRouter, Response
 from prometheus_client import (
+    CONTENT_TYPE_LATEST,
     Counter,
-    Histogram,
     Gauge,
+    Histogram,
     Info,
     generate_latest,
-    CONTENT_TYPE_LATEST,
 )
-from fastapi import APIRouter, Response
-import psutil
-
 
 # ==============================================================================
 # 指標定義
@@ -301,7 +300,7 @@ def monitor_http_requests(endpoint: str = None):
                     method_name, endpoint_name, status_code, time.time() - start_time
                 )
                 return result
-            except Exception as e:
+            except Exception:
                 metrics_collector.record_http_request(
                     method_name, endpoint_name, 500, time.time() - start_time
                 )

@@ -74,7 +74,7 @@ class QueryTemplateManager(ITemplateManager):
             logger.error(
                 "❌ 模板不存在，嘗試載入預設模板",
                 query_type=query_type.value,
-                available_types=[qt.value for qt in self._templates.keys()],
+                available_types=[qt.value for qt in self._templates],
             )
 
             # 🔥 關鍵修復：嘗試載入預設模板
@@ -160,10 +160,7 @@ class QueryTemplateManager(ITemplateManager):
                 return False
 
         # 檢查是否包含危險的 SQL 操作（使用配置檔案和改進的檢測邏輯）
-        if not self._validate_sql_security(template_upper):
-            return False
-
-        return True
+        return self._validate_sql_security(template_upper)
 
     def _validate_sql_security(self, template_upper: str) -> bool:
         """
@@ -393,7 +390,7 @@ class QueryTemplateManager(ITemplateManager):
         parameters = re.findall(r"\{(\w+)\}", template)
 
         # 去除重複並排序
-        unique_parameters = sorted(list(set(parameters)))
+        unique_parameters = sorted(set(parameters))
 
         logger.debug(
             "📋 提取模板參數", query_type=query_type.value, parameters=unique_parameters
@@ -515,7 +512,7 @@ class QueryTemplateManager(ITemplateManager):
         """
         default_templates = {
             QueryType.SPECIFIC_MACHINE: """
-                SELECT 
+                SELECT
                     m.machine_id,
                     m.machine_name,
                     m.department,
@@ -530,7 +527,7 @@ class QueryTemplateManager(ITemplateManager):
                 GROUP BY m.machine_id, m.machine_name, m.department
             """,
             QueryType.ALL_MACHINES: """
-                SELECT 
+                SELECT
                     m.machine_id,
                     m.machine_name,
                     m.department,
@@ -538,24 +535,24 @@ class QueryTemplateManager(ITemplateManager):
                     COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
                     MAX(u.date) as last_record_date
                 FROM machines m
-                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
                     AND u.date >= date('now', '-7 days')
                 GROUP BY m.machine_id, m.machine_name, m.department
                 ORDER BY m.machine_id
             """,
             QueryType.FAULT_ANALYSIS: """
-                SELECT 
+                SELECT
                     COUNT(*) as total_faults,
                     fault_type,
                     severity,
                     COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
-                FROM machine_faults 
+                FROM machine_faults
                 WHERE fault_date >= date('now', '-{days} days')
                 GROUP BY fault_type, severity
                 ORDER BY COUNT(*) DESC
             """,
             QueryType.PRODUCTION_STATS: """
-                SELECT 
+                SELECT
                     m.department,
                     COUNT(DISTINCT m.machine_id) as machine_count,
                     COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
@@ -563,20 +560,20 @@ class QueryTemplateManager(ITemplateManager):
                     COALESCE(SUM(u.good_parts), 0) as total_good_parts,
                     COALESCE(SUM(u.defective_parts), 0) as total_defective_parts
                 FROM machines m
-                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
                     AND u.date >= date('now', '-7 days')
                 GROUP BY m.department
                 ORDER BY avg_utilization DESC
             """,
             QueryType.DEPARTMENT_STATUS: """
-                SELECT 
+                SELECT
                     m.machine_id,
                     m.machine_name,
                     COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
                     COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
                     MAX(u.date) as last_record_date
                 FROM machines m
-                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+                LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
                     AND u.date >= date('now', '-7 days')
                 WHERE m.department = '{department}'
                 GROUP BY m.machine_id, m.machine_name
@@ -584,7 +581,7 @@ class QueryTemplateManager(ITemplateManager):
             """,
             # 🔥 關鍵修復：添加缺失的 MACHINE_STATUS 模板
             QueryType.MACHINE_STATUS: """
-                SELECT 
+                SELECT
                     m.machine_id,
                     m.machine_name,
                     m.department,
@@ -595,8 +592,8 @@ class QueryTemplateManager(ITemplateManager):
                 FROM machines m
                 LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
                     AND u.date = (
-                        SELECT MAX(date) 
-                        FROM machine_utilization 
+                        SELECT MAX(date)
+                        FROM machine_utilization
                         WHERE machine_id = m.machine_id
                     )
                 ORDER BY m.machine_id
@@ -715,11 +712,11 @@ class QueryTemplateManager(ITemplateManager):
         """
         total_templates = len(self._templates)
         total_parameters = sum(
-            len(self.get_template_parameters(qt)) for qt in self._templates.keys()
+            len(self.get_template_parameters(qt)) for qt in self._templates
         )
 
         complexity_distribution = {}
-        for query_type in self._templates.keys():
+        for query_type in self._templates:
             metadata = self._template_metadata.get(query_type, {})
             performance = metadata.get("estimated_performance", "unknown")
             complexity_distribution[performance] = (
@@ -730,11 +727,11 @@ class QueryTemplateManager(ITemplateManager):
             "total_templates": total_templates,
             "total_parameters": total_parameters,
             "complexity_distribution": complexity_distribution,
-            "supported_query_types": [qt.value for qt in self._templates.keys()],
+            "supported_query_types": [qt.value for qt in self._templates],
             "average_complexity": (
                 sum(
                     self._template_metadata.get(qt, {}).get("complexity_score", 0)
-                    for qt in self._templates.keys()
+                    for qt in self._templates
                 )
                 / total_templates
                 if total_templates > 0

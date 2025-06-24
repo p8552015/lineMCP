@@ -202,7 +202,7 @@ class MessageFormatter:
         # 故障類型分布（顯示前5個）
         if fault_types:
             message += "📊 故障類型分布：\n"
-            for i, fault in enumerate(fault_types[:5]):
+            for _i, fault in enumerate(fault_types[:5]):
                 severity_icon = self._get_severity_icon(fault.get("severity", ""))
                 message += f"{severity_icon} {fault['fault_type']} "
                 message += f"({fault['count']} 次, {fault['percentage']:.1f}%)\n"

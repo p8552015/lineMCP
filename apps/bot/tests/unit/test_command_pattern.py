@@ -3,20 +3,19 @@ Command Pattern 測試
 驗證指令處理器和指令執行器的功能
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import AsyncMock, Mock, MagicMock
 from linebot.v3.messaging import TextMessage
 
+from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import (
-    CommandHandler,
     CommandContext,
+    CommandHandler,
     CommandRegistry,
     get_command_registry,
 )
-from src.domain.command_executor import CommandExecutor
-from src.commands.sql_command import SqlCommandHandler
-from src.commands.help_command import HelpCommandHandler
-from src.domain.exceptions import CommandParsingException, ValidationException
+from src.domain.exceptions import CommandParsingException
 
 
 class MockCommandHandler(CommandHandler):
@@ -56,14 +55,14 @@ class TestCommandHandler:
         assert handler.description == "Test command"
         assert handler.aliases == []
         assert handler.get_usage() == "/test"
-        assert handler.validate_args([]) == True
+        assert handler.validate_args([]) is True
 
     def test_command_handler_help_text(self):
         """測試幫助文字生成"""
         handler = MockCommandHandler("test", "Test command")
         help_text = handler.get_help_text()
 
-        assert "**/{0}**".format(handler.command_name) in help_text
+        assert f"**/{handler.command_name}**" in help_text
         assert handler.description in help_text
 
     @pytest.mark.asyncio
@@ -74,7 +73,7 @@ class TestCommandHandler:
         result = await handler.handle("user_1", ["arg1", "arg2"])
 
         assert isinstance(result, TextMessage)
-        assert handler.handle_called == True
+        assert handler.handle_called is True
         assert "Mock command test executed" in result.text
 
 
@@ -134,7 +133,7 @@ class TestCommandRegistry:
         registry = CommandRegistry()
 
         assert len(registry.list_commands()) == 0
-        assert registry.has_command("nonexistent") == False
+        assert registry.has_command("nonexistent") is False
 
     def test_command_registry_register_handler(self):
         """測試註冊指令處理器"""
@@ -143,7 +142,7 @@ class TestCommandRegistry:
 
         registry.register(handler)
 
-        assert registry.has_command("test") == True
+        assert registry.has_command("test") is True
         assert len(registry.list_commands()) == 1
         assert registry.get_handler("test") == handler
 
@@ -157,9 +156,9 @@ class TestCommandRegistry:
         registry.register(handler)
 
         # 測試主名稱和別名都能找到
-        assert registry.has_command("test") == True
-        assert registry.has_command("t") == True
-        assert registry.has_command("testing") == True
+        assert registry.has_command("test") is True
+        assert registry.has_command("t") is True
+        assert registry.has_command("testing") is True
         assert registry.get_handler("t") == handler
         assert registry.get_handler("testing") == handler
 
@@ -231,7 +230,7 @@ class TestCommandExecutor:
         executor = CommandExecutor(mock_context)
 
         assert executor.context == mock_context
-        assert executor._initialized == False
+        assert executor._initialized is False
 
     def test_command_executor_initialize(self, mock_context):
         """測試指令執行器初始化過程"""
@@ -240,7 +239,7 @@ class TestCommandExecutor:
         # 初始化指令執行器
         executor.initialize()
 
-        assert executor._initialized == True
+        assert executor._initialized is True
         assert len(executor.list_commands()) > 0
 
     @pytest.mark.asyncio
@@ -259,7 +258,7 @@ class TestCommandExecutor:
         result = await executor.execute_command("user_1", "/help")
 
         assert isinstance(result, TextMessage)
-        assert test_handler.handle_called == True
+        assert test_handler.handle_called is True
 
     @pytest.mark.asyncio
     async def test_command_executor_execute_invalid_command(self, mock_context):
@@ -291,8 +290,8 @@ class TestCommandExecutor:
         executor.registry.register(test_handler)
         executor._initialized = True
 
-        assert executor.has_command("help") == True
-        assert executor.has_command("nonexistent") == False
+        assert executor.has_command("help") is True
+        assert executor.has_command("nonexistent") is False
 
     def test_command_executor_get_command_info(self, mock_context):
         """測試獲取指令統計資訊"""

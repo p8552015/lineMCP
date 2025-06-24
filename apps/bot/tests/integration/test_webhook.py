@@ -1,13 +1,14 @@
 """Webhook 整合測試"""
 
-import pytest
-import httpx
-import json
+import base64
 import hashlib
 import hmac
-import base64
+import json
 import os
 import sys
+
+import httpx
+import pytest
 
 # 添加 src 到路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
@@ -281,7 +282,7 @@ class TestWebhook:
 
                 start_time = time.time()
 
-                response = await client.post(
+                await client.post(
                     self.WEBHOOK_URL,
                     content=body,
                     headers={"Content-Type": "application/json"},

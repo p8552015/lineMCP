@@ -2,8 +2,9 @@
 測試應用服務門面 (Application Facade)
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from linebot.v3.messaging import Message, TextMessage
 
 from src.application.application_facade import ApplicationFacade, get_application_facade
@@ -84,7 +85,7 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_process_message_auto_initialization(self, application_facade):
         """測試處理訊息時自動初始化"""
-        with patch.object(application_facade, "initialize") as mock_init:
+        with patch.object(application_facade, "initialize"):
             with patch.object(application_facade, "_messaging_service") as mock_service:
                 mock_service.process_message = AsyncMock(
                     return_value=TextMessage(text="test")
@@ -100,37 +101,35 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_process_message_with_metrics(self, application_facade):
         """測試訊息處理的監控指標"""
-        with patch.object(application_facade, "initialize") as mock_init:
-            with patch.object(
-                application_facade, "_messaging_service"
-            ) as mock_msg_service:
-                with patch.object(
-                    application_facade, "_monitoring_service"
-                ) as mock_mon_service:
-                    # 設置模擬
-                    mock_msg_service.process_message = AsyncMock(
-                        return_value=TextMessage(text="test")
-                    )
-                    mock_mon_service.record_request_metrics = Mock()
-                    application_facade._initialized = True
+        with patch.object(application_facade, "initialize"), patch.object(
+            application_facade, "_messaging_service"
+        ) as mock_msg_service, patch.object(
+            application_facade, "_monitoring_service"
+        ) as mock_mon_service:
+            # 設置模擬
+            mock_msg_service.process_message = AsyncMock(
+                return_value=TextMessage(text="test")
+            )
+            mock_mon_service.record_request_metrics = Mock()
+            application_facade._initialized = True
 
-                    # 執行
-                    await application_facade.process_message(
-                        user_id="test_user",
-                        message_text="hello",
-                        reply_token="test_token",
-                    )
+            # 執行
+            await application_facade.process_message(
+                user_id="test_user",
+                message_text="hello",
+                reply_token="test_token",
+            )
 
-                    # 驗證指標記錄
-                    mock_mon_service.record_request_metrics.assert_called()
-                    call_args = mock_mon_service.record_request_metrics.call_args[1]
-                    assert call_args["status"] == "success"
-                    assert call_args["endpoint"] == "process_message"
+            # 驗證指標記錄
+            mock_mon_service.record_request_metrics.assert_called()
+            call_args = mock_mon_service.record_request_metrics.call_args[1]
+            assert call_args["status"] == "success"
+            assert call_args["endpoint"] == "process_message"
 
     @pytest.mark.asyncio
     async def test_execute_sql_query(self, application_facade):
         """測試 SQL 查詢執行"""
-        with patch.object(application_facade, "initialize") as mock_init:
+        with patch.object(application_facade, "initialize"):
             with patch.object(application_facade, "_query_service") as mock_service:
                 # 設置模擬
                 expected_result = {
@@ -155,56 +154,53 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_get_system_health(self, application_facade):
         """測試系統健康檢查"""
-        with patch.object(application_facade, "initialize") as mock_init:
-            with patch.object(
-                application_facade, "_monitoring_service"
-            ) as mock_service:
-                # 設置模擬
-                expected_health = {
-                    "overall_status": "healthy",
-                    "components": {"test": {"status": "healthy"}},
-                }
-                mock_service.perform_comprehensive_health_check = AsyncMock(
-                    return_value=expected_health
-                )
-                application_facade._initialized = True
+        with patch.object(application_facade, "initialize"), patch.object(
+            application_facade, "_monitoring_service"
+        ) as mock_service:
+            # 設置模擬
+            expected_health = {
+                "overall_status": "healthy",
+                "components": {"test": {"status": "healthy"}},
+            }
+            mock_service.perform_comprehensive_health_check = AsyncMock(
+                return_value=expected_health
+            )
+            application_facade._initialized = True
 
-                # 執行
-                result = await application_facade.get_system_health()
+            # 執行
+            result = await application_facade.get_system_health()
 
-                # 驗證
-                assert result == expected_health
+            # 驗證
+            assert result == expected_health
 
     def test_get_dashboard_data(self, application_facade):
         """測試儀表板數據獲取"""
         with patch.object(
             application_facade, "_monitoring_service"
-        ) as mock_mon_service:
-            with patch.object(
-                application_facade, "_messaging_service"
-            ) as mock_msg_service:
-                with patch.object(
-                    application_facade, "_query_service"
-                ) as mock_query_service:
-                    # 設置模擬
-                    mock_mon_service.get_dashboard_data.return_value = {
-                        "metrics": "test"
-                    }
-                    mock_msg_service.get_processing_stats.return_value = {
-                        "messages": 100
-                    }
-                    mock_query_service.get_query_statistics.return_value = {
-                        "queries": 50
-                    }
-                    application_facade._initialized = True
+        ) as mock_mon_service, patch.object(
+            application_facade, "_messaging_service"
+        ) as mock_msg_service, patch.object(
+            application_facade, "_query_service"
+        ) as mock_query_service:
+            # 設置模擬
+            mock_mon_service.get_dashboard_data.return_value = {
+                "metrics": "test"
+            }
+            mock_msg_service.get_processing_stats.return_value = {
+                "messages": 100
+            }
+            mock_query_service.get_query_statistics.return_value = {
+                "queries": 50
+            }
+            application_facade._initialized = True
 
-                    # 執行
-                    result = application_facade.get_dashboard_data()
+            # 執行
+            result = application_facade.get_dashboard_data()
 
-                    # 驗證
-                    assert "metrics" in result
-                    assert "messaging_stats" in result
-                    assert "query_stats" in result
+            # 驗證
+            assert "metrics" in result
+            assert "messaging_stats" in result
+            assert "query_stats" in result
 
     def test_get_dashboard_data_not_initialized(self, application_facade):
         """測試未初始化時獲取儀表板數據"""
@@ -286,33 +282,31 @@ class TestApplicationFacade:
     @pytest.mark.asyncio
     async def test_process_message_error_handling(self, application_facade):
         """測試處理訊息時的錯誤處理"""
-        with patch.object(application_facade, "initialize") as mock_init:
-            with patch.object(
-                application_facade, "_messaging_service"
-            ) as mock_msg_service:
-                with patch.object(
-                    application_facade, "_monitoring_service"
-                ) as mock_mon_service:
-                    # 設置服務拋出異常
-                    test_error = Exception("Test error")
-                    mock_msg_service.process_message = AsyncMock(side_effect=test_error)
-                    mock_mon_service.record_request_metrics = Mock()
-                    application_facade._initialized = True
+        with patch.object(application_facade, "initialize"), patch.object(
+            application_facade, "_messaging_service"
+        ) as mock_msg_service, patch.object(
+            application_facade, "_monitoring_service"
+        ) as mock_mon_service:
+            # 設置服務拋出異常
+            test_error = Exception("Test error")
+            mock_msg_service.process_message = AsyncMock(side_effect=test_error)
+            mock_mon_service.record_request_metrics = Mock()
+            application_facade._initialized = True
 
-                    # 執行並預期拋出異常
-                    with pytest.raises(Exception) as exc_info:
-                        await application_facade.process_message(
-                            user_id="test_user",
-                            message_text="hello",
-                            reply_token="test_token",
-                        )
+            # 執行並預期拋出異常
+            with pytest.raises(Exception) as exc_info:
+                await application_facade.process_message(
+                    user_id="test_user",
+                    message_text="hello",
+                    reply_token="test_token",
+                )
 
-                    assert str(exc_info.value) == "Test error"
+            assert str(exc_info.value) == "Test error"
 
-                    # 驗證錯誤指標記錄
-                    mock_mon_service.record_request_metrics.assert_called()
-                    call_args = mock_mon_service.record_request_metrics.call_args[1]
-                    assert call_args["status"] == "error"
+            # 驗證錯誤指標記錄
+            mock_mon_service.record_request_metrics.assert_called()
+            call_args = mock_mon_service.record_request_metrics.call_args[1]
+            assert call_args["status"] == "error"
 
     def test_get_application_facade_singleton(self):
         """測試全域門面實例"""

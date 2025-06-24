@@ -77,7 +77,9 @@
       "Bash(claude mcp add:*)",
       "Bash(./test-github-detector.sh:*)",
       "Bash(./github-actions-detector.sh:*)",
-      "Bash(PYTHONPATH:*)"
+      "Bash(PYTHONPATH:*)",
+      "Bash(./analyze-github-errors.sh:*)",
+      "Bash(./fix-ci-issues.sh:*)"
     ],
     "deny": []
   }

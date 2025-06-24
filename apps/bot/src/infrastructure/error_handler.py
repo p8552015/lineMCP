@@ -139,7 +139,7 @@ class UnifiedErrorHandler:
             error_data.update(error.to_dict())
 
         # 對於嚴重錯誤，記錄完整的堆疊追蹤
-        if not isinstance(error, (ValidationException, CommandParsingException)):
+        if not isinstance(error, ValidationException | CommandParsingException):
             error_data["traceback"] = traceback.format_exc()
             logger.error("Error occurred", **error_data)
         else:

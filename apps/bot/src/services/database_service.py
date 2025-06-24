@@ -337,7 +337,7 @@ class DatabaseService:
 
             fault_query = f"""
                 SELECT COUNT(*) as fault_count
-                FROM machine_faults 
+                FROM machine_faults
                 WHERE machine_id = '{machine_id}' AND fault_date >= date('now', '-{days} days')
             """
 
@@ -364,7 +364,7 @@ class DatabaseService:
         try:
             # 獲取表格列表
             tables_query = "SELECT name FROM sqlite_master WHERE type='table'"
-            tables_result = await self._execute_query(tables_query)
+            await self._execute_query(tables_query)
 
             # 手動定義已知的表格結構，避免使用 PRAGMA
             table_info = {

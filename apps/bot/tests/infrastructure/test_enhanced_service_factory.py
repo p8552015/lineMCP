@@ -2,9 +2,12 @@
 測試增強版服務工廠
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from src.application.messaging_service import MessagingApplicationService
+from src.domain.command_executor import CommandExecutor
 from src.infrastructure.enhanced_service_factory import (
     EnhancedServiceFactory,
     get_enhanced_service_factory,
@@ -13,8 +16,6 @@ from src.infrastructure.service_registry import ServiceRegistry, ServiceScope
 from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.message_formatter import MessageFormatter
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
-from src.application.messaging_service import MessagingApplicationService
-from src.domain.command_executor import CommandExecutor
 
 
 class TestEnhancedServiceFactory:

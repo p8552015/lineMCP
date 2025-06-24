@@ -3,11 +3,12 @@
 專注於邊界條件和回歸測試
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock
 
+import pytest
+
+from src.services.nl_to_sql.models.query_models import QueryType
 from src.services.nl_to_sql.parsers.rule_based_parser import RuleBasedParser
-from src.services.nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 
 class TestRuleBasedParser:

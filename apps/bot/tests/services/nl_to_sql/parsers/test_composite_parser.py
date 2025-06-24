@@ -3,12 +3,12 @@
 專注於策略模式協調、解析器管理和回退機制
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock
 
-from src.services.nl_to_sql.parsers.composite_parser import CompositeParser
+import pytest
+
 from src.services.nl_to_sql.interfaces.parsing_interfaces import IParser
 from src.services.nl_to_sql.models.query_models import ParsedQuery, QueryType
+from src.services.nl_to_sql.parsers.composite_parser import CompositeParser
 
 
 class MockParser(IParser):

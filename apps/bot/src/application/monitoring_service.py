@@ -351,7 +351,7 @@ class MonitoringApplicationService(BaseApplicationService):
         degraded_components = 0
         unhealthy_components = 0
 
-        for component, result in component_results.items():
+        for _component, result in component_results.items():
             status = result.get("status", "unknown")
             if status == "healthy":
                 healthy_components += 1

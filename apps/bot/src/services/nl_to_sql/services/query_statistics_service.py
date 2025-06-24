@@ -619,7 +619,7 @@ class QueryStatisticsService(IStatistics):
             avg_time = self._safe_float_conversion(avg_time, 0.0)
 
             # 🛡️ 額外驗證：確保結果確實是數值類型
-            if not isinstance(avg_time, (int, float)):
+            if not isinstance(avg_time, int | float):
                 logger.error(
                     "❌ 平均時間計算後仍非數值類型",
                     result_type=type(avg_time).__name__,
@@ -629,7 +629,7 @@ class QueryStatisticsService(IStatistics):
 
             # 🛡️ 確保是有效的數值（非 NaN 或無限值）
             if not (
-                isinstance(avg_time, (int, float))
+                isinstance(avg_time, int | float)
                 and not (
                     isinstance(avg_time, float)
                     and (
@@ -651,7 +651,7 @@ class QueryStatisticsService(IStatistics):
         # 🔥 關鍵修復：終極類型安全的比較邏輯
         try:
             # 🛡️ 雙重類型轉換保護 - 確保絕對是數值類型
-            if not isinstance(avg_time, (int, float)):
+            if not isinstance(avg_time, int | float):
                 # 嘗試字符串轉換
                 if isinstance(avg_time, str):
                     avg_time_float = float(avg_time.strip())
@@ -661,7 +661,7 @@ class QueryStatisticsService(IStatistics):
                 avg_time_float = float(avg_time)
 
             # 🛡️ 最終類型驗證：確保是有效的浮點數
-            if not isinstance(avg_time_float, (int, float)):
+            if not isinstance(avg_time_float, int | float):
                 logger.error(
                     "❌ 類型轉換後仍非數值", result_type=type(avg_time_float).__name__
                 )
@@ -809,7 +809,7 @@ class QueryStatisticsService(IStatistics):
                 return default
 
             # 如果已經是數值類型
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 return float(value)
 
             # 如果是字串，嘗試轉換
@@ -928,7 +928,7 @@ class QueryStatisticsService(IStatistics):
 
             for parser_type in all_parser_types:
                 success_count = self._success_counts[parser_type]
-                failure_count = self._failure_counts[parser_type]
+                self._failure_counts[parser_type]
 
                 # 檢查信心度記錄數量是否合理
                 confidence_count = len(self._confidence_scores[parser_type])

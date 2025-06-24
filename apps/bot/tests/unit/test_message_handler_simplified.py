@@ -3,14 +3,15 @@ MessageHandler 簡化測試
 專注於測試核心功能而不被複雜的依賴阻礙
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from linebot.v3.messaging import TextMessage
 
 # 確保可以導入 MessageHandler
 try:
-    from src.services.message_handler import MessageHandler
     from src.models.commands import Command, parse_command
+    from src.services.message_handler import MessageHandler
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)
 
@@ -197,11 +198,12 @@ class TestMessageHandlerCore:
         assert handler.formatter is not None
 
         # 檢查服務類型
-        from src.services.openai_client import OpenAIClient
-        from src.services.ai_model_service_enhanced import EnhancedAIModelService
         from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
+
+        from src.services.ai_model_service_enhanced import EnhancedAIModelService
         from src.services.database_service import DatabaseService
         from src.services.message_formatter import MessageFormatter
+        from src.services.openai_client import OpenAIClient
 
         # FlexBuilder 已移除，不再檢查
 

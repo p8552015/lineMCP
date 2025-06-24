@@ -234,7 +234,7 @@ class MCPResponseParser:
             numeric_fields = [
                 k
                 for k, v in first_row.items()
-                if isinstance(v, (int, float)) or (isinstance(v, str) and v.isdigit())
+                if isinstance(v, int | float) or (isinstance(v, str) and v.isdigit())
             ]
 
             if len(numeric_fields) == 1:

@@ -4,11 +4,11 @@
 """
 
 import unittest
-from typing import Dict, Any
+
+from src.services.nl_to_sql.interfaces.statistics_interfaces import IStatistics
 from src.services.nl_to_sql.services.query_statistics_service import (
     QueryStatisticsService,
 )
-from src.services.nl_to_sql.interfaces.statistics_interfaces import IStatistics
 
 
 class TestQueryStatisticsInterface(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestQueryStatisticsInterface(unittest.TestCase):
 
     def test_implements_interface(self):
         """測試是否實現 IStatistics 介面"""
-        self.assertIsInstance(self.service, IStatistics)
+        assert isinstance(self.service, IStatistics)
 
     def test_record_success_signature(self):
         """測試 record_success 方法簽名"""
@@ -40,7 +40,7 @@ class TestQueryStatisticsInterface(unittest.TestCase):
 
         # 驗證統計資料已記錄
         stats = self.service.get_stats()
-        self.assertGreater(stats["summary"]["total_success"], 0)
+        assert stats["summary"]["total_success"] > 0
 
     def test_record_failure_signature(self):
         """測試 record_failure 方法簽名"""
@@ -61,7 +61,7 @@ class TestQueryStatisticsInterface(unittest.TestCase):
 
         # 驗證統計資料已記錄
         stats = self.service.get_stats()
-        self.assertGreater(stats["summary"]["total_failure"], 0)
+        assert stats["summary"]["total_failure"] > 0
 
     def test_backward_compatibility(self):
         """測試向後兼容性"""
@@ -81,13 +81,13 @@ class TestQueryStatisticsInterface(unittest.TestCase):
         parser_stats = stats["parser_statistics"]
 
         # 應該有 custom_parser 的統計
-        self.assertIn("custom_parser", parser_stats)
-        self.assertEqual(parser_stats["custom_parser"]["success_count"], 1)
+        assert "custom_parser" in parser_stats
+        assert parser_stats["custom_parser"]["success_count"] == 1
 
         # 驗證查詢類型統計
         query_stats = stats["query_type_distribution"]
-        self.assertIn("all_machines", query_stats)
-        self.assertEqual(query_stats["all_machines"], 1)
+        assert "all_machines" in query_stats
+        assert query_stats["all_machines"] == 1
 
     def test_duration_conversion(self):
         """測試時間單位轉換（秒到毫秒）"""
@@ -114,7 +114,7 @@ class TestQueryStatisticsInterface(unittest.TestCase):
             ("configuration", "ConfigError", "Invalid configuration"),
         ]
 
-        for expected_category, error_type, error_message in test_cases:
+        for _expected_category, error_type, error_message in test_cases:
             self.service.record_failure(
                 operation_type="test",
                 error_type=error_type,
@@ -125,11 +125,11 @@ class TestQueryStatisticsInterface(unittest.TestCase):
         error_dist = stats["error_distribution"]
 
         # 驗證錯誤正確分類
-        self.assertEqual(error_dist["timeout"], 1)
-        self.assertEqual(error_dist["network"], 1)
-        self.assertEqual(error_dist["parsing"], 1)
-        self.assertEqual(error_dist["ai_service"], 1)
-        self.assertEqual(error_dist["configuration"], 1)
+        assert error_dist["timeout"] == 1
+        assert error_dist["network"] == 1
+        assert error_dist["parsing"] == 1
+        assert error_dist["ai_service"] == 1
+        assert error_dist["configuration"] == 1
 
 
 if __name__ == "__main__":

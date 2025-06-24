@@ -133,7 +133,7 @@ class EnhancedServiceFactory(IServiceFactory):
         info = {
             "total_services": sum(len(descs) for descs in all_descriptors.values()),
             "service_types": [
-                getattr(t, "__name__", str(t)) for t in all_descriptors.keys()
+                getattr(t, "__name__", str(t)) for t in all_descriptors
             ],
             "by_scope": {},
             "by_tag": {},

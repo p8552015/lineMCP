@@ -3,18 +3,17 @@
 測試整個架構重構後的系統整合
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from linebot.v3.messaging import TextMessage
 
-from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
 from src.application.application_facade import ApplicationFacade
-from src.services.message_handler_di import MessageHandlerDI
-from src.domain.command_executor import CommandExecutor
 from src.application.messaging_service import MessagingApplicationService
-from src.application.query_service import QueryApplicationService
 from src.application.monitoring_service import MonitoringApplicationService
+from src.application.query_service import QueryApplicationService
+from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
 
 
 class TestFullSystemIntegration:
@@ -384,8 +383,9 @@ class TestPerformanceIntegration:
     async def test_memory_usage_stability(self, application_facade):
         """測試記憶體使用穩定性"""
         import gc
-        import psutil
         import os
+
+        import psutil
 
         with patch(
             "src.services.unified_mcp_client.get_unified_mcp_client"

@@ -4,6 +4,7 @@ MCP 連接池管理器
 """
 
 import asyncio
+import contextlib
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -116,10 +117,8 @@ class MCPConnectionPool:
 
         if self.health_check_task:
             self.health_check_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.health_check_task
-            except asyncio.CancelledError:
-                pass
 
         # 關閉所有連接
         await self._close_all_connections()
@@ -236,7 +235,7 @@ class MCPConnectionPool:
     async def _perform_health_checks(self):
         """執行健康檢查"""
         async with self.connection_lock:
-            for server_name, connection in self.connections.items():
+            for _server_name, connection in self.connections.items():
                 await self._check_connection_health(connection)
 
     async def _check_connection_health(self, connection: ConnectionInfo):

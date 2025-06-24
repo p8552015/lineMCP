@@ -470,10 +470,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Any: 配置值
         """
-        if config_section:
-            key_path = f"{config_section}.{key}"
-        else:
-            key_path = key
+        key_path = f"{config_section}.{key}" if config_section else key
 
         return self.get_setting(key_path, default)
 
@@ -488,10 +485,7 @@ class ConfigurationService(IConfiguration):
             value: 配置值
             config_section: 可選的配置段落
         """
-        if config_section:
-            key_path = f"{config_section}.{key}"
-        else:
-            key_path = key
+        key_path = f"{config_section}.{key}" if config_section else key
 
         self.set_setting(key_path, value)
 

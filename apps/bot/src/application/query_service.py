@@ -8,10 +8,7 @@ from typing import Any
 
 import structlog
 
-from src.domain.exceptions import (
-    create_db_error,
-    create_validation_error,
-)
+from src.domain.exceptions import create_db_error, create_validation_error
 
 from .base_service import BaseApplicationService
 
@@ -244,10 +241,7 @@ class QueryApplicationService(BaseApplicationService):
             return False
 
         # 不快取結果過大的查詢（節省記憶體）
-        if result["row_count"] > 1000:
-            return False
-
-        return True
+        return not result["row_count"] > 1000
 
     def _cache_result(self, cache_key: str, result: dict[str, Any]) -> None:
         """快取查詢結果"""

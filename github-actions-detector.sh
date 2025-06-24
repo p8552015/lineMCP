@@ -696,6 +696,13 @@ EOF
     
     if [[ ${#GLOBAL_FAILED_WORKFLOWS[@]} -gt 0 ]]; then
         echo -e "\\n${RED}⚠️  發現 ${#GLOBAL_FAILED_WORKFLOWS[@]} 個失敗的 workflows，需要修復${NC}"
+        
+        # 提供錯誤分析選項
+        echo -e "\\n${YELLOW}💡 進階分析選項:${NC}"
+        echo -e "  1. 快速錯誤分析: ${BLUE}./analyze-github-errors.sh${NC}"
+        echo -e "  2. 詳細錯誤報告: ${BLUE}python3 github_actions_error_analyzer.py --latest${NC}"
+        echo -e "  3. 分析特定 Run: ${BLUE}python3 github_actions_error_analyzer.py --run-id RUN_ID${NC}"
+        
         exit 1
     else
         echo -e "\\n${GREEN}🎉 所有 workflows 狀態正常！${NC}"

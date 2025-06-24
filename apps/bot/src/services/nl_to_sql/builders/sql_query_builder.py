@@ -331,7 +331,7 @@ class SQLQueryBuilder(IQueryBuilder):
             if isinstance(value, str):
                 # 字串參數需要轉義
                 safe_params[key] = self._escape_sql_parameter(value)
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, int | float):
                 # 數值參數直接使用
                 safe_params[key] = value
             elif isinstance(value, bool):

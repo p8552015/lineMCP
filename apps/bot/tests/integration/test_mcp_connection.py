@@ -1,16 +1,16 @@
 """MCP 連接整合測試"""
 
-import asyncio
-import pytest
-from unittest.mock import Mock, patch
 import os
 import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加 src 到路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.services.production_mcp_client import ProductionMCPClient
 from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
+from src.services.production_mcp_client import ProductionMCPClient
 
 
 @pytest.fixture
@@ -182,7 +182,7 @@ class TestMCPConnection:
 
             # 驗證 SQLite 特定配置
             if server_name == "sqlite":
-                assert config["command"] == "npx", f"SQLite 服務器應使用 npx 命令"
+                assert config["command"] == "npx", "SQLite 服務器應使用 npx 命令"
                 assert (
                     "@mcp/sqlite" in config["args"]
-                ), f"SQLite 服務器應包含 @mcp/sqlite 參數"
+                ), "SQLite 服務器應包含 @mcp/sqlite 參數"

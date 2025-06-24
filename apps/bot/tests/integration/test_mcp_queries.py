@@ -1,16 +1,16 @@
 """MCP 查詢整合測試"""
 
-import asyncio
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import os
 import sys
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # 添加 src 到路徑
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
-from src.services.production_mcp_client import ProductionMCPClient
 from src.services.database_service import DatabaseService
+from src.services.production_mcp_client import ProductionMCPClient
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ class TestMCPQueries:
             {
                 "description": "查詢機台稼動率",
                 "query": """
-                    SELECT m.machine_id, m.name, 
+                    SELECT m.machine_id, m.name,
                            AVG(p.efficiency_rate) as avg_efficiency,
                            AVG(p.utilization_rate) as avg_utilization
                     FROM machines m
@@ -178,7 +178,7 @@ class TestMCPQueries:
 
                 # 這應該觸發重試邏輯
                 try:
-                    result = await mcp_client.call_tool(
+                    await mcp_client.call_tool(
                         server_name=query_data["server_name"],
                         tool_name="read_query",
                         arguments={"query": query_data["query"]},
@@ -199,7 +199,7 @@ class TestMCPQueries:
 
         with patch.object(mcp_client, "call_tool") as mock_call_tool:
             # 模擬超時
-            mock_call_tool.side_effect = asyncio.TimeoutError("Query timeout")
+            mock_call_tool.side_effect = TimeoutError("Query timeout")
 
             with patch.object(mcp_client, "connect_to_server", return_value=True):
                 try:
@@ -211,7 +211,7 @@ class TestMCPQueries:
                     # 如果有超時處理，應該返回錯誤結果
                     assert result["success"] is False
                     assert "timeout" in result.get("error", "").lower()
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # 也可能直接拋出超時異常
                     pass
 
@@ -261,11 +261,11 @@ class TestMCPQueries:
             {
                 "name": "今日生產統計",
                 "query": """
-                    SELECT machine_id, 
+                    SELECT machine_id,
                            SUM(good_count) as total_good,
                            SUM(bad_count) as total_bad,
                            AVG(efficiency_rate) as avg_efficiency
-                    FROM production_data 
+                    FROM production_data
                     WHERE DATE(record_time) = DATE('now')
                     GROUP BY machine_id
                 """,
@@ -275,7 +275,7 @@ class TestMCPQueries:
                 "query": """
                     SELECT DATE(record_time) as date,
                            AVG(utilization_rate) as avg_utilization
-                    FROM production_data 
+                    FROM production_data
                     WHERE record_time >= DATE('now', '-7 days')
                     GROUP BY DATE(record_time)
                     ORDER BY date

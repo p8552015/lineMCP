@@ -2,13 +2,14 @@
 測試指令處理器基礎架構
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from linebot.v3.messaging import TextMessage
 
 from src.domain.command_handler import (
-    CommandHandler,
     CommandContext,
+    CommandHandler,
     CommandRegistry,
     get_command_registry,
 )
