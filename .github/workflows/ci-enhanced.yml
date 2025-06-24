@@ -58,7 +58,7 @@ jobs:
     
     - name: Install dependencies
       working-directory: apps/bot
-      run: poetry install --no-interaction --no-ansi
+      run: poetry install --no-interaction --no-ansi --no-root
     
     - name: Create test environment file
       working-directory: apps/bot
@@ -152,7 +152,7 @@ jobs:
 
     - name: Install bot dependencies
       working-directory: apps/bot
-      run: poetry install --no-interaction --no-ansi
+      run: poetry install --no-interaction --no-ansi --no-root
 
     - name: Install uv
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -246,7 +246,7 @@ jobs:
     
     - name: Install dependencies
       working-directory: apps/bot
-      run: poetry install --no-interaction --no-ansi
+      run: poetry install --no-interaction --no-ansi --no-root
     
     - name: Create API test environment
       working-directory: apps/bot
