@@ -1,0 +1,100 @@
+{
+  "baseline_info": {
+    "version": "TF-09",
+    "created_at": "2025-06-23T16:11:42.380188",
+    "description": "Post TF-07 production query validation baseline"
+  },
+  "system_config": {
+    "environment_config": {
+      "nl_to_sql_enabled": true,
+      "composite_parser_fallback_threshold": 0.5,
+      "enable_query_statistics": true,
+      "ai_parser_timeout": 3000,
+      "rule_parser_cache_size": 1000,
+      "enable_config_hot_reload": false
+    },
+    "nl_to_sql_enabled": true,
+    "statistics_enabled": false,
+    "config_files_loaded": 3,
+    "parser_count": 2,
+    "template_count": 6
+  },
+  "service_registry": {
+    "total_services": 25,
+    "singleton_services": 23,
+    "transient_services": 2,
+    "core_services": 5,
+    "application_services": 4,
+    "nl_to_sql_services": 12,
+    "infrastructure_services": 4,
+    "service_factory_version": "enhanced",
+    "dependency_injection": "active"
+  },
+  "query_tests": {
+    "core_queries": {
+      "M001機台稼動率": {
+        "success": true,
+        "query_type": "specific_machine",
+        "confidence": 0.9,
+        "sql_length": 467,
+        "response_time_ms": 17.66,
+        "has_parameters": true,
+        "explanation_length": 42
+      },
+      "查看所有機台": {
+        "success": true,
+        "query_type": "all_machines",
+        "confidence": 0.85,
+        "sql_length": 384,
+        "response_time_ms": 0.63,
+        "has_parameters": false,
+        "explanation_length": 38
+      },
+      "近期故障記錄": {
+        "success": true,
+        "query_type": "fault_analysis",
+        "confidence": 0.8,
+        "sql_length": 224,
+        "response_time_ms": 1520.78,
+        "has_parameters": true,
+        "explanation_length": 137
+      },
+      "生產統計報告": {
+        "success": true,
+        "query_type": "production_stats",
+        "confidence": 0.8,
+        "sql_length": 460,
+        "response_time_ms": 0.58,
+        "has_parameters": false,
+        "explanation_length": 38
+      }
+    },
+    "total_tested": 4,
+    "success_count": 4,
+    "success_rate": 100.0
+  },
+  "performance_metrics": {
+    "query_parsing": {
+      "m001_query_confidence": 0.9,
+      "all_machines_query_confidence": 0.85,
+      "sql_generation_success": true,
+      "auto_repair_mechanism": "active"
+    },
+    "service_initialization": {
+      "factory_init_success": true,
+      "nl_service_init_success": true,
+      "config_load_success": true
+    },
+    "memory_efficiency": {
+      "service_registry_optimized": true,
+      "modular_architecture": true,
+      "dependency_injection_efficient": true
+    },
+    "reliability": {
+      "v5_stability_fixes": "active",
+      "empty_query_protection": "active",
+      "type_safety_enhanced": true,
+      "statistics_service_stable": true
+    }
+  }
+}

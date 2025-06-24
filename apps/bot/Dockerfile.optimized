@@ -1,0 +1,209 @@
+# ==============================================================================
+# 多階段建構 Dockerfile - LINE MCP Bot
+# 實現快取優化、安全性強化、體積縮減
+# ==============================================================================
+
+# ================================
+# Stage 1: Base Dependencies
+# ================================
+FROM python:3.11-slim-bookworm AS base
+
+# 設定非 root 用戶
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+# 建立應用用戶和目錄
+RUN groupadd -g ${APP_GID} ${APP_USER} && \
+    useradd -u ${APP_UID} -g ${APP_GID} -m -s /bin/bash ${APP_USER} && \
+    mkdir -p /app && \
+    chown -R ${APP_USER}:${APP_USER} /app
+
+# 設定工作目錄
+WORKDIR /app
+
+# 安裝系統依賴（最小化安裝）
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    git \
+    curl \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
+
+# 安裝 Poetry（固定版本）
+ENV POETRY_VERSION=1.7.1
+RUN pip install --no-cache-dir poetry==$POETRY_VERSION
+
+# Poetry 配置
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_CACHE_DIR=/tmp/poetry_cache \
+    POETRY_HOME="/opt/poetry" \
+    POETRY_VENV_IN_PROJECT=1
+
+# ================================
+# Stage 2: Dependencies Builder
+# ================================
+FROM base AS deps-builder
+
+# 繼續以 root 身份安裝依賴
+
+# 複製 Poetry 配置檔案（利用 Docker 快取）
+COPY apps/bot/pyproject.toml apps/bot/poetry.lock ./
+
+# 安裝生產依賴（無 dev 依賴）
+RUN poetry install --only main --no-interaction --no-ansi && \
+    rm -rf $POETRY_CACHE_DIR
+
+# ================================
+# Stage 3: Development Dependencies (可選)
+# ================================
+FROM deps-builder AS deps-dev
+
+# 安裝開發依賴
+RUN poetry install --with dev --no-interaction --no-ansi && \
+    rm -rf $POETRY_CACHE_DIR
+
+# ================================
+# Stage 4: Application Builder
+# ================================
+FROM deps-builder AS app-builder
+
+# 複製應用程式碼
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/src/ ./src/
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/tests/ ./tests/
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/*.py ./
+
+# 創建必要目錄
+RUN mkdir -p logs data temp && \
+    touch logs/.gitkeep data/.gitkeep temp/.gitkeep
+
+# 安裝應用（如果需要）
+RUN if [ -f "setup.py" ] || grep -q "build-backend" pyproject.toml; then \
+        poetry install --only main --no-interaction --no-ansi; \
+    fi
+
+# ================================
+# Stage 5: Production Runtime
+# ================================
+FROM python:3.11-slim-bookworm AS production
+
+# 重建用戶（保持一致性）
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+RUN groupadd -g ${APP_GID} ${APP_USER} && \
+    useradd -u ${APP_UID} -g ${APP_GID} -m -s /bin/bash ${APP_USER}
+
+# 安裝最小運行時依賴
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    tini \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
+
+# 設定工作目錄
+WORKDIR /app
+
+# 從建構階段複製 Python 環境
+COPY --from=app-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=app-builder /usr/local/bin /usr/local/bin
+
+# 複製應用程式碼和配置
+COPY --from=app-builder --chown=${APP_USER}:${APP_USER} /app /app
+
+# 設定權限
+RUN chown -R ${APP_USER}:${APP_USER} /app
+
+# 切換到非特權用戶
+USER ${APP_USER}
+
+# 環境變數
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PYTHONPATH=/app/src:$PYTHONPATH \
+    PATH=/home/${APP_USER}/.local/bin:$PATH
+
+# 標籤（元數據）
+LABEL maintainer="LINE MCP Bot Team" \
+      version="1.0.0" \
+      description="LINE Bot with Model Context Protocol integration" \
+      org.opencontainers.image.title="LINE MCP Bot" \
+      org.opencontainers.image.description="Production-ready LINE Bot with MCP" \
+      org.opencontainers.image.vendor="Your Organization" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/your-org/line-mcp"
+
+# 暴露端口
+EXPOSE 8000
+
+# 健康檢查（改進版）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# 使用 tini 作為 init 進程（處理僵屍進程）
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+# 啟動命令
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+
+# ================================
+# Stage 6: Development Runtime
+# ================================
+FROM deps-dev AS development
+
+# 重建用戶
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+# 複製應用程式碼
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/ .
+
+# 切換到應用用戶
+USER ${APP_USER}
+
+# 環境變數（開發模式）
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PYTHONPATH=/app/src:$PYTHONPATH \
+    ENVIRONMENT=development
+
+# 暴露端口
+EXPOSE 8000 5678
+
+# 開發模式啟動（支援熱重載）
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# ================================
+# Stage 7: Testing Runtime
+# ================================
+FROM deps-dev AS testing
+
+# 重建用戶
+ARG APP_USER=appuser
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+# 複製應用程式碼
+COPY --chown=${APP_USER}:${APP_USER} apps/bot/ .
+
+# 切換到應用用戶  
+USER ${APP_USER}
+
+# 環境變數
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PYTHONPATH=/app/src:$PYTHONPATH \
+    ENVIRONMENT=testing
+
+# 預設測試命令
+CMD ["pytest", "-v", "--cov=src", "--cov-report=xml", "--cov-report=html"]

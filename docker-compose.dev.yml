@@ -1,0 +1,189 @@
+version: '3.8'
+
+# 開發環境 Docker Compose 配置
+# 使用方式: docker-compose -f docker-compose.dev.yml up
+
+services:
+  # LINE Bot 應用
+  bot:
+    build:
+      context: ./apps/bot
+      dockerfile: Dockerfile
+      target: development  # 開發階段
+    container_name: line-mcp-bot-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "5678:5678"  # debugpy 端口
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+      - REDIS_URL=redis://redis-dev:6379/0
+      - MCP_SQLITE_SERVER_URL=http://mcp-sqlite-dev:3000
+      - ASYNCIO_FORCE_SELECT_SELECTOR=1
+      # 從 .env.dev 載入其他環境變數
+    env_file:
+      - .env.dev
+    volumes:
+      # 熱重載支援
+      - ./apps/bot/src:/app/src:ro
+      - ./apps/bot/tests:/app/tests:ro
+      - ./data:/app/data
+      - dev-logs:/app/logs
+    depends_on:
+      redis-dev:
+        condition: service_healthy
+      mcp-sqlite-dev:
+        condition: service_started
+    networks:
+      - line-mcp-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot-dev.rule=Host(`dev.line-mcp.local`)"
+      - "traefik.http.services.bot-dev.loadbalancer.server.port=8000"
+
+  # MCP SQLite 服務器
+  mcp-sqlite-dev:
+    build:
+      context: ./apps/servers/src/sqlite
+      dockerfile: Dockerfile
+    container_name: mcp-sqlite-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - DB_PATH=/data/test.db
+    volumes:
+      - ./data/sqlite:/data
+      - dev-logs:/app/logs
+    networks:
+      - line-mcp-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Redis 快取
+  redis-dev:
+    image: redis:7-alpine
+    container_name: redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_DATABASES=16
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-dev-data:/data
+      - ./config/redis/redis.dev.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - line-mcp-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # 開發工具 - Redis GUI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis-dev:6379
+    depends_on:
+      - redis-dev
+    networks:
+      - line-mcp-dev
+    profiles:
+      - tools
+
+  # 開發工具 - 資料庫瀏覽器
+  sqlite-web:
+    image: coleifer/sqlite-web
+    container_name: sqlite-web-dev
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./data/sqlite:/data:ro
+    command: sqlite_web /data/test.db --host 0.0.0.0 --port 8080
+    networks:
+      - line-mcp-dev
+    profiles:
+      - tools
+
+  # 日誌聚合 - 開發環境
+  fluentd-dev:
+    build:
+      context: ./infra/fluentd
+      dockerfile: Dockerfile.dev
+    container_name: fluentd-dev
+    restart: unless-stopped
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - dev-logs:/fluentd/log
+      - ./config/fluentd/fluent.dev.conf:/fluentd/etc/fluent.conf:ro
+    networks:
+      - line-mcp-dev
+    profiles:
+      - monitoring
+
+  # 指標收集 - 開發環境
+  prometheus-dev:
+    image: prom/prometheus:latest
+    container_name: prometheus-dev
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.dev.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-dev-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - line-mcp-dev
+    profiles:
+      - monitoring
+
+volumes:
+  redis-dev-data:
+    driver: local
+  prometheus-dev-data:
+    driver: local
+  dev-logs:
+    driver: local
+
+networks:
+  line-mcp-dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 開發環境特殊配置
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"

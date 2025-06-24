@@ -1,5 +1,8 @@
 依計劃撰寫 spec_自定義任務名稱.md,嚴格按照 spec檔案執行,每一個任務都要有對應的測試腳本,要等到測試沒問題才可以執行下一個任務,當所有任務都完成要有一個總結,以便後續專案延續
 
+
+
+
 最後還要進行產品運行測試,運行測試相關查詢“M001機台稼動率”,得到結果
 
 結果：
@@ -12,6 +15,38 @@
 ❌ 不良品：881 件
 📅 最後記錄：2025-06-16
 🔧 近7天故障：1 次
+
+運行測試相關查詢“查看所有機台”,得到結果
+
+結果：
+📋 所有機台狀態概覽 (10 台)
+━━━━━━━━━━━━━━━━━━━━
+📊 整體統計：
+   平均稼動率：71.7%
+   平均效率：91.6%
+   🟢 高效機台：2 台
+   🔴 低效機台：0 台
+
+🔧 機台詳情：
+🟡 M001 CNC車床A
+   🔧 加工部 | 稼動率 72.8%
+🟡 M002 CNC車床B
+   🔧 加工部 | 稼動率 72.2%
+🟡 M003 銑床A
+   🔧 加工部 | 稼動率 67.1%
+🟡 M004 銑床B
+   🔧 加工部 | 稼動率 66.0%
+🟡 M005 沖床A
+   🏭 沖壓部 | 稼動率 74.7%
+🟡 M006 沖床B
+   🏭 沖壓部 | 稼動率 76.3%
+🟡 M007 焊接機A
+   🔩 組裝部 | 稼動率 65.2%
+🟡 M008 焊接機B
+   🔩 組裝部 | 稼動率 60.0%
+
+... 還有 2 台機台
+💡 使用 /sql 查詢更多詳情
 
 得到正確的結果,還要做更新專案相關文件以反映代碼變更 - 確保系統使用最新修復
 
@@ -41,3 +76,121 @@
 6. 若需觸發測試，呼叫 `/Users/yen/Desktop/lineMCP/start-production.sh`。  
    測試通過 → 視為當前任務完成；測試失敗 → 將任務標為 BLOCKED 並列出錯誤摘要。
 7. 禁止洩漏機密路徑、Token 等資訊至最終回應中。
+
+
+還有要遵循零風險遷移計劃：
+  📋 總體策略原則
+  1. 舊代碼研究優先
+  - 先理解再行動，避免盲目重構
+  - 建立完整的使用追蹤和依賴地圖
+  - 保留所有變更歷史和回滾機制
+  2. 漸進式替換
+  - 採用"新建-共存-遷移-驗證-移除"的五步法
+
+# 零風險遷移 Git 指令手冊
+
+依階段排列的完整流程──從建立錨點、雙軌共存，到最終移除舊架構與回滾指令，一檔搞定，可直接存成 `migration-guide.md`。
+
+---
+
+## 0️⃣ 建立遷移前錨點
+
+```bash
+git tag -a baseline-20250623 -m "遷移前最後穩定版"
+git push origin baseline-20250623
+```
+
+---
+
+## 1️⃣ 新建 (New)
+
+```bash
+git checkout -b feature/new-architecture
+# 建立最小骨架…
+
+git add .
+git commit -m "feat(core): scaffold new arch skeleton (no integration yet)"
+git push -u origin feature/new-architecture
+```
+
+---
+
+## 2️⃣ 共存 (Co-exist)
+
+```bash
+# 啟用 Feature Flag
+export NEW_ARCH=true     # 或寫入 .env ／ CI 變數
+
+# 與主幹保持同步
+git pull --rebase origin main
+
+# 黑暗推出：可運作的新功能合併回 main
+git checkout main
+git merge --no-ff feature/new-architecture -m "merge: new arch (flag off)"
+git push origin main
+```
+
+---
+
+## 3️⃣ 遷移 (Migrate)
+
+```bash
+git checkout -b migrate/<module-name>
+# 搬遷模組、覆寫、測試…
+
+git add .
+git commit -m "migrate(<module-name>): switch to new service"
+gh pr create -B main -t "Migrate <module-name>" -b "Flag guarded"
+```
+
+---
+
+## 4️⃣ 驗證 (Verify)
+
+```bash
+# 以下動作由 CI 自動執行
+npm test          # JS／TS 單元測試
+pytest            # Python 單元測試
+# Playwright／Cypress 端到端測試
+# 當 Tag 為 perf/* 時，自動執行壓力測試
+```
+
+---
+
+## 5️⃣ 移除 (Remove)
+
+```bash
+git checkout -b chore/cleanup-legacy
+git rm -r legacy/
+git commit -m "chore: remove legacy impl after full cutover"
+
+# 移除 Feature Flag 痕跡
+git grep -l "NEW_ARCH" | xargs sed -i '' '/NEW_ARCH/d'
+git commit -am "chore: drop NEW_ARCH flag"
+
+# 打正式版標籤並推送
+git tag -a v2.0.0 -m "New architecture complete"
+git push origin --tags
+```
+
+---
+
+## 🔄 快速回滾
+
+```bash
+# 回到遷移前錨點
+git checkout baseline-20250623
+
+# 或回滾單次合併
+git revert <merge-commit-sha> -m 1
+```
+
+> 若需補充 CI YAML 範例、Feature Flag SDK 細節或回滾腳本，可隨時告訴我！
+
+  
+  - 每個階段都有獨立的測試和驗證機制
+  - 確保任何時刻都能回滾到上一個穩定狀態
+  3. 測試驅動安全網
+  - 在每次變更前建立完整的功能測試
+  - 使用特徵開關(Feature Flag)控制新舊實現
+  - 建立自動化的回歸測試套件

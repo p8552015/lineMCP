@@ -1,0 +1,276 @@
+# ==============================================================================
+# Prometheus 告警規則 - LINE MCP Bot
+# ==============================================================================
+
+groups:
+  
+  # ============================
+  # 應用層告警
+  # ============================
+  - name: line-mcp-application
+    rules:
+      
+      # 服務下線告警
+      - alert: ServiceDown
+        expr: up{job="line-mcp-bot"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot 服務下線"
+          description: "LINE MCP Bot 服務已下線超過 1 分鐘"
+          runbook_url: "https://docs.company.com/runbooks/service-down"
+
+      # 高錯誤率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{job="line-mcp-bot",status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot 高錯誤率"
+          description: "錯誤率在過去 5 分鐘內超過 10%"
+
+      # 高延遲告警
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="line-mcp-bot"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot 高延遲"
+          description: "95% 請求延遲超過 2 秒"
+
+      # 記憶體使用率過高
+      - alert: HighMemoryUsage
+        expr: container_memory_usage_bytes{name="line-mcp-bot"} / container_spec_memory_limit_bytes{name="line-mcp-bot"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot 記憶體使用率過高"
+          description: "記憶體使用率超過 80%"
+
+      # CPU 使用率過高
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name="line-mcp-bot"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot CPU 使用率過高"
+          description: "CPU 使用率超過 80%"
+
+      # 健康檢查失敗
+      - alert: HealthCheckFailing
+        expr: probe_success{job="blackbox",instance="http://line-mcp-bot:8000/health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: line-mcp-bot
+        annotations:
+          summary: "LINE MCP Bot 健康檢查失敗"
+          description: "健康檢查端點連續失敗超過 2 分鐘"
+
+  # ============================
+  # MCP 服務告警
+  # ============================
+  - name: mcp-service
+    rules:
+      
+      # MCP 服務下線
+      - alert: MCPServiceDown
+        expr: up{job="mcp-sqlite"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: mcp-sqlite
+        annotations:
+          summary: "MCP SQLite 服務下線"
+          description: "MCP SQLite 服務已下線超過 1 分鐘"
+
+      # MCP 連接失敗率過高
+      - alert: MCPConnectionFailureRate
+        expr: rate(mcp_connection_failures_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: mcp-sqlite
+        annotations:
+          summary: "MCP 連接失敗率過高"
+          description: "MCP 連接失敗率在過去 5 分鐘內超過 5%"
+
+  # ============================
+  # 資料庫告警
+  # ============================
+  - name: database
+    rules:
+      
+      # PostgreSQL 下線
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL 資料庫下線"
+          description: "PostgreSQL 資料庫已下線超過 1 分鐘"
+
+      # 連接數過多
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_database_numbackends{datname!~"template.*|postgres"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+        annotations:
+          summary: "PostgreSQL 連接數過多"
+          description: "資料庫連接數超過 80"
+
+      # Redis 下線
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis 快取服務下線"
+          description: "Redis 快取服務已下線超過 1 分鐘"
+
+      # Redis 記憶體使用率過高
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis 記憶體使用率過高"
+          description: "Redis 記憶體使用率超過 90%"
+
+  # ============================
+  # 系統層告警
+  # ============================
+  - name: system
+    rules:
+      
+      # 磁碟空間不足
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "磁碟空間不足"
+          description: "磁碟可用空間少於 10%"
+
+      # 磁碟空間嚴重不足
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.05
+        for: 1m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁碟空間嚴重不足"
+          description: "磁碟可用空間少於 5%"
+
+      # 負載過高
+      - alert: HighSystemLoad
+        expr: node_load1 > 4
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "系統負載過高"
+          description: "1 分鐘平均負載超過 4"
+
+      # 節點下線
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "節點監控下線"
+          description: "節點監控已下線超過 1 分鐘"
+
+  # ============================
+  # 網路層告警
+  # ============================
+  - name: network
+    rules:
+      
+      # Nginx 下線
+      - alert: NginxDown
+        expr: up{job="nginx-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nginx
+        annotations:
+          summary: "Nginx 代理服務下線"
+          description: "Nginx 代理服務已下線超過 1 分鐘"
+
+      # 高連接數
+      - alert: NginxHighConnections
+        expr: nginx_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx
+        annotations:
+          summary: "Nginx 活躍連接數過高"
+          description: "Nginx 活躍連接數超過 1000"
+
+  # ============================
+  # 業務層告警
+  # ============================
+  - name: business
+    rules:
+      
+      # LINE 訊息處理失敗率過高
+      - alert: HighLineMessageFailureRate
+        expr: rate(line_message_processing_failures_total[5m]) / rate(line_message_processing_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+          type: business
+        annotations:
+          summary: "LINE 訊息處理失敗率過高"
+          description: "LINE 訊息處理失敗率在過去 5 分鐘內超過 5%"
+
+      # AI 模型調用失敗率過高
+      - alert: HighAIModelFailureRate
+        expr: rate(ai_model_request_failures_total[5m]) / rate(ai_model_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+          type: business
+        annotations:
+          summary: "AI 模型調用失敗率過高"
+          description: "AI 模型調用失敗率在過去 5 分鐘內超過 10%"
+
+      # MCP 查詢失敗率過高
+      - alert: HighMCPQueryFailureRate
+        expr: rate(mcp_query_failures_total[5m]) / rate(mcp_queries_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          service: line-mcp-bot
+          type: business
+        annotations:
+          summary: "MCP 查詢失敗率過高"
+          description: "MCP 查詢失敗率在過去 5 分鐘內超過 5%"

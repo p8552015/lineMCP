@@ -1,0 +1,211 @@
+# SQL 查詢模板配置檔案
+# 用於 QueryTemplateManager 的模板管理
+
+# 配置格式說明：
+# query_type:
+#   template: SQL 模板字串（支援 {parameter} 佔位符）
+#   description: 模板描述
+#   parameters: [必要參數列表]
+#   performance_hint: 效能提示
+#   example_parameters: 範例參數
+
+specific_machine:
+  template: |
+    SELECT 
+        m.machine_id,
+        m.machine_name,
+        m.department,
+        COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+        COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+        MAX(u.date) as last_record_date,
+        COALESCE(SUM(u.good_parts), 0) as total_good_parts,
+        COALESCE(SUM(u.defective_parts), 0) as total_defective_parts
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
+    WHERE m.machine_id = '{machine_id}'
+    GROUP BY m.machine_id, m.machine_name, m.department
+  description: "查詢特定機台的詳細狀態和效能資料"
+  parameters: ["machine_id"]
+  performance_hint: "使用機台 ID 索引，查詢速度較快"
+  example_parameters:
+    machine_id: "M001"
+
+all_machines:
+  template: |
+    SELECT 
+        m.machine_id,
+        m.machine_name,
+        m.department,
+        COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+        COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+        MAX(u.date) as last_record_date
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+        AND u.date >= date('now', '-7 days')
+    GROUP BY m.machine_id, m.machine_name, m.department
+    ORDER BY m.machine_id
+  description: "獲取所有機台的狀態概覽"
+  parameters: []
+  performance_hint: "查詢範圍較大，已限制為近 7 天資料"
+  example_parameters: {}
+
+fault_analysis:
+  template: |
+    SELECT 
+        COUNT(*) as total_faults,
+        fault_type,
+        severity,
+        COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
+    FROM machine_faults 
+    WHERE fault_date >= date('now', '-{days} days')
+    GROUP BY fault_type, severity
+    ORDER BY COUNT(*) DESC
+  description: "分析機台故障記錄和統計"
+  parameters: ["days"]
+  performance_hint: "根據時間範圍過濾，建議使用適當的天數"
+  example_parameters:
+    days: 30
+
+production_stats:
+  template: |
+    SELECT 
+        m.department,
+        COUNT(DISTINCT m.machine_id) as machine_count,
+        COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+        COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+        COALESCE(SUM(u.good_parts), 0) as total_good_parts,
+        COALESCE(SUM(u.defective_parts), 0) as total_defective_parts
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+        AND u.date >= date('now', '-7 days')
+    GROUP BY m.department
+    ORDER BY avg_utilization DESC
+  description: "生產統計報告，按部門分組"
+  parameters: []
+  performance_hint: "涉及多表聯接和聚合計算，已優化為近 7 天"
+  example_parameters: {}
+
+department_status:
+  template: |
+    SELECT 
+        m.machine_id,
+        m.machine_name,
+        COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+        COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+        MAX(u.date) as last_record_date
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+        AND u.date >= date('now', '-7 days')
+    WHERE m.department = '{department}'
+    GROUP BY m.machine_id, m.machine_name
+    ORDER BY avg_utilization DESC
+  description: "查詢特定部門的機台狀態"
+  parameters: ["department"]
+  performance_hint: "使用部門索引，效能良好"
+  example_parameters:
+    department: "加工部"
+
+machine_status:
+  template: |
+    SELECT 
+        m.machine_id,
+        m.machine_name,
+        m.department,
+        m.status,
+        COALESCE(u.utilization_rate, 0) as current_utilization,
+        COALESCE(u.efficiency_rate, 0) as current_efficiency,
+        u.date as last_update
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
+        AND u.date = (
+            SELECT MAX(date) 
+            FROM machine_utilization 
+            WHERE machine_id = m.machine_id
+        )
+    ORDER BY m.machine_id
+  description: "查詢機台即時運行狀態"
+  parameters: []
+  performance_hint: "查詢最新狀態，使用子查詢獲取最新記錄"
+  example_parameters: {}
+
+# 模板設定
+template_settings:
+  # 參數驗證規則
+  parameter_validation:
+    machine_id:
+      pattern: "^M\\d{3,4}$"
+      description: "機台 ID 格式：M + 3-4 位數字"
+      
+    department:
+      allowed_values: ["加工部", "組裝部", "品管部", "維修部", "生產部"]
+      description: "有效的部門名稱"
+      
+    days:
+      type: "integer"
+      min_value: 1
+      max_value: 365
+      default_value: 30
+      description: "查詢天數範圍"
+  
+  # 安全設定
+  security:
+    # 允許的 SQL 關鍵字
+    allowed_keywords: ["SELECT", "FROM", "WHERE", "GROUP BY", "ORDER BY", "LEFT JOIN", "COALESCE", "AVG", "SUM", "COUNT", "MAX", "MIN"]
+    
+    # 禁止的 SQL 關鍵字
+    forbidden_keywords: ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE", "EXEC", "UNION", "SCRIPT"]
+    
+    # 參數轉義設定
+    parameter_escaping:
+      enabled: true
+      escape_quotes: true
+      remove_comments: true
+      remove_semicolons: true
+  
+  # 效能設定
+  performance:
+    # 預設查詢超時（秒）
+    default_timeout: 30
+    
+    # 結果集大小限制
+    max_result_rows: 10000
+    
+    # 模板快取設定
+    template_caching:
+      enabled: true
+      cache_duration: 3600  # 秒
+      max_cache_size: 100
+  
+  # 模板品質標準
+  quality_standards:
+    # 最大查詢長度
+    max_template_length: 2000
+    
+    # 必須包含的元素
+    required_elements: ["SELECT", "FROM"]
+    
+    # 推薦的最佳實踐
+    best_practices:
+      - "使用 COALESCE 處理 NULL 值"
+      - "明確指定欄位名稱，避免 SELECT *"
+      - "適當使用索引欄位進行 WHERE 過濾"
+      - "使用 LEFT JOIN 而非 INNER JOIN 以避免資料遺失"
+      - "加入適當的 ORDER BY 子句"
+      
+# 模板元數據
+template_metadata:
+  version: "1.0.0"
+  last_updated: "2025-06-20"
+  total_templates: 6
+  supported_query_types:
+    - "specific_machine"
+    - "all_machines" 
+    - "fault_analysis"
+    - "production_stats"
+    - "department_status"
+    - "machine_status"
+    
+  complexity_levels:
+    simple: ["specific_machine", "machine_status"]
+    medium: ["department_status", "fault_analysis"]
+    complex: ["all_machines", "production_stats"]

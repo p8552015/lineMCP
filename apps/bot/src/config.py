@@ -75,12 +75,12 @@ class Settings(BaseSettings):
     ai_enable_enhanced_nl: bool = True
     ai_fallback_to_rules: bool = True
     ai_rules_first: bool = True  # 規則優先
-    
+
     # Architecture Configuration
     # 新架構已完成遷移，永久啟用
     use_new_architecture: bool = True
     service_factory_type: str = "enhanced"
-    
+
     # NL-to-SQL SOLID 架構配置
     nl_to_sql_enabled: bool = True
     nl_to_sql_config_dir: str = "src/services/nl_to_sql/config"

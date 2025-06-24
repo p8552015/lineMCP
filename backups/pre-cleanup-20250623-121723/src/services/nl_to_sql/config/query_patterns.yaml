@@ -1,0 +1,139 @@
+# 查詢模式配置檔案
+# 用於 RuleBasedParser 的規則匹配
+
+# 配置格式說明：
+# query_type_name:
+#   patterns: [正規表達式列表]
+#   confidence: 信心度 (0.0-1.0)
+#   description: 查詢類型描述
+#   examples: [範例查詢列表]
+
+all_machines:
+  patterns:
+    - "所有.*機台"
+    - "全部.*機台"
+    - "整體.*狀態"
+    - "機台.*概覽"
+    - "機台.*列表"
+    - "查看.*所有"
+    - "顯示.*全部"
+  confidence: 0.85
+  description: "查詢所有機台的狀態概覽"
+  examples:
+    - "所有機台的狀態"
+    - "全部機台概覽"
+    - "查看所有機台"
+    - "顯示機台列表"
+
+fault_analysis:
+  patterns:
+    - "故障.*分析"
+    - "錯誤.*統計"
+    - "異常.*記錄"
+    - "故障.*報告"
+    - "維修.*記錄"
+    - "問題.*分析"
+    - "故障.*趨勢"
+    - "錯誤.*類型"
+  confidence: 0.8
+  description: "分析機台故障記錄和統計"
+  examples:
+    - "故障分析報告"
+    - "近期錯誤統計"
+    - "異常記錄查詢"
+    - "維修記錄統計"
+
+production_stats:
+  patterns:
+    - "生產.*統計"
+    - "產量.*報告"
+    - "效率.*分析"
+    - "生產.*報表"
+    - "產能.*統計"
+    - "製造.*數據"
+    - "生產.*績效"
+    - "部門.*統計"
+  confidence: 0.8
+  description: "生產統計報告，按部門分組"
+  examples:
+    - "生產統計報告"
+    - "部門產量統計"
+    - "效率分析報表"
+    - "生產績效統計"
+
+department_status:
+  patterns:
+    - "部門.*狀態"
+    - "部門.*機台"
+    - ".*部.*狀態"
+    - ".*部.*機台"
+    - "部門.*概覽"
+    - ".*部.*概覽"
+  confidence: 0.75
+  description: "查詢特定部門的機台狀態"
+  examples:
+    - "加工部狀態"
+    - "組裝部機台"
+    - "品管部概覽"
+    - "維修部狀態"
+
+machine_status:
+  patterns:
+    - "機台.*狀態"
+    - "設備.*狀態"
+    - "機器.*運行"
+    - "設備.*運行"
+    - "機台.*運轉"
+    - "設備.*運轉"
+    - "運行.*狀態"
+    - "運轉.*情況"
+  confidence: 0.7
+  description: "查詢機台運行狀態"
+  examples:
+    - "機台狀態查詢"
+    - "設備運行狀態"
+    - "機器運轉情況"
+    - "設備狀態報告"
+
+# 特殊模式配置
+special_patterns:
+  # 時間相關模式
+  time_patterns:
+    daily: ["今天", "今日", "當日"]
+    weekly: ["本週", "這週", "一週", "7天"]
+    monthly: ["本月", "這月", "一個月", "30天"]
+    quarterly: ["季度", "三個月", "90天"]
+    
+  # 部門映射
+  department_mapping:
+    "加工": "加工部"
+    "組裝": "組裝部"
+    "品管": "品管部"
+    "維修": "維修部"
+    "生產": "生產部"
+    
+  # 機台 ID 模式
+  machine_id_pattern: "[Mm](\\d{3,4})"
+  
+# 全域設定
+global_settings:
+  # 預設信心度門檻
+  default_confidence_threshold: 0.6
+  
+  # 解析器優先級設定
+  parser_priorities:
+    machine_id_match: 0.95  # 機台 ID 匹配優先級最高
+    exact_pattern_match: 0.8  # 精確模式匹配
+    partial_pattern_match: 0.6  # 部分模式匹配
+    
+  # 日誌設定
+  logging:
+    enabled: true
+    level: "DEBUG"
+    include_pattern_details: true
+    
+  # 效能設定
+  performance:
+    max_pattern_evaluation_time: 100  # 毫秒
+    enable_pattern_caching: true
+    cache_expiry: 3600  # 秒

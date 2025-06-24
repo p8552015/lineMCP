@@ -1,0 +1,182 @@
+# ==============================================================================
+# Prometheus 配置 - LINE MCP Bot 監控
+# ==============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'line-mcp-production'
+    environment: 'production'
+
+# Alertmanager 配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# 告警規則文件
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+# 抓取配置
+scrape_configs:
+  
+  # ============================
+  # Prometheus 自身監控
+  # ============================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # ============================
+  # LINE MCP Bot 應用監控
+  # ============================
+  - job_name: 'line-mcp-bot'
+    static_configs:
+      - targets: ['line-mcp-bot:8000']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: line-mcp-bot:8000
+
+  # ============================
+  # 容器監控 (cAdvisor)
+  # ============================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # ============================
+  # 節點監控 (Node Exporter)
+  # ============================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # ============================
+  # PostgreSQL 監控
+  # ============================
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # ============================
+  # Redis 監控
+  # ============================
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # ============================
+  # Nginx 監控
+  # ============================
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    scrape_interval: 30s
+
+  # ============================
+  # MCP SQLite 服務器監控
+  # ============================
+  - job_name: 'mcp-sqlite'
+    static_configs:
+      - targets: ['mcp-sqlite:3003']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # ============================
+  # 健康檢查監控
+  # ============================
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://line-mcp-bot:8000/health
+        - http://mcp-sqlite:3003/health
+        - http://nginx/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ============================
+  # 日誌監控 (Loki)
+  # ============================
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    scrape_interval: 30s
+
+  # ============================
+  # 自動服務發現 (Docker)
+  # ============================
+  - job_name: 'docker-discovery'
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 30s
+        port: 8080
+    relabel_configs:
+      # 只監控有 prometheus.scrape=true 標籤的容器
+      - source_labels: [__meta_docker_container_label_prometheus_scrape]
+        action: keep
+        regex: true
+      
+      # 使用容器名稱作為實例名
+      - source_labels: [__meta_docker_container_name]
+        target_label: container_name
+      
+      # 使用自定義端口
+      - source_labels: [__meta_docker_container_label_prometheus_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      
+      # 使用自定義路徑
+      - source_labels: [__meta_docker_container_label_prometheus_path]
+        action: replace
+        target_label: __metrics_path__
+
+# ============================
+# 遠程寫入配置 (可選)
+# ============================
+# remote_write:
+#   - url: "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push"
+#     basic_auth:
+#       username: "your_username"
+#       password: "your_password"
+
+# ============================
+# 存儲配置
+# ============================
+storage:
+  tsdb:
+    # 數據保留時間
+    retention.time: 30d
+    # 數據保留大小
+    retention.size: 10GB
+    # 壓縮設置
+    wal-compression: true

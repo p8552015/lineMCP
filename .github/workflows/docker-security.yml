@@ -1,0 +1,346 @@
+name: 🔒 Docker Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/bot/Dockerfile*'
+      - 'apps/bot/pyproject.toml'
+      - 'apps/bot/src/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/bot/Dockerfile*'
+      - 'apps/bot/pyproject.toml'
+      - 'apps/bot/src/**'
+  schedule:
+    # 每日 UTC 02:00 執行
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/line-mcp-bot
+
+jobs:
+  
+  # ================================
+  # Dockerfile 安全掃描
+  # ================================
+  dockerfile-scan:
+    name: 📄 Dockerfile 安全掃描
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Dockerfile 安全掃描 (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: apps/bot/Dockerfile.optimized
+          format: sarif
+          output-file: hadolint-results.sarif
+          no-fail: true
+
+      - name: 📤 Upload Hadolint Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: hadolint-results.sarif
+
+      - name: 🔍 Dockerfile 最佳實踐掃描 (Dockle)
+        run: |
+          curl -L -o dockle.deb https://github.com/goodwithtech/dockle/releases/download/v0.4.10/dockle_0.4.10_Linux-64bit.deb
+          sudo dpkg -i dockle.deb
+          
+          # 建構測試映像
+          docker build -f apps/bot/Dockerfile.optimized --target production -t test-image apps/bot
+          
+          # 執行 Dockle 掃描
+          dockle --format json --output dockle-results.json test-image
+
+      - name: 📤 Upload Dockle Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dockle-results
+          path: dockle-results.json
+
+  # ================================
+  # 容器映像安全掃描
+  # ================================
+  image-security-scan:
+    name: 🐳 映像安全掃描
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [production, development, testing]
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Test Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/bot
+          file: ./apps/bot/Dockerfile.optimized
+          target: ${{ matrix.target }}
+          load: true
+          tags: test-image:${{ matrix.target }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🔍 Trivy 漏洞掃描
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: test-image:${{ matrix.target }}
+          format: 'sarif'
+          output: 'trivy-${{ matrix.target }}.sarif'
+
+      - name: 📤 Upload Trivy Scan Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-${{ matrix.target }}.sarif'
+          category: 'trivy-${{ matrix.target }}'
+
+      - name: 🔍 Grype 漏洞掃描
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          grype test-image:${{ matrix.target }} -o json > grype-${{ matrix.target }}.json
+
+      - name: 📤 Upload Grype Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: grype-results-${{ matrix.target }}
+          path: grype-${{ matrix.target }}.json
+
+      - name: 🔍 Syft SBOM 生成
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          syft test-image:${{ matrix.target }} -o spdx-json > sbom-${{ matrix.target }}.spdx.json
+
+      - name: 📤 Upload SBOM
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sbom-${{ matrix.target }}
+          path: sbom-${{ matrix.target }}.spdx.json
+
+  # ================================
+  # 執行時安全掃描
+  # ================================
+  runtime-security-scan:
+    name: 🏃 執行時安全掃描
+    runs-on: ubuntu-latest
+    needs: [image-security-scan]
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Production Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/bot
+          file: ./apps/bot/Dockerfile.optimized
+          target: production
+          load: true
+          tags: prod-image:latest
+
+      - name: 🏃 容器執行時掃描
+        run: |
+          # 啟動容器進行執行時測試
+          docker run -d --name test-container \
+            -e ENVIRONMENT=testing \
+            -e LOG_LEVEL=INFO \
+            prod-image:latest sleep 60
+          
+          # 檢查容器狀態
+          sleep 10
+          docker ps -a
+          
+          # 檢查容器健康狀態
+          docker exec test-container sh -c 'ps aux'
+          
+          # 檢查網路端口
+          docker exec test-container sh -c 'netstat -tuln' || true
+          
+          # 檢查文件權限
+          docker exec test-container sh -c 'ls -la /app'
+          
+          # 檢查用戶權限
+          docker exec test-container sh -c 'id'
+          
+          # 停止容器
+          docker stop test-container
+          docker rm test-container
+
+      - name: 🔍 容器配置掃描 (Docker Bench)
+        run: |
+          git clone https://github.com/docker/docker-bench-security.git
+          cd docker-bench-security
+          sudo sh docker-bench-security.sh -c container_images
+
+  # ================================
+  # 安全報告生成
+  # ================================
+  security-report:
+    name: 📊 安全報告
+    runs-on: ubuntu-latest
+    needs: [dockerfile-scan, image-security-scan, runtime-security-scan]
+    if: always()
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./security-results
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📊 生成安全報告
+        run: |
+          pip install jq-py pandas matplotlib seaborn
+          
+          cat > generate_security_report.py << 'EOF'
+          import json
+          import os
+          from datetime import datetime
+          import pandas as pd
+          
+          def generate_security_report():
+              report = {
+                  "scan_date": datetime.now().isoformat(),
+                  "repository": "${{ github.repository }}",
+                  "commit": "${{ github.sha }}",
+                  "summary": {
+                      "total_vulnerabilities": 0,
+                      "critical": 0,
+                      "high": 0,
+                      "medium": 0,
+                      "low": 0
+                  },
+                  "details": []
+              }
+              
+              # 分析 Trivy 結果
+              for target in ["production", "development", "testing"]:
+                  trivy_file = f"./security-results/trivy-results-{target}/trivy-{target}.sarif"
+                  if os.path.exists(trivy_file):
+                      with open(trivy_file) as f:
+                          trivy_data = json.load(f)
+                          # 處理 SARIF 格式...
+                          pass
+              
+              # 分析 Grype 結果
+              for target in ["production", "development", "testing"]:
+                  grype_pattern = f"./security-results/grype-results-{target}/grype-{target}.json"
+                  if os.path.exists(grype_pattern):
+                      with open(grype_pattern) as f:
+                          grype_data = json.load(f)
+                          if "matches" in grype_data:
+                              for match in grype_data["matches"]:
+                                  severity = match["vulnerability"]["severity"]
+                                  report["summary"]["total_vulnerabilities"] += 1
+                                  report["summary"][severity.lower()] += 1
+              
+              # 生成 Markdown 報告
+              with open("SECURITY_REPORT.md", "w") as f:
+                  f.write(f"""# 🔒 Docker 安全掃描報告
+          
+          ## 📋 掃描摘要
+          - **掃描時間**: {report['scan_date']}
+          - **提交**: {report['commit'][:8]}
+          - **總漏洞數**: {report['summary']['total_vulnerabilities']}
+          
+          ## 📊 漏洞分佈
+          - 🚨 嚴重: {report['summary']['critical']}
+          - 🟠 高危: {report['summary']['high']} 
+          - 🟡 中危: {report['summary']['medium']}
+          - 🔵 低危: {report['summary']['low']}
+          
+          ## 🎯 建議行動
+          - 優先修復嚴重和高危漏洞
+          - 定期更新基礎映像
+          - 實施最小權限原則
+          - 啟用容器安全監控
+          
+          ---
+          *此報告由 GitHub Actions 自動生成*
+          """)
+          
+          if __name__ == "__main__":
+              generate_security_report()
+          EOF
+          
+          python generate_security_report.py
+
+      - name: 📤 Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: SECURITY_REPORT.md
+
+      - name: 💬 Comment PR (如果是 PR)
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('SECURITY_REPORT.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Docker 安全掃描結果\n\n${report}`
+            });
+
+  # ================================
+  # 安全政策檢查
+  # ================================
+  security-policy-check:
+    name: 📋 安全政策檢查
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 檢查安全配置
+        run: |
+          echo "🔍 檢查 Dockerfile 安全最佳實踐..."
+          
+          # 檢查是否使用非 root 用戶
+          if grep -q "USER.*root" apps/bot/Dockerfile.optimized; then
+            echo "❌ 發現 root 用戶使用"
+            exit 1
+          fi
+          
+          # 檢查是否有 HEALTHCHECK
+          if ! grep -q "HEALTHCHECK" apps/bot/Dockerfile.optimized; then
+            echo "⚠️ 缺少健康檢查配置"
+          fi
+          
+          # 檢查是否清理 apt 快取
+          if ! grep -q "rm -rf /var/lib/apt/lists" apps/bot/Dockerfile.optimized; then
+            echo "⚠️ 未清理 apt 快取"
+          fi
+          
+          echo "✅ 基本安全檢查完成"

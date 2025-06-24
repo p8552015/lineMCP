@@ -5,7 +5,7 @@ MessageHandler 依賴注入版本
 """
 
 import asyncio
-from typing import Optional, Callable, Awaitable
+from collections.abc import Awaitable, Callable
 
 import structlog
 from linebot.v3.messaging import (
@@ -21,8 +21,8 @@ from .database_service import DatabaseService
 from .error_handlers import ErrorContext, log_performance, mcp_error_handler
 from .mcp_response_parser import MCPResponseParser
 from .message_formatter import MessageFormatter
-from .nl_to_sql_service import NaturalLanguageToSQLService
 from .nl_to_sql.models.query_models import QueryType
+from .nl_to_sql_service import NaturalLanguageToSQLService
 from .openai_client import OpenAIClient
 
 logger = structlog.get_logger()
@@ -37,16 +37,18 @@ class MessageHandlerDI:
     - 清晰的依賴關係宣告
     """
 
-    def __init__(self,
-                 mcp_client_factory: Callable[[], Awaitable],
-                 ai_model_service: AIModelService,
-                 nl_service: NaturalLanguageToSQLService,
-                 db_service: DatabaseService,
-                 formatter: MessageFormatter,
-                 openai_client: Optional[OpenAIClient] = None):
+    def __init__(
+        self,
+        mcp_client_factory: Callable[[], Awaitable],
+        ai_model_service: AIModelService,
+        nl_service: NaturalLanguageToSQLService,
+        db_service: DatabaseService,
+        formatter: MessageFormatter,
+        openai_client: OpenAIClient | None = None,
+    ):
         """
         初始化訊息處理器
-        
+
         Args:
             mcp_client_factory: MCP 客戶端工廠函數
             ai_model_service: AI 模型服務
@@ -61,10 +63,10 @@ class MessageHandlerDI:
         self.db_service = db_service
         self.formatter = formatter
         self.openai_client = openai_client
-        
+
         # 內部狀態
         self._mcp_client = None
-        
+
         # TaskMaster 整合暫時禁用
         self.taskmaster = None
 
@@ -122,29 +124,32 @@ class MessageHandlerDI:
             except Exception as e:
                 # 使用統一錯誤處理
                 from src.infrastructure.error_handler import handle_error_gracefully
+
                 logger.error(f"Message processing failed: {e}", exc_info=True)
-                return handle_error_gracefully(e, {"user_id": user_id, "message_text": message_text})
+                return handle_error_gracefully(
+                    e, {"user_id": user_id, "message_text": message_text}
+                )
 
     async def _handle_command(self, user_id: str, command: Command) -> Message:
         """處理指令式查詢（使用 Command Pattern）"""
         logger.info(f"Processing command: {command.name}", args=command.args)
-        
+
         # 使用指令執行器處理指令
-        if not hasattr(self, '_command_executor'):
+        if not hasattr(self, "_command_executor"):
             self._initialize_command_executor()
-        
+
         # 重建完整的指令文字以供執行器解析
         command_text = f"/{command.name}"
         if command.args:
             command_text += " " + " ".join(command.args)
-        
+
         return await self._command_executor.execute_command(user_id, command_text)
-    
+
     def _initialize_command_executor(self):
         """初始化指令執行器"""
-        from src.domain.command_handler import CommandContext
         from src.domain.command_executor import CommandExecutor
-        
+        from src.domain.command_handler import CommandContext
+
         # 創建指令上下文
         context = CommandContext(
             mcp_client_factory=self.mcp_client_factory,
@@ -152,13 +157,13 @@ class MessageHandlerDI:
             nl_service=self.nl_service,
             db_service=self.db_service,
             formatter=self.formatter,
-            openai_client=self.openai_client
+            openai_client=self.openai_client,
         )
-        
+
         # 創建並初始化指令執行器
         self._command_executor = CommandExecutor(context)
         self._command_executor.initialize()
-        
+
         logger.info("✅ 指令執行器已初始化")
 
     @mcp_error_handler(
@@ -175,13 +180,13 @@ class MessageHandlerDI:
 
         # 🔥 緊急修復：檢查空查詢
         if not sql_query:
-            logger.error("❌ 緊急阻止：MessageHandler SQL 查詢為空", 
-                        user_id=user_id, 
-                        args=args)
+            logger.error(
+                "❌ 緊急阻止：MessageHandler SQL 查詢為空", user_id=user_id, args=args
+            )
             return TextMessage(
                 text="❌ SQL 查詢不能為空\\n\\n"
-                     "📝 用法：/sql <SQL查詢語句>\\n"
-                     "💡 例如：/sql SELECT * FROM machines LIMIT 5"
+                "📝 用法：/sql <SQL查詢語句>\\n"
+                "💡 例如：/sql SELECT * FROM machines LIMIT 5"
             )
 
         with ErrorContext("sql_command") as ctx:
@@ -428,6 +433,7 @@ class MessageHandlerDI:
 
         except Exception as e:
             from src.domain.exceptions import create_mcp_error
+
             logger.error(f"❌ MCP 工具調用失敗 {server}.{tool}：{e}", exc_info=True)
             raise create_mcp_error(server, tool, str(e))
 

@@ -13,17 +13,15 @@
 
 from .parsing_interfaces import IParser, IParsingStrategy
 from .query_builder_interfaces import IQueryBuilder, ITemplateManager
-from .statistics_interfaces import IStatistics, IConfiguration
+from .statistics_interfaces import IConfiguration, IStatistics
 
 __all__ = [
     # 解析介面
     "IParser",
-    "IParsingStrategy", 
-    
+    "IParsingStrategy",
     # 查詢建構介面
     "IQueryBuilder",
     "ITemplateManager",
-    
     # 統計和配置介面
     "IStatistics",
     "IConfiguration",

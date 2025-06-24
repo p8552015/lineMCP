@@ -1,0 +1,13 @@
+{
+  "test_time": "2025-06-23T22:01:42.047798",
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0
+  },
+  "results": [
+    {
+      "query": "M001機台稼動率",
+      "description": "測試特定機台稼動率查詢",
+      "success": true,
+      "response": 

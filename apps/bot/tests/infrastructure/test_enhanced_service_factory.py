@@ -11,7 +11,7 @@ from src.infrastructure.enhanced_service_factory import (
 from src.infrastructure.service_registry import ServiceRegistry, ServiceScope
 from src.services.ai_model_service import AIModelService
 from src.services.message_formatter import MessageFormatter
-from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
+from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 from src.application.messaging_service import MessagingApplicationService
 
 

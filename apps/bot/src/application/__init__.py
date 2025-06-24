@@ -5,12 +5,12 @@
 
 from .base_service import BaseApplicationService
 from .messaging_service import MessagingApplicationService
-from .query_service import QueryApplicationService
 from .monitoring_service import MonitoringApplicationService
+from .query_service import QueryApplicationService
 
 __all__ = [
-    'BaseApplicationService',
-    'MessagingApplicationService', 
-    'QueryApplicationService',
-    'MonitoringApplicationService'
+    "BaseApplicationService",
+    "MessagingApplicationService",
+    "QueryApplicationService",
+    "MonitoringApplicationService",
 ]

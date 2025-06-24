@@ -7,12 +7,12 @@
 - CompositeParser: 組合解析策略協調器
 """
 
-from .rule_based_parser import RuleBasedParser
 from .ai_enhanced_parser import AIEnhancedParser
 from .composite_parser import CompositeParser
+from .rule_based_parser import RuleBasedParser
 
 __all__ = [
     "RuleBasedParser",
-    "AIEnhancedParser", 
+    "AIEnhancedParser",
     "CompositeParser",
 ]

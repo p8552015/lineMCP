@@ -47,53 +47,153 @@ class MCPBridge:
         logger.info(f"Started MCP server process: PID {self.process.pid}")
         
     async def call_mcp(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
-        """透過 STDIO 調用 MCP 服務器"""
+        """透過 STDIO 調用 MCP 服務器 - 增強錯誤處理"""
         async with self.lock:
-            if not self.process:
-                await self.start_server()
+            try:
+                if not self.process:
+                    await self.start_server()
                 
-            request = {
-                "jsonrpc": "2.0",
-                "id": "bridge-1",
-                "method": method,
-                "params": params
-            }
-            
-            # 寫入請求
-            self.process.stdin.write(json.dumps(request) + "\n")
-            self.process.stdin.flush()
-            
-            # 讀取響應
-            response_line = self.process.stdout.readline()
-            if not response_line:
-                raise Exception("No response from MCP server")
+                # 檢查進程狀態
+                if self.process.poll() is not None:
+                    logger.error(f"MCP server process died with code {self.process.returncode}")
+                    self.process = None
+                    await self.start_server()
+                    
+                request = {
+                    "jsonrpc": "2.0",
+                    "id": "bridge-1",
+                    "method": method,
+                    "params": params
+                }
                 
-            return json.loads(response_line)
+                # 寫入請求 - 增加錯誤處理
+                try:
+                    request_json = json.dumps(request) + "\n"
+                    self.process.stdin.write(request_json)
+                    self.process.stdin.flush()
+                except (BrokenPipeError, OSError) as e:
+                    logger.error(f"Failed to write to MCP server: {e}")
+                    self.process = None
+                    raise Exception(f"MCP server connection broken: {e}")
+                
+                # 讀取響應 - 增加超時和錯誤處理
+                try:
+                    response_line = self.process.stdout.readline()
+                    if not response_line or not response_line.strip():
+                        stderr_output = self.process.stderr.readline() if self.process.stderr else ""
+                        logger.error(f"No response from MCP server. stderr: {stderr_output}")
+                        raise Exception(f"No response from MCP server. Error: {stderr_output}")
+                    
+                    response_data = json.loads(response_line)
+                    
+                    # 檢查 JSON-RPC 錯誤
+                    if "error" in response_data:
+                        error_info = response_data["error"]
+                        logger.error(f"MCP server returned error: {error_info}")
+                        raise Exception(f"MCP Error {error_info.get('code', 'unknown')}: {error_info.get('message', 'Unknown error')}")
+                    
+                    return response_data
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"Invalid JSON response from MCP server: {response_line[:100]}...")
+                    raise Exception(f"Invalid response format from MCP server: {e}")
+                    
+            except Exception as e:
+                # 統一錯誤格式
+                logger.error(f"MCP call failed - method: {method}, error: {e}")
+                # 重新拋出標準化錯誤
+                raise Exception(f"MCP service error: {str(e)}")
             
     async def handle_request(self, request: web.Request) -> web.Response:
-        """處理 HTTP 請求並轉發到 STDIO"""
+        """處理 HTTP 請求並轉發到 STDIO - 增強錯誤處理和分類"""
+        start_time = asyncio.get_event_loop().time()
+        request_id = id(request)
+        
         try:
-            data = await request.json()
+            # 驗證 Content-Type
+            if request.content_type not in ['application/json', None]:
+                logger.warning(f"Invalid content type: {request.content_type}")
+            
+            # 解析 JSON 請求體
+            try:
+                data = await request.json()
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON in request: {e}")
+                return web.json_response({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,  # Parse error
+                        "message": f"Invalid JSON format: {str(e)}"
+                    }
+                }, status=400)
+            
             method = data.get("method", "")
             params = data.get("params", {})
+            
+            # 記錄請求
+            logger.info(f"Processing request {request_id}: {request.path} -> {method}")
             
             # 映射 HTTP 路徑到 MCP 方法
             if request.path == "/tools/list":
                 method = "tools/list"
             elif request.path == "/tools/call":
                 method = "tools/call"
-                
-            result = await self.call_mcp(method, params)
+            elif not method:
+                logger.error(f"No method specified for path: {request.path}")
+                return web.json_response({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32600,  # Invalid Request
+                        "message": "No method specified"
+                    }
+                }, status=400)
             
-            return web.json_response(result)
+            # 調用 MCP 服務
+            try:
+                result = await self.call_mcp(method, params)
+                duration = asyncio.get_event_loop().time() - start_time
+                logger.info(f"Request {request_id} completed successfully in {duration:.3f}s")
+                return web.json_response(result)
+                
+            except Exception as mcp_error:
+                # MCP 特定錯誤處理
+                error_message = str(mcp_error)
+                error_code = -32603  # Internal error
+                
+                # 根據錯誤類型分類
+                if "connection broken" in error_message.lower():
+                    error_code = -32002  # Connection error
+                elif "no response" in error_message.lower():
+                    error_code = -32001  # Timeout error
+                elif "invalid response format" in error_message.lower():
+                    error_code = -32700  # Parse error
+                
+                logger.error(f"MCP error for request {request_id}: {error_message}")
+                return web.json_response({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": error_code,
+                        "message": error_message,
+                        "data": {
+                            "method": method,
+                            "path": request.path,
+                            "request_id": str(request_id)
+                        }
+                    }
+                }, status=500)
             
         except Exception as e:
-            logger.error(f"Error handling request: {e}")
+            # 捕獲所有其他未預期的錯誤
+            duration = asyncio.get_event_loop().time() - start_time
+            logger.error(f"Unexpected error in request {request_id} after {duration:.3f}s: {e}", exc_info=True)
             return web.json_response({
                 "jsonrpc": "2.0",
                 "error": {
-                    "code": -32603,
-                    "message": str(e)
+                    "code": -32603,  # Internal error
+                    "message": f"Internal server error: {str(e)}",
+                    "data": {
+                        "request_id": str(request_id)
+                    }
                 }
             }, status=500)
             

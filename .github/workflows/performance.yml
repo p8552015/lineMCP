@@ -1,0 +1,608 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*', 'perf/*']
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/bot/src/**'
+      - 'apps/servers/**'
+      - '.github/workflows/performance.yml'
+  schedule:
+    # 每週一凌晨 3 點執行效能測試
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      test_duration:
+        description: 'Test duration in seconds'
+        required: false
+        default: '300'
+        type: string
+      concurrent_users:
+        description: 'Number of concurrent users'
+        required: false
+        default: '10'
+        type: string
+      test_target:
+        description: 'Test target environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - performance
+
+env:
+  PYTHON_VERSION: "3.11"
+  PERFORMANCE_THRESHOLD_P95: "2000"  # 95th percentile response time (ms)
+  PERFORMANCE_THRESHOLD_P99: "5000"  # 99th percentile response time (ms)
+  ERROR_RATE_THRESHOLD: "1.0"       # Maximum error rate percentage
+
+jobs:
+  performance-setup:
+    name: Performance Test Setup
+    runs-on: ubuntu-latest
+    outputs:
+      test-duration: ${{ steps.config.outputs.test-duration }}
+      concurrent-users: ${{ steps.config.outputs.concurrent-users }}
+      baseline-exists: ${{ steps.baseline.outputs.exists }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure test parameters
+        id: config
+        run: |
+          # Set test duration
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "test-duration=${{ github.event.inputs.test_duration }}" >> $GITHUB_OUTPUT
+            echo "concurrent-users=${{ github.event.inputs.concurrent_users }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "test-duration=60" >> $GITHUB_OUTPUT  # Short test for PRs
+            echo "concurrent-users=5" >> $GITHUB_OUTPUT
+          else
+            echo "test-duration=300" >> $GITHUB_OUTPUT  # Full test for main branch
+            echo "concurrent-users=10" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check baseline performance data
+        id: baseline
+        run: |
+          if [ -f "performance-baseline.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  api-load-testing:
+    name: API Load Testing
+    runs-on: ubuntu-latest
+    needs: performance-setup
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Install dependencies
+        working-directory: apps/bot
+        run: |
+          poetry install --no-interaction --no-ansi
+          poetry run pip install locust
+      
+      - name: Set up Node.js for MCP servers
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      
+      - name: Install and start MCP servers
+        working-directory: apps/servers
+        run: |
+          npm ci
+          npm run build --workspaces --if-present
+          # Start SQLite MCP server in background
+          npm start --workspace=@mcp/sqlite &
+          echo $! > sqlite-mcp.pid
+          sleep 5
+      
+      - name: Create performance test environment
+        working-directory: apps/bot
+        run: |
+          cat > .env.performance << EOF
+          LINE_CHANNEL_ACCESS_TOKEN=perf_test_token
+          LINE_CHANNEL_SECRET=perf_test_secret
+          GOOGLE_API_KEY=perf_test_google_key
+          OPENAI_API_KEY=perf_test_openai_key
+          AI_MODEL_PROVIDER=google
+          REDIS_URL=redis://localhost:6379/2
+          ASYNCIO_FORCE_SELECT_SELECTOR=1
+          LOG_LEVEL=WARNING
+          EOF
+      
+      - name: Start FastAPI application
+        working-directory: apps/bot
+        run: |
+          poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > fastapi.pid
+          sleep 10
+      
+      - name: Wait for application readiness
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+      
+      - name: Create Locust test files
+        working-directory: apps/bot
+        run: |
+          mkdir -p performance_tests
+          
+          cat > performance_tests/locustfile.py << 'EOF'
+          import json
+          import random
+          import time
+          from locust import HttpUser, task, between
+          
+          class WebsiteUser(HttpUser):
+              wait_time = between(1, 3)
+              
+              def on_start(self):
+                  """Setup for each user"""
+                  self.test_queries = [
+                      "查看所有機台",
+                      "M001機台稼動率",
+                      "顯示生產統計",
+                      "機台效率排行",
+                      "查詢故障記錄"
+                  ]
+              
+              @task(3)
+              def health_check(self):
+                  """Health check endpoint - high frequency"""
+                  with self.client.get("/health", catch_response=True) as response:
+                      if response.status_code == 200:
+                          response.success()
+                      else:
+                          response.failure(f"Health check failed: {response.status_code}")
+              
+              @task(2)
+              def metrics_endpoint(self):
+                  """Metrics endpoint"""
+                  with self.client.get("/metrics", catch_response=True) as response:
+                      if response.status_code == 200:
+                          response.success()
+                      else:
+                          response.failure(f"Metrics failed: {response.status_code}")
+              
+              @task(1)
+              def webhook_simulation(self):
+                  """Simulate LINE webhook calls"""
+                  test_payload = {
+                      "events": [
+                          {
+                              "type": "message",
+                              "message": {
+                                  "type": "text",
+                                  "text": random.choice(self.test_queries)
+                              },
+                              "source": {
+                                  "type": "user", 
+                                  "userId": f"perf_user_{random.randint(1000, 9999)}"
+                              },
+                              "replyToken": f"perf_token_{int(time.time())}_{random.randint(1000, 9999)}",
+                              "timestamp": int(time.time() * 1000)
+                          }
+                      ],
+                      "destination": "performance_test"
+                  }
+                  
+                  headers = {
+                      "Content-Type": "application/json",
+                      "X-Line-Signature": "test_signature"
+                  }
+                  
+                  with self.client.post("/webhook", 
+                                      json=test_payload, 
+                                      headers=headers,
+                                      catch_response=True) as response:
+                      if response.status_code in [200, 400]:  # 400 is expected due to signature
+                          response.success()
+                      else:
+                          response.failure(f"Webhook failed: {response.status_code}")
+          EOF
+          
+          cat > performance_tests/config.conf << EOF
+          locustfile = performance_tests/locustfile.py
+          headless = true
+          users = ${{ needs.performance-setup.outputs.concurrent-users }}
+          spawn-rate = 2
+          run-time = ${{ needs.performance-setup.outputs.test-duration }}s
+          host = http://localhost:8000
+          html = performance_report.html
+          csv = performance_results
+          EOF
+      
+      - name: Run Locust performance tests
+        working-directory: apps/bot
+        run: |
+          echo "🚀 Starting performance test with ${{ needs.performance-setup.outputs.concurrent-users }} users for ${{ needs.performance-setup.outputs.test-duration }}s"
+          poetry run locust --config=performance_tests/config.conf
+      
+      - name: Analyze performance results
+        working-directory: apps/bot
+        run: |
+          python << 'EOF'
+          import csv
+          import json
+          import sys
+          
+          def analyze_performance(stats_file):
+              results = {
+                  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+                  "test_config": {
+                      "concurrent_users": ${{ needs.performance-setup.outputs.concurrent-users }},
+                      "duration_seconds": ${{ needs.performance-setup.outputs.test-duration }},
+                      "trigger": "${{ github.event_name }}"
+                  },
+                  "endpoints": {},
+                  "summary": {}
+              }
+              
+              try:
+                  with open(stats_file, 'r') as f:
+                      reader = csv.DictReader(f)
+                      total_requests = 0
+                      total_failures = 0
+                      
+                      for row in reader:
+                          if row['Type'] == 'GET' or row['Type'] == 'POST':
+                              endpoint = row['Name']
+                              requests = int(row['Request Count'])
+                              failures = int(row['Failure Count'])
+                              avg_response = float(row['Average Response Time'])
+                              p95_response = float(row['95%'])
+                              p99_response = float(row['99%'])
+                              
+                              total_requests += requests
+                              total_failures += failures
+                              
+                              results["endpoints"][endpoint] = {
+                                  "requests": requests,
+                                  "failures": failures,
+                                  "failure_rate": (failures / requests * 100) if requests > 0 else 0,
+                                  "avg_response_time": avg_response,
+                                  "p95_response_time": p95_response,
+                                  "p99_response_time": p99_response
+                              }
+                      
+                      # Overall summary
+                      error_rate = (total_failures / total_requests * 100) if total_requests > 0 else 0
+                      results["summary"] = {
+                          "total_requests": total_requests,
+                          "total_failures": total_failures,
+                          "error_rate_percent": error_rate,
+                          "performance_score": "PASS" if error_rate <= ${{ env.ERROR_RATE_THRESHOLD }} else "FAIL"
+                      }
+                      
+                      # Check performance thresholds
+                      threshold_violations = []
+                      for endpoint, metrics in results["endpoints"].items():
+                          if metrics["p95_response_time"] > ${{ env.PERFORMANCE_THRESHOLD_P95 }}:
+                              threshold_violations.append(f"{endpoint}: P95 {metrics['p95_response_time']}ms > {${{ env.PERFORMANCE_THRESHOLD_P95 }}}ms")
+                          if metrics["p99_response_time"] > ${{ env.PERFORMANCE_THRESHOLD_P99 }}:
+                              threshold_violations.append(f"{endpoint}: P99 {metrics['p99_response_time']}ms > {${{ env.PERFORMANCE_THRESHOLD_P99 }}}ms")
+                      
+                      results["threshold_violations"] = threshold_violations
+                      results["summary"]["threshold_check"] = "PASS" if not threshold_violations else "FAIL"
+                      
+                      # Save results
+                      with open('performance_results.json', 'w') as out_f:
+                          json.dump(results, out_f, indent=2)
+                      
+                      # Print summary
+                      print("## 🏁 Performance Test Results")
+                      print(f"- **Total Requests**: {total_requests:,}")
+                      print(f"- **Error Rate**: {error_rate:.2f}%")
+                      print(f"- **Performance Score**: {results['summary']['performance_score']}")
+                      print(f"- **Threshold Check**: {results['summary']['threshold_check']}")
+                      
+                      if threshold_violations:
+                          print("\n### ⚠️ Threshold Violations:")
+                          for violation in threshold_violations:
+                              print(f"- {violation}")
+                      
+                      # Exit with error if thresholds violated
+                      if error_rate > ${{ env.ERROR_RATE_THRESHOLD }} or threshold_violations:
+                          sys.exit(1)
+                          
+              except Exception as e:
+                  print(f"❌ Error analyzing performance results: {e}")
+                  sys.exit(1)
+          
+          analyze_performance('performance_results_stats.csv')
+          EOF
+      
+      - name: Generate performance summary
+        working-directory: apps/bot
+        run: |
+          echo "## 📊 Performance Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "performance_results.json" ]; then
+            python << 'EOF'
+          import json
+          
+          with open('performance_results.json', 'r') as f:
+              results = json.load(f)
+          
+          print(f"### Test Configuration")
+          print(f"- **Users**: {results['test_config']['concurrent_users']}")
+          print(f"- **Duration**: {results['test_config']['duration_seconds']}s")
+          print(f"- **Trigger**: {results['test_config']['trigger']}")
+          print()
+          
+          print(f"### Overall Results")
+          summary = results['summary']
+          print(f"- **Total Requests**: {summary['total_requests']:,}")
+          print(f"- **Error Rate**: {summary['error_rate_percent']:.2f}%")
+          print(f"- **Performance Score**: {summary['performance_score']}")
+          print(f"- **Threshold Check**: {summary['threshold_check']}")
+          print()
+          
+          print(f"### Endpoint Performance")
+          for endpoint, metrics in results['endpoints'].items():
+              print(f"#### {endpoint}")
+              print(f"- Requests: {metrics['requests']:,}")
+              print(f"- Failure Rate: {metrics['failure_rate']:.2f}%")
+              print(f"- Avg Response: {metrics['avg_response_time']:.0f}ms")
+              print(f"- P95 Response: {metrics['p95_response_time']:.0f}ms")
+              print(f"- P99 Response: {metrics['p99_response_time']:.0f}ms")
+              print()
+          EOF
+          fi >> $GITHUB_STEP_SUMMARY
+      
+      - name: Compare with baseline (if exists)
+        working-directory: apps/bot
+        if: needs.performance-setup.outputs.baseline-exists == 'true'
+        run: |
+          python << 'EOF'
+          import json
+          
+          try:
+              with open('../performance-baseline.json', 'r') as f:
+                  baseline = json.load(f)
+              
+              with open('performance_results.json', 'r') as f:
+                  current = json.load(f)
+              
+              print("## 📈 Performance Comparison with Baseline")
+              
+              # Compare overall metrics
+              baseline_error_rate = baseline['summary']['error_rate_percent']
+              current_error_rate = current['summary']['error_rate_percent']
+              error_rate_change = current_error_rate - baseline_error_rate
+              
+              print(f"### Error Rate: {current_error_rate:.2f}% ({error_rate_change:+.2f}%)")
+              
+              # Compare endpoint performance
+              for endpoint in current['endpoints']:
+                  if endpoint in baseline['endpoints']:
+                      baseline_p95 = baseline['endpoints'][endpoint]['p95_response_time']
+                      current_p95 = current['endpoints'][endpoint]['p95_response_time']
+                      p95_change = ((current_p95 - baseline_p95) / baseline_p95) * 100
+                      
+                      status = "🟢" if p95_change <= 5 else "🟡" if p95_change <= 20 else "🔴"
+                      print(f"{status} **{endpoint}**: {current_p95:.0f}ms ({p95_change:+.1f}%)")
+              
+          except Exception as e:
+              print(f"⚠️ Could not compare with baseline: {e}")
+          EOF
+      
+      - name: Stop services
+        if: always()
+        run: |
+          # Stop FastAPI
+          if [ -f apps/bot/fastapi.pid ]; then
+            kill $(cat apps/bot/fastapi.pid) || true
+          fi
+          
+          # Stop MCP server
+          if [ -f apps/servers/sqlite-mcp.pid ]; then
+            kill $(cat apps/servers/sqlite-mcp.pid) || true
+          fi
+      
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: |
+            apps/bot/performance_results.json
+            apps/bot/performance_results_*.csv
+            apps/bot/performance_report.html
+          retention-days: 30
+
+  memory-profiling:
+    name: Memory & Resource Profiling
+    runs-on: ubuntu-latest
+    needs: performance-setup
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install Poetry and profiling tools
+        working-directory: apps/bot
+        run: |
+          pip install poetry
+          poetry install --no-interaction --no-ansi
+          poetry run pip install memory-profiler psutil
+      
+      - name: Memory usage profiling
+        working-directory: apps/bot
+        run: |
+          cat > memory_profile_test.py << 'EOF'
+          import psutil
+          import time
+          import json
+          import asyncio
+          import sys
+          import os
+          
+          # Add src to path
+          sys.path.insert(0, 'src')
+          
+          async def memory_profile():
+              """Profile memory usage of key components"""
+              process = psutil.Process()
+              initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+              
+              print(f"Initial memory usage: {initial_memory:.2f} MB")
+              
+              # Test service factory initialization
+              try:
+                  from infrastructure.enhanced_service_factory import EnhancedServiceFactory
+                  
+                  factory = EnhancedServiceFactory()
+                  await factory.initialize()
+                  
+                  after_init_memory = process.memory_info().rss / 1024 / 1024
+                  print(f"After service factory init: {after_init_memory:.2f} MB (+{after_init_memory - initial_memory:.2f})")
+                  
+                  # Simulate some operations
+                  for i in range(10):
+                      # Get some services to test memory usage
+                      try:
+                          mcp_client = factory.get_mcp_client()
+                          db_service = factory.get_database_service()
+                          
+                          # Simulate some work
+                          await asyncio.sleep(0.1)
+                          
+                      except Exception as e:
+                          print(f"Service test {i} failed: {e}")
+                      
+                      if i % 5 == 0:
+                          current_memory = process.memory_info().rss / 1024 / 1024
+                          print(f"After {i} operations: {current_memory:.2f} MB")
+                  
+                  final_memory = process.memory_info().rss / 1024 / 1024
+                  
+                  # Memory usage summary
+                  memory_report = {
+                      "initial_memory_mb": round(initial_memory, 2),
+                      "final_memory_mb": round(final_memory, 2),
+                      "memory_increase_mb": round(final_memory - initial_memory, 2),
+                      "memory_increase_percent": round(((final_memory - initial_memory) / initial_memory) * 100, 2),
+                      "peak_memory_mb": round(process.memory_info().peak_wss / 1024 / 1024, 2) if hasattr(process.memory_info(), 'peak_wss') else None
+                  }
+                  
+                  with open('memory_profile_results.json', 'w') as f:
+                      json.dump(memory_report, f, indent=2)
+                  
+                  print(f"\nMemory Profile Summary:")
+                  print(f"- Initial: {memory_report['initial_memory_mb']} MB")
+                  print(f"- Final: {memory_report['final_memory_mb']} MB")
+                  print(f"- Increase: {memory_report['memory_increase_mb']} MB ({memory_report['memory_increase_percent']}%)")
+                  
+                  # Check for memory leaks (simple heuristic)
+                  if memory_report['memory_increase_percent'] > 50:
+                      print("⚠️ Potential memory leak detected!")
+                      return 1
+                  
+                  return 0
+                  
+              except Exception as e:
+                  print(f"❌ Memory profiling failed: {e}")
+                  return 1
+          
+          if __name__ == "__main__":
+              exit_code = asyncio.run(memory_profile())
+              sys.exit(exit_code)
+          EOF
+          
+          echo "🧠 Running memory profiling..."
+          poetry run python memory_profile_test.py
+      
+      - name: Upload memory profile results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memory-profile-results
+          path: apps/bot/memory_profile_results.json
+
+  performance-summary:
+    name: Performance Test Summary
+    runs-on: ubuntu-latest
+    needs: [performance-setup, api-load-testing, memory-profiling]
+    if: always()
+    
+    steps:
+      - name: Download performance artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: "*-results"
+          merge-multiple: true
+      
+      - name: Generate comprehensive summary
+        run: |
+          echo "## 🏆 Performance Testing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Load test results
+          if [ "${{ needs.api-load-testing.result }}" == "success" ]; then
+            echo "✅ **API Load Testing**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **API Load Testing**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.memory-profiling.result }}" == "success" ]; then
+            echo "✅ **Memory Profiling**: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Memory Profiling**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Test Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Duration**: ${{ needs.performance-setup.outputs.test-duration }}s" >> $GITHUB_STEP_SUMMARY
+          echo "- **Concurrent Users**: ${{ needs.performance-setup.outputs.concurrent-users }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 詳細結果請查看各作業的 Artifacts。" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Update performance baseline
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.api-load-testing.result == 'success'
+        run: |
+          if [ -f "performance_results.json" ]; then
+            echo "📝 Updating performance baseline..."
+            cp performance_results.json ../performance-baseline.json
+            
+            # This would typically be committed back to the repo
+            echo "ℹ️ New baseline saved (would be committed in real scenario)"
+          fi

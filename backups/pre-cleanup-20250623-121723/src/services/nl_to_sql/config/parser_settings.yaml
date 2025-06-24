@@ -1,0 +1,240 @@
+# 解析器設定配置檔案
+# 用於 CompositeParser 和其他解析器的配置管理
+
+# 全域解析器設定
+global_parser_settings:
+  # 預設信心度門檻
+  default_confidence_threshold: 0.5
+  
+  # 最大解析時間（毫秒）
+  max_parse_time: 5000
+  
+  # 啟用詳細日誌
+  verbose_logging: true
+  
+  # 並行解析設定
+  parallel_parsing:
+    enabled: true
+    max_concurrent_parsers: 3
+    timeout_per_parser: 2000  # 毫秒
+
+# 策略模式設定
+strategy_settings:
+  # 解析器權重配置
+  parser_weights:
+    RuleBasedParser: 1.0
+    AIEnhancedParser: 1.2
+    
+  # 回退策略設定
+  fallback_strategy:
+    enabled: true
+    min_confidence_threshold: 0.3
+    fallback_order: ["RuleBasedParser", "AIEnhancedParser"]
+    
+  # 策略選擇演算法
+  selection_algorithm: "highest_confidence"  # 選項: "highest_confidence", "weighted_average", "consensus"
+  
+  # 結果合併設定
+  result_merging:
+    enabled: false  # 是否合併多個解析器的結果
+    confidence_threshold: 0.7  # 合併的最低信心度要求
+    merge_method: "weighted_average"  # 合併方法
+
+# RuleBasedParser 特定設定
+rule_based_parser:
+  # 規則匹配設定
+  pattern_matching:
+    case_sensitive: false
+    use_regex_flags: ["IGNORECASE", "UNICODE"]
+    max_pattern_length: 500
+    
+  # 機台 ID 識別設定
+  machine_id_detection:
+    enabled: true
+    pattern: "[Mm](\\d{3,4})"
+    auto_format: true  # 自動格式化為 M001 格式
+    validate_existence: false  # 是否驗證機台 ID 存在
+    
+  # 部門識別設定
+  department_detection:
+    enabled: true
+    fuzzy_matching: true
+    confidence_boost: 0.1  # 識別到部門時的信心度加成
+    
+  # 時間範圍識別設定
+  time_range_detection:
+    enabled: true
+    default_days: 30
+    max_days: 365
+    parse_relative_time: true  # 解析「昨天」、「本週」等相對時間
+    
+  # 效能優化設定
+  performance:
+    enable_pattern_caching: true
+    cache_size: 1000
+    pattern_compilation_cache: true
+
+# AIEnhancedParser 特定設定
+ai_enhanced_parser:
+  # AI 服務設定
+  ai_service:
+    enabled: true
+    timeout: 3000  # 毫秒
+    retry_attempts: 2
+    
+  # 系統提示設定
+  system_prompt:
+    language: "zh-TW"
+    domain: "manufacturing"
+    response_format: "json"
+    include_confidence: true
+    
+  # 上下文增強設定
+  context_enhancement:
+    enabled: true
+    include_schema_info: true
+    include_examples: true
+    max_context_length: 2000
+    
+  # 結果驗證設定
+  result_validation:
+    validate_json_format: true
+    require_confidence_field: true
+    min_confidence: 0.1
+    max_confidence: 1.0
+    
+  # 回退到文字解析
+  text_parsing_fallback:
+    enabled: true
+    confidence_penalty: 0.3  # 文字解析的信心度懲罰
+
+# CompositeParser 特定設定
+composite_parser:
+  # 解析器管理設定
+  parser_management:
+    auto_register_parsers: true
+    validate_parser_interface: true
+    remove_failed_parsers: false
+    
+  # 能力評估設定
+  capability_assessment:
+    cache_evaluations: true
+    cache_duration: 300  # 秒
+    reevaluate_threshold: 0.1  # 信心度變化超過此值時重新評估
+    
+  # 統計追蹤設定
+  statistics_tracking:
+    enabled: true
+    track_parser_performance: true
+    track_selection_patterns: true
+    export_statistics: true
+
+# 配置管理設定
+configuration_management:
+  # 配置檔案路徑
+  config_paths:
+    query_patterns: "config/query_patterns.yaml"
+    sql_templates: "config/sql_templates.yaml"
+    parser_settings: "config/parser_settings.yaml"
+    
+  # 熱更新設定
+  hot_reload:
+    enabled: true
+    check_interval: 60  # 秒
+    auto_reload_on_change: true
+    backup_on_reload: true
+    
+  # 配置驗證設定
+  validation:
+    validate_on_load: true
+    strict_mode: false  # 嚴格模式：發現錯誤時停止載入
+    log_validation_errors: true
+
+# 日誌設定
+logging:
+  # 日誌等級
+  level: "DEBUG"  # 選項: "DEBUG", "INFO", "WARNING", "ERROR"
+  
+  # 日誌輸出設定
+  output:
+    console: true
+    file: false
+    structured: true  # 結構化日誌（JSON 格式）
+    
+  # 特定模組日誌設定
+  module_levels:
+    "rule_based_parser": "DEBUG"
+    "ai_enhanced_parser": "INFO"
+    "composite_parser": "INFO"
+    "sql_query_builder": "INFO"
+    "template_manager": "WARNING"
+    
+  # 效能日誌設定
+  performance_logging:
+    enabled: true
+    log_parse_times: true
+    log_confidence_scores: true
+    log_parser_selection: true
+
+# 錯誤處理設定
+error_handling:
+  # 錯誤恢復策略
+  recovery_strategy: "graceful_degradation"  # 選項: "fail_fast", "graceful_degradation", "retry"
+  
+  # 重試設定
+  retry:
+    max_attempts: 3
+    backoff_factor: 1.5
+    max_backoff_time: 5000  # 毫秒
+    
+  # 錯誤報告設定
+  reporting:
+    log_errors: true
+    include_stack_trace: true
+    notify_on_critical_errors: false
+
+# 安全設定
+security:
+  # 輸入驗證
+  input_validation:
+    max_input_length: 1000
+    sanitize_input: true
+    reject_suspicious_patterns: true
+    
+  # SQL 注入防護
+  sql_injection_protection:
+    enabled: true
+    escape_parameters: true
+    validate_parameters: true
+    use_parameterized_queries: true
+    
+  # 資源限制
+  resource_limits:
+    max_memory_usage: "100MB"
+    max_cpu_time: 5000  # 毫秒
+    max_concurrent_requests: 50
+
+# 開發和調試設定
+development:
+  # 調試模式
+  debug_mode: false
+  
+  # 測試設定
+  testing:
+    enable_test_mode: false
+    mock_ai_service: false
+    test_data_path: "test_data/"
+    
+  # 效能分析
+  profiling:
+    enabled: false
+    profile_parse_operations: true
+    export_profile_data: false
+
+# 元數據
+metadata:
+  version: "1.0.0"
+  created_date: "2025-06-20"
+  last_modified: "2025-06-20"
+  author: "SOLID Refactoring Team"
+  description: "解析器系統的綜合配置設定"
