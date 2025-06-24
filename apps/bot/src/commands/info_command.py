@@ -3,7 +3,6 @@
 處理 /info 指令的系統資訊顯示
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 

@@ -3,7 +3,6 @@ SQL 查詢指令處理器
 處理 /sql 指令的直接 SQL 查詢
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 

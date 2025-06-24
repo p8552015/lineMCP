@@ -3,7 +3,6 @@ AI 模型查詢指令處理器
 處理 /models 指令的 AI 模型資訊查詢
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 

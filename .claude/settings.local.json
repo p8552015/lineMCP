@@ -68,7 +68,11 @@
       "Bash(gh run list:*)",
       "Bash(open https://github.com/p8552015/lineMCP/actions)",
       "WebFetch(domain:github.com)",
-      "Bash(poetry --version)"
+      "Bash(poetry --version)",
+      "mcp__zen__chat",
+      "Bash(./ci_failure_diagnosis.sh:*)",
+      "Bash(/Users/yen/Desktop/lineMCP/ci_failure_diagnosis.sh:*)",
+      "Bash(poetry env:*)"
     ],
     "deny": []
   }

@@ -60,9 +60,9 @@ class MessagingApplicationService(BaseApplicationService):
         """初始化訊息處理服務"""
         # 初始化指令執行器
         self._command_executor = CommandExecutor(self.command_context)
-        
+
         # 同步初始化方法
-        if hasattr(self._command_executor, 'initialize'):
+        if hasattr(self._command_executor, "initialize"):
             self._command_executor.initialize()
 
         self.logger.info("指令執行器已初始化")
@@ -193,20 +193,24 @@ class MessagingApplicationService(BaseApplicationService):
             # 檢查解析是否成功（ParsedQuery物件）
             if parsed_query.is_successful() and parsed_query.has_sql_query():
                 # 通過服務工廠獲取資料庫服務
-                from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
+                from src.infrastructure.enhanced_service_factory import (
+                    get_enhanced_service_factory,
+                )
                 from src.services.database_service import DatabaseService
-                
+
                 factory = get_enhanced_service_factory()
                 db_service = factory.get_service(DatabaseService)
                 query_result = await db_service.execute_parsed_query(parsed_query)
-                
+
                 # 格式化結果
                 return self.message_formatter.format_query_result(query_result)
             else:
                 # 解析失敗或信心度不足，返回預設友善回應
-                self.logger.warning("自然語言解析失敗或信心度不足", 
-                                  confidence=parsed_query.confidence,
-                                  query_type=parsed_query.query_type.value)
+                self.logger.warning(
+                    "自然語言解析失敗或信心度不足",
+                    confidence=parsed_query.confidence,
+                    query_type=parsed_query.query_type.value,
+                )
                 return self._get_default_response()
 
         except Exception as e:

@@ -3,7 +3,6 @@
 處理 /status 指令的系統狀態檢查
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 

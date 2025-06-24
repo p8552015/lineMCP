@@ -90,7 +90,9 @@ class ApplicationFacade:
             self._messaging_service = self.service_factory.get_service(
                 MessagingApplicationService
             )
-            self._query_service = self.service_factory.get_service(QueryApplicationService)
+            self._query_service = self.service_factory.get_service(
+                QueryApplicationService
+            )
             self._monitoring_service = self.service_factory.get_service(
                 MonitoringApplicationService
             )
@@ -362,7 +364,9 @@ class ApplicationFacade:
 _application_facade: ApplicationFacade | None = None
 
 
-def get_application_facade(service_factory: IServiceFactory | None = None) -> ApplicationFacade:
+def get_application_facade(
+    service_factory: IServiceFactory | None = None,
+) -> ApplicationFacade:
     """
     獲取全域應用門面實例
 
@@ -376,7 +380,10 @@ def get_application_facade(service_factory: IServiceFactory | None = None) -> Ap
     if _application_facade is None:
         if service_factory is None:
             # 使用預設的增強版服務工廠
-            from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
+            from src.infrastructure.enhanced_service_factory import (
+                get_enhanced_service_factory,
+            )
+
             service_factory = get_enhanced_service_factory()
         _application_facade = ApplicationFacade(service_factory)
     return _application_facade

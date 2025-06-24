@@ -436,15 +436,15 @@ class AIEnhancedParser(IParser):
         # 🔥 首先檢查部門查詢模式（最高優先級，避免被其他關鍵詞覆蓋）
         department_patterns = [
             r".*部.*機台.*",
-            r".*部.*狀況.*", 
+            r".*部.*狀況.*",
             r".*部.*狀態.*",
             r".*部.*概覽.*",
-            r".*部.*設備.*"
+            r".*部.*設備.*",
         ]
-        
+
         if any(re.search(pattern, text_lower) for pattern in department_patterns):
             return QueryType.DEPARTMENT_STATUS
-            
+
         # 部門查詢關鍵詞檢查
         if any(
             keyword in text_lower
@@ -463,7 +463,7 @@ class AIEnhancedParser(IParser):
         fault_keywords = ["故障", "問題", "錯誤", "異常", "近期"]
         if any(keyword in text_lower for keyword in fault_keywords):
             return QueryType.FAULT_ANALYSIS
-        
+
         # 維修關鍵詞單獨檢查（避免與維修部混淆）
         if "維修" in text_lower and "維修部" not in text_lower:
             return QueryType.FAULT_ANALYSIS
@@ -520,7 +520,11 @@ class AIEnhancedParser(IParser):
             return QueryType.MACHINE_STATUS
 
         # 所有機台查詢（沒有 WHERE 條件的機台查詢，且不是狀態表）
-        if "machine" in sql_lower and "where" not in sql_lower and "status" not in sql_lower:
+        if (
+            "machine" in sql_lower
+            and "where" not in sql_lower
+            and "status" not in sql_lower
+        ):
             return QueryType.ALL_MACHINES
 
         # 預設返回機台狀態

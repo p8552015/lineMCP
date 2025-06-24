@@ -3,7 +3,6 @@
 處理 /tables 指令的資料表列表查詢
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 

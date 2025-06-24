@@ -1074,9 +1074,7 @@ class QueryStatisticsService(IStatistics):
 
     # 實現 IStatistics 抽象介面的缺失方法
 
-    def record_event(
-        self, event_type, metadata: dict[str, Any] | None = None
-    ) -> None:
+    def record_event(self, event_type, metadata: dict[str, Any] | None = None) -> None:
         """
         記錄統計事件（實現 IStatistics 介面）
 

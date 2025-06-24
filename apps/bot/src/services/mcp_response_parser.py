@@ -316,6 +316,9 @@ class MCPResponseParser:
             if "'" in cleaned and '"' not in cleaned:
                 cleaned = cleaned.replace("'", '"')
 
+            # 修復 Python None 值為 JSON null
+            cleaned = re.sub(r"\bNone\b", "null", cleaned)
+
             # 修復尾隨逗號問題
             cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)
 

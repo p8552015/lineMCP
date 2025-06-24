@@ -144,9 +144,7 @@ class IParsingStrategy(ABC):
         pass
 
     @abstractmethod
-    def is_applicable(
-        self, text: str, context: dict[str, Any] | None = None
-    ) -> bool:
+    def is_applicable(self, text: str, context: dict[str, Any] | None = None) -> bool:
         """
         判斷策略是否適用於給定的輸入
 

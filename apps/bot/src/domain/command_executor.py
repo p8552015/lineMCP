@@ -3,7 +3,6 @@
 負責協調指令處理器的註冊和執行
 """
 
-
 import structlog
 from linebot.v3.messaging import Message
 

@@ -23,6 +23,7 @@ settings = get_settings()
 
 class ModelProvider(Enum):
     """AI 模型供應商"""
+
     OPENAI = "openai"
     GOOGLE = "google"
     LOCAL = "local"
@@ -31,6 +32,7 @@ class ModelProvider(Enum):
 @dataclass
 class ModelConfig:
     """模型配置"""
+
     name: str
     provider: ModelProvider
     api_key: str
@@ -48,6 +50,7 @@ class ModelConfig:
 @dataclass
 class RetryConfig:
     """重試配置"""
+
     max_retries: int = 3
     base_delay: float = 1.0  # 基礎延遲秒數
     max_delay: float = 60.0  # 最大延遲秒數
@@ -56,44 +59,44 @@ class RetryConfig:
 
 class RateLimiter:
     """速率限制器"""
-    
+
     def __init__(self):
         self._calls = defaultdict(list)  # model_name -> [timestamp, ...]
-        
+
     def can_call(self, model_name: str, config: ModelConfig) -> bool:
         """檢查是否可以調用 API"""
         now = time.time()
         calls = self._calls[model_name]
-        
+
         # 清理過期記錄（保留最近1小時）
         calls[:] = [t for t in calls if now - t < 3600]
-        
+
         # 檢查每分鐘限制
         minute_calls = [t for t in calls if now - t < 60]
         if len(minute_calls) >= config.rate_limit_per_minute:
             return False
-            
+
         # 檢查每小時限制
         if len(calls) >= config.rate_limit_per_hour:
             return False
-            
+
         return True
-    
+
     def record_call(self, model_name: str):
         """記錄 API 調用"""
         self._calls[model_name].append(time.time())
-    
+
     def get_wait_time(self, model_name: str, config: ModelConfig) -> float:
         """計算需要等待的時間（秒）"""
         now = time.time()
         calls = self._calls[model_name]
-        
+
         # 檢查分鐘限制
         minute_calls = [t for t in calls if now - t < 60]
         if len(minute_calls) >= config.rate_limit_per_minute:
             # 等到最早的調用過期
             return 60 - (now - minute_calls[0]) + 1
-            
+
         return 0
 
 
@@ -106,12 +109,16 @@ class EnhancedAIModelService:
         self.fallback_models = self._get_fallback_models()
         self.rate_limiter = RateLimiter()
         self.retry_config = RetryConfig()
-        
+
         # 模型健康狀態跟蹤
-        self._model_health = defaultdict(lambda: {"failures": 0, "last_success": time.time()})
-        
+        self._model_health = defaultdict(
+            lambda: {"failures": 0, "last_success": time.time()}
+        )
+
         logger.info(f"✅ 增強版AI模型服務初始化完成，支援 {len(self.models)} 個模型")
-        logger.info(f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}")
+        logger.info(
+            f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}"
+        )
 
     def _init_models(self) -> dict[str, ModelConfig]:
         """初始化支援的模型配置"""
@@ -153,37 +160,37 @@ class EnhancedAIModelService:
     def _get_default_model(self) -> str:
         """獲取預設模型"""
         provider_preference = settings.ai_model_provider.lower()
-        
+
         if provider_preference == "google" and "gemini-1.5-flash" in self.models:
             logger.info("🌟 選擇 Gemini 1.5 Flash 作為預設模型")
             return "gemini-1.5-flash"
         elif provider_preference == "openai" and "gpt-4o-mini" in self.models:
             logger.info("🤖 選擇 GPT-4o-mini 作為預設模型")
             return "gpt-4o-mini"
-        
+
         # 自動選擇
         if "gemini-1.5-flash" in self.models:
             return "gemini-1.5-flash"
         elif "gpt-4o-mini" in self.models:
             return "gpt-4o-mini"
-        
+
         return ""
 
     def _get_fallback_models(self) -> list[str]:
         """獲取備用模型列表（優化備用模型順序）"""
         models = [self.default_model] if self.default_model in self.models else []
-        
+
         # 如果預設是Google，優先選擇OpenAI作為備用
         if self.default_model == "gemini-1.5-flash" and "gpt-4o-mini" in self.models:
             models.append("gpt-4o-mini")
         elif self.default_model == "gpt-4o-mini" and "gemini-1.5-flash" in self.models:
             models.append("gemini-1.5-flash")
-            
+
         # 添加其他模型
         for model_name in self.models:
             if model_name not in models:
                 models.append(model_name)
-                
+
         logger.info(f"🔄 備用模型順序: {models}")
         return models
 
@@ -195,12 +202,12 @@ class EnhancedAIModelService:
     ) -> tuple[str, float]:
         """
         使用 AI 模型增強自然語言查詢理解（帶重試和備用模型）
-        
+
         Args:
             user_query: 使用者原始查詢
             database_schema: 資料庫結構資訊
             model_name: 指定使用的模型，None 則使用預設
-            
+
         Returns:
             Tuple[增強後的查詢意圖, 信心度]
         """
@@ -211,32 +218,32 @@ class EnhancedAIModelService:
         # 確定要嘗試的模型列表
         models_to_try = [model_name] if model_name else self.fallback_models
         models_to_try = [m for m in models_to_try if m in self.models]
-        
+
         if not models_to_try:
             logger.error("沒有可用的模型")
             return user_query, 0.3
 
         last_exception = None
-        
+
         for attempt_model in models_to_try:
             try:
                 logger.info(f"🎯 嘗試使用模型: {attempt_model}")
                 result = await self._call_model_with_retry(
                     user_query, database_schema, attempt_model
                 )
-                
+
                 # 更新模型健康狀態
                 self._model_health[attempt_model]["failures"] = 0
                 self._model_health[attempt_model]["last_success"] = time.time()
-                
+
                 logger.info(f"✅ 模型 {attempt_model} 調用成功")
                 return result
-                
+
             except Exception as e:
                 last_exception = e
                 self._model_health[attempt_model]["failures"] += 1
                 logger.warning(f"⚠️ 模型 {attempt_model} 調用失敗: {e}")
-                
+
                 # 如果還有其他模型可以嘗試，繼續
                 if attempt_model != models_to_try[-1]:
                     logger.info(f"🔄 切換到下一個備用模型")
@@ -251,7 +258,7 @@ class EnhancedAIModelService:
     ) -> tuple[str, float]:
         """帶重試機制的模型調用"""
         config = self.models[model_name]
-        
+
         for attempt in range(self.retry_config.max_retries + 1):
             try:
                 # 檢查速率限制
@@ -263,30 +270,38 @@ class EnhancedAIModelService:
                             await asyncio.sleep(wait_time)
                         else:
                             raise Exception(f"速率限制: 需等待 {wait_time:.1f} 秒")
-                
+
                 # 記錄調用
                 self.rate_limiter.record_call(model_name)
-                
+
                 # 調用相應的 API
                 if config.provider == ModelProvider.OPENAI:
-                    return await self._call_openai_api(user_query, database_schema, config)
+                    return await self._call_openai_api(
+                        user_query, database_schema, config
+                    )
                 elif config.provider == ModelProvider.GOOGLE:
-                    return await self._call_google_api(user_query, database_schema, config)
+                    return await self._call_google_api(
+                        user_query, database_schema, config
+                    )
                 else:
                     raise Exception(f"不支援的模型供應商: {config.provider}")
-                    
+
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429:  # Too Many Requests
-                    logger.warning(f"⚠️ {model_name} API速率限制(429)，立即切換到備用模型")
+                    logger.warning(
+                        f"⚠️ {model_name} API速率限制(429)，立即切換到備用模型"
+                    )
                     # 429錯誤不重試，直接拋出異常讓上層切換模型
                     raise Exception(f"API速率限制: {model_name} - 切換備用模型")
                 else:
                     raise Exception(f"HTTP錯誤: {e.response.status_code}")
-                    
+
             except Exception as e:
                 if attempt < self.retry_config.max_retries:
                     delay = self._calculate_retry_delay(attempt)
-                    logger.warning(f"🔄 調用失敗，第{attempt+1}次重試，等待{delay:.1f}秒: {e}")
+                    logger.warning(
+                        f"🔄 調用失敗，第{attempt+1}次重試，等待{delay:.1f}秒: {e}"
+                    )
                     await asyncio.sleep(delay)
                     continue
                 else:
@@ -295,10 +310,10 @@ class EnhancedAIModelService:
     def _calculate_retry_delay(self, attempt: int) -> float:
         """計算重試延遲"""
         if self.retry_config.exponential_backoff:
-            delay = self.retry_config.base_delay * (2 ** attempt)
+            delay = self.retry_config.base_delay * (2**attempt)
         else:
             delay = self.retry_config.base_delay
-            
+
         return min(delay, self.retry_config.max_delay)
 
     async def _call_openai_api(
@@ -425,7 +440,11 @@ class EnhancedAIModelService:
                 "failures": health["failures"],
                 "last_success": health["last_success"],
                 "is_healthy": health["failures"] < 3,
-                "rate_limit_status": "ok" if self.rate_limiter.can_call(model_name, self.models[model_name]) else "limited"
+                "rate_limit_status": (
+                    "ok"
+                    if self.rate_limiter.can_call(model_name, self.models[model_name])
+                    else "limited"
+                ),
             }
         return status
 
@@ -434,15 +453,17 @@ class EnhancedAIModelService:
         models_info = []
         for name, config in self.models.items():
             health = self._model_health[name]
-            models_info.append({
-                "name": name,
-                "provider": config.provider.value,
-                "cost_per_1k_input": config.cost_per_1k_input,
-                "cost_per_1k_output": config.cost_per_1k_output,
-                "free_tier_limit": config.free_tier_limit,
-                "context_window": config.context_window,
-                "is_default": name == self.default_model,
-                "is_healthy": health["failures"] < 3,
-                "rate_limit_per_minute": config.rate_limit_per_minute,
-            })
+            models_info.append(
+                {
+                    "name": name,
+                    "provider": config.provider.value,
+                    "cost_per_1k_input": config.cost_per_1k_input,
+                    "cost_per_1k_output": config.cost_per_1k_output,
+                    "free_tier_limit": config.free_tier_limit,
+                    "context_window": config.context_window,
+                    "is_default": name == self.default_model,
+                    "is_healthy": health["failures"] < 3,
+                    "rate_limit_per_minute": config.rate_limit_per_minute,
+                }
+            )
         return models_info

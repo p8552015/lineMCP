@@ -3,7 +3,6 @@
 處理 /help 指令的幫助訊息顯示
 """
 
-
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
