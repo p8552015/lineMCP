@@ -224,7 +224,7 @@ class TestFullSystemIntegration:
         assert handler.nl_service is not None
         assert handler.db_service is not None
         assert handler.formatter is not None
-        assert handler.flex_builder is not None
+        # flex_builder 已移除，不再測試
         
         # 驗證依賴鏈完整性
         assert handler.nl_service.ai_model_service is not None

@@ -60,7 +60,10 @@ class MessagingApplicationService(BaseApplicationService):
         """初始化訊息處理服務"""
         # 初始化指令執行器
         self._command_executor = CommandExecutor(self.command_context)
-        self._command_executor.initialize()
+        
+        # 同步初始化方法
+        if hasattr(self._command_executor, 'initialize'):
+            self._command_executor.initialize()
 
         self.logger.info("指令執行器已初始化")
 
@@ -88,10 +91,10 @@ class MessagingApplicationService(BaseApplicationService):
 
         self._stats["total_messages"] += 1
 
-        # 更新用戶會話
-        self._update_user_session(user_id, message_text, additional_context)
-
         try:
+            # 更新用戶會話
+            self._update_user_session(user_id, message_text, additional_context)
+
             # 創建帶上下文的 logger
             context_logger = self.logger.bind(
                 user_id=user_id, message_length=len(message_text)

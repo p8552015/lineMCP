@@ -183,7 +183,7 @@ class TestMessageHandlerCore:
         
         # 檢查所有服務都已初始化
         assert handler.openai_client is not None
-        assert handler.flex_builder is not None
+        # flex_builder 已移除，不再測試
         assert handler.ai_model_service is not None
         assert handler.nl_service is not None
         assert handler.db_service is not None
@@ -195,11 +195,11 @@ class TestMessageHandlerCore:
         from apps.bot.backup.nl_to_sql_service import NaturalLanguageToSQLService
         from src.services.database_service import DatabaseService
         from src.services.message_formatter import MessageFormatter
-        from src.services.flex_builder import FlexBuilder
+        # FlexBuilder 已移除，不再檢查
         
         assert isinstance(handler.openai_client, OpenAIClient)
         assert isinstance(handler.ai_model_service, EnhancedAIModelService)
         assert isinstance(handler.nl_service, NaturalLanguageToSQLService)
         assert isinstance(handler.db_service, DatabaseService)
         assert isinstance(handler.formatter, MessageFormatter)
-        assert isinstance(handler.flex_builder, FlexBuilder)
+        # flex_builder 檢查已移除

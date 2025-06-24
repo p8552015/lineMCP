@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     ai_fallback_to_rules: bool = True
     ai_rules_first: bool = True  # 規則優先
 
+    # GitHub Actions Integration
+    github_pat: str | None = None
+
     # Architecture Configuration
     # 新架構已完成遷移，永久啟用
     use_new_architecture: bool = True

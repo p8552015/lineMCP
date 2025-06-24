@@ -87,7 +87,7 @@ class TestCommandContext:
         mock_nl_service = Mock()
         mock_db_service = Mock()
         mock_formatter = Mock()
-        mock_flex_builder = Mock()
+        # mock_flex_builder 已移除
         
         context = CommandContext(
             mcp_client_factory=mock_mcp_factory,
