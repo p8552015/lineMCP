@@ -282,7 +282,8 @@ class TestAIEnhancedParser:
             
             assert result.query_type == QueryType.UNKNOWN
             assert result.confidence == 0.0
-            assert "AI模型調用失敗" in result.explanation
+            assert "AI 解析錯誤" in result.explanation
+            assert "AI 服務錯誤" in result.explanation
             # 檢查錯誤是否在參數中（可能在 error 鍵或說明中）
             has_error = ("AI 服務錯誤" in result.parameters.get("error", "") or 
                         "AI 服務錯誤" in result.explanation)
@@ -305,7 +306,7 @@ class TestAIEnhancedParser:
             result = await parser.parse("機台狀態")
             
             assert result.query_type == QueryType.UNKNOWN
-            assert "結果類型錯誤" in result.explanation
+            assert "AI 解析錯誤" in result.explanation
         
         @pytest.mark.asyncio
         async def test_parse_malformed_json(self, parser, mock_ai_service):

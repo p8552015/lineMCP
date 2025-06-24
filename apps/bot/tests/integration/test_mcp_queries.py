@@ -22,7 +22,12 @@ async def mcp_client():
 @pytest.fixture
 async def database_service():
     """創建資料庫服務實例"""
-    service = DatabaseService()
+    # Mock MCP client getter
+    mock_mcp_client_getter = AsyncMock()
+    mock_mcp_client = Mock()
+    mock_mcp_client_getter.return_value = mock_mcp_client
+    
+    service = DatabaseService(mock_mcp_client_getter)
     return service
 
 

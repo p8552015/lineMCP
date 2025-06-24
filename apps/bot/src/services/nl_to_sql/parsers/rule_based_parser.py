@@ -49,7 +49,7 @@ class RuleBasedParser(IParser):
             configuration: 配置管理介面
         """
         self._config = configuration
-        self._machine_id_pattern = re.compile(r"[Mm](\d{3,4})", re.IGNORECASE)
+        self._machine_id_pattern = re.compile(r"[Mm](\d{2,4})", re.IGNORECASE)
 
         # 從配置載入查詢模式
         self._query_patterns = self._config.get_query_patterns()
@@ -93,7 +93,12 @@ class RuleBasedParser(IParser):
         # 1. 檢查特定機台 ID
         machine_match = self._machine_id_pattern.search(normalized_text)
         if machine_match:
-            machine_id = f"M{machine_match.group(1).zfill(3)}"
+            # 2-3位數補零到3位，4位數保持原樣
+            digits = machine_match.group(1)
+            if len(digits) <= 3:
+                machine_id = f"M{digits.zfill(3)}"
+            else:
+                machine_id = f"M{digits}"
             return self._create_machine_query(machine_id, text)
 
         # 2. 按優先級檢查查詢模式

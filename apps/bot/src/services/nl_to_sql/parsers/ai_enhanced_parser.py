@@ -453,18 +453,7 @@ class AIEnhancedParser(IParser):
         ):
             return QueryType.ALL_MACHINES
 
-        # 部門查詢關鍵詞
-        if any(
-            keyword in text_lower
-            for keyword in ["部門", "加工", "組裝", "品管", "維修"]
-        ):
-            return QueryType.DEPARTMENT_STATUS
-
-        # 機台狀態關鍵詞
-        if any(keyword in text_lower for keyword in ["狀態", "狀況", "運行", "機台"]):
-            return QueryType.MACHINE_STATUS
-
-        # 檢查是否有機台ID
+        # 檢查是否有機台ID（優先檢查，更具體）
         import re
 
         machine_pattern = re.compile(r"[Mm]\d{3,4}")
@@ -472,6 +461,17 @@ class AIEnhancedParser(IParser):
             "M" in entity.upper() for entity in target_entities
         ):
             return QueryType.SPECIFIC_MACHINE
+
+        # 部門查詢關鍵詞
+        if any(
+            keyword in text_lower
+            for keyword in ["部門", "加工", "組裝", "品管", "維修"]
+        ):
+            return QueryType.DEPARTMENT_STATUS
+
+        # 機台狀態關鍵詞（最後檢查，較通用）
+        if any(keyword in text_lower for keyword in ["狀態", "狀況", "運行", "機台"]):
+            return QueryType.MACHINE_STATUS
 
         # 預設返回機台狀態查詢
         return QueryType.MACHINE_STATUS
@@ -496,19 +496,19 @@ class AIEnhancedParser(IParser):
         if any(table in sql_lower for table in ["production", "statistics", "stats"]):
             return QueryType.PRODUCTION_STATS
 
-        # 機台狀態相關表
-        if any(table in sql_lower for table in ["machine_status", "status"]):
-            return QueryType.MACHINE_STATUS
+        # 特定機台查詢（有機台 ID 條件，優先檢查）
+        if "machine_id" in sql_lower and (
+            "where" in sql_lower or "machine_id =" in sql_lower
+        ):
+            return QueryType.SPECIFIC_MACHINE
 
         # 所有機台查詢（沒有 WHERE 條件的機台查詢）
         if "machine" in sql_lower and "where" not in sql_lower:
             return QueryType.ALL_MACHINES
 
-        # 特定機台查詢（有機台 ID 條件）
-        if "machine_id" in sql_lower and (
-            "where" in sql_lower or "machine_id =" in sql_lower
-        ):
-            return QueryType.SPECIFIC_MACHINE
+        # 機台狀態相關表（較通用的檢查）
+        if any(table in sql_lower for table in ["machine_status", "status"]):
+            return QueryType.MACHINE_STATUS
 
         # 預設返回機台狀態
         return QueryType.MACHINE_STATUS
