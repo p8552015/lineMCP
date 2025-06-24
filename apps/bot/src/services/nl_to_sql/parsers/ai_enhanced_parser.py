@@ -431,12 +431,41 @@ class AIEnhancedParser(IParser):
             QueryType: 推斷的查詢類型
         """
         text_lower = text.lower()
+        import re
 
-        # 故障相關關鍵詞
+        # 🔥 首先檢查部門查詢模式（最高優先級，避免被其他關鍵詞覆蓋）
+        department_patterns = [
+            r".*部.*機台.*",
+            r".*部.*狀況.*", 
+            r".*部.*狀態.*",
+            r".*部.*概覽.*",
+            r".*部.*設備.*"
+        ]
+        
+        if any(re.search(pattern, text_lower) for pattern in department_patterns):
+            return QueryType.DEPARTMENT_STATUS
+            
+        # 部門查詢關鍵詞檢查
         if any(
             keyword in text_lower
-            for keyword in ["故障", "問題", "錯誤", "異常", "維修", "近期"]
+            for keyword in ["部門", "加工部", "組裝部", "品管部", "維修部", "生產部"]
         ):
+            return QueryType.DEPARTMENT_STATUS
+
+        # 檢查是否有機台ID（高優先級，具體查詢）
+        machine_pattern = re.compile(r"[Mm]\d{2,4}")
+        if machine_pattern.search(text) or any(
+            "M" in entity.upper() for entity in target_entities
+        ):
+            return QueryType.SPECIFIC_MACHINE
+
+        # 故障相關關鍵詞（但排除已確認的部門查詢）
+        fault_keywords = ["故障", "問題", "錯誤", "異常", "近期"]
+        if any(keyword in text_lower for keyword in fault_keywords):
+            return QueryType.FAULT_ANALYSIS
+        
+        # 維修關鍵詞單獨檢查（避免與維修部混淆）
+        if "維修" in text_lower and "維修部" not in text_lower:
             return QueryType.FAULT_ANALYSIS
 
         # 生產統計關鍵詞
@@ -452,22 +481,6 @@ class AIEnhancedParser(IParser):
             for keyword in ["所有機台", "全部機台", "整體", "概覽"]
         ):
             return QueryType.ALL_MACHINES
-
-        # 檢查是否有機台ID（優先檢查，更具體）
-        import re
-
-        machine_pattern = re.compile(r"[Mm]\d{3,4}")
-        if machine_pattern.search(text) or any(
-            "M" in entity.upper() for entity in target_entities
-        ):
-            return QueryType.SPECIFIC_MACHINE
-
-        # 部門查詢關鍵詞
-        if any(
-            keyword in text_lower
-            for keyword in ["部門", "加工", "組裝", "品管", "維修"]
-        ):
-            return QueryType.DEPARTMENT_STATUS
 
         # 機台狀態關鍵詞（最後檢查，較通用）
         if any(keyword in text_lower for keyword in ["狀態", "狀況", "運行", "機台"]):
@@ -502,13 +515,13 @@ class AIEnhancedParser(IParser):
         ):
             return QueryType.SPECIFIC_MACHINE
 
-        # 所有機台查詢（沒有 WHERE 條件的機台查詢）
-        if "machine" in sql_lower and "where" not in sql_lower:
-            return QueryType.ALL_MACHINES
-
-        # 機台狀態相關表（較通用的檢查）
+        # 機台狀態相關表（優先檢查具體表名）
         if any(table in sql_lower for table in ["machine_status", "status"]):
             return QueryType.MACHINE_STATUS
+
+        # 所有機台查詢（沒有 WHERE 條件的機台查詢，且不是狀態表）
+        if "machine" in sql_lower and "where" not in sql_lower and "status" not in sql_lower:
+            return QueryType.ALL_MACHINES
 
         # 預設返回機台狀態
         return QueryType.MACHINE_STATUS

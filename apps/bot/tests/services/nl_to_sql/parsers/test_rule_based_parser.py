@@ -116,12 +116,13 @@ class TestRuleBasedParser:
             assert result.parameters["machine_id"] == "M100"
         
         @pytest.mark.asyncio
-        async def test_invalid_machine_id_2_digits(self, parser):
-            """測試無效的 2 位數機台 ID"""
+        async def test_machine_id_2_digits_with_high_number(self, parser):
+            """測試 2 位數機台 ID (修正：現在支援 2 位數)"""
             result = await parser.parse("M99機台")
             
-            # 應該不匹配機台 ID 模式，而匹配其他模式
-            assert result.query_type != QueryType.SPECIFIC_MACHINE
+            # 現在 2 位數也應該匹配機台 ID 模式
+            assert result.query_type == QueryType.SPECIFIC_MACHINE
+            assert result.parameters["machine_id"] == "M099"
     
     class TestPatternMatching:
         """模式匹配測試"""
