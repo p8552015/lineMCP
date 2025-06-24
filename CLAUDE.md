@@ -227,4 +227,11 @@ git commit -m"自動總結訊息"
 ### 新增文檔規則
 要檢查類似的檔名文件,看文件的內容是否跟要撰寫的函式功能相同,如有雷同不要重複實作,直接更改原文件即可
 
+
+GitHub Actions 提供的 Workflow Run API
+Personal Access Token
+Fine-grained personal access tokens
+
+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
+
 參考：[代碼審查流程文檔](./代碼審查流程文檔.md)

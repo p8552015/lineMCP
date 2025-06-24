@@ -1,0 +1,119 @@
+{
+  "run_id": 15840958217,
+  "status": "completed",
+  "conclusion": "failure",
+  "created_at": "2025-06-24T04:06:48Z",
+  "updated_at": "2025-06-24T04:27:04Z",
+  "html_url": "https://github.com/p8552015/lineMCP/actions/runs/15840958217",
+  "jobs": [
+    {
+      "name": "Node.js Tests & Build (18.x)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2025-06-24T04:06:53Z",
+      "completed_at": "2025-06-24T04:07:04Z",
+      "steps": []
+    },
+    {
+      "name": "Node.js Tests & Build (20.x)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2025-06-24T04:06:51Z",
+      "completed_at": "2025-06-24T04:06:58Z",
+      "steps": [
+        {
+          "name": "Install dependencies",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "name": "Python Tests & Coverage (3.10)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2025-06-24T04:06:51Z",
+      "completed_at": "2025-06-24T04:26:54Z",
+      "steps": []
+    },
+    {
+      "name": "Python Tests & Coverage (3.12)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2025-06-24T04:06:51Z",
+      "completed_at": "2025-06-24T04:26:37Z",
+      "steps": [
+        {
+          "name": "Run unit tests with coverage",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "name": "Node.js Tests & Build (22.x)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2025-06-24T04:06:52Z",
+      "completed_at": "2025-06-24T04:06:59Z",
+      "steps": [
+        {
+          "name": "Install dependencies",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "name": "Python Tests & Coverage (3.11)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2025-06-24T04:06:52Z",
+      "completed_at": "2025-06-24T04:26:54Z",
+      "steps": []
+    },
+    {
+      "name": "Python Tests & Coverage (3.9)",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2025-06-24T04:06:51Z",
+      "completed_at": "2025-06-24T04:26:48Z",
+      "steps": []
+    },
+    {
+      "name": "Test Summary",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2025-06-24T04:26:58Z",
+      "completed_at": "2025-06-24T04:27:03Z",
+      "steps": [
+        {
+          "name": "Fail if critical tests failed",
+          "conclusion": "failure"
+        }
+      ]
+    },
+    {
+      "name": "MCP Integration Tests",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2025-06-24T04:26:54Z",
+      "completed_at": "2025-06-24T04:26:54Z",
+      "steps": []
+    },
+    {
+      "name": "Docker Build & Security Scan",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2025-06-24T04:26:54Z",
+      "completed_at": "2025-06-24T04:26:54Z",
+      "steps": []
+    },
+    {
+      "name": "API Integration Tests",
+      "status": "completed",
+      "conclusion": "skipped",
+      "started_at": "2025-06-24T04:26:54Z",
+      "completed_at": "2025-06-24T04:26:54Z",
+      "steps": []
+    }
+  ],
+  "summary": "❌ 測試失敗: Node.js Tests & Build (20.x), Python Tests & Coverage (3.12), Test Summary"
+}
