@@ -72,7 +72,12 @@
       "mcp__zen__chat",
       "Bash(./ci_failure_diagnosis.sh:*)",
       "Bash(/Users/yen/Desktop/lineMCP/ci_failure_diagnosis.sh:*)",
-      "Bash(poetry env:*)"
+      "Bash(poetry env:*)",
+      "Bash(gh workflow:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(./test-github-detector.sh:*)",
+      "Bash(./github-actions-detector.sh:*)",
+      "Bash(PYTHONPATH:*)"
     ],
     "deny": []
   }

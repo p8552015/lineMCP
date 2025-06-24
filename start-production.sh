@@ -857,6 +857,8 @@ show_help() {
     echo -e "  ${GREEN}test${NC}           僅運行系統測試"
     echo -e "  ${GREEN}test-full${NC}      運行完整測試套件"
     echo -e "  ${GREEN}test-production${NC} 運行生產查詢測試"
+    echo -e "  ${GREEN}check-ci${NC}       檢測 GitHub Actions CI/CD 狀態"
+    echo -e "  ${GREEN}check-ci-report${NC} 生成 CI/CD 狀態報告"
     echo -e "  ${GREEN}install${NC}        智能安裝依賴"
     echo -e "  ${GREEN}install-dev${NC}    安裝開發依賴（含測試）"
     echo -e "  ${GREEN}install-force${NC}  強制重新安裝"
@@ -870,6 +872,7 @@ show_help() {
     echo -e "  $0 quick          # 快速啟動"
     echo -e "  $0 test           # 僅測試"
     echo -e "  $0 test-production # 生產查詢測試"
+    echo -e "  $0 check-ci       # 檢測 CI/CD 狀態"
     echo -e "  $0 install-dev    # 安裝開發環境"
     echo -e ""
     echo -e "${PURPLE}✨ v2.1 新特性：${NC}"
@@ -938,6 +941,24 @@ case "${1:-start}" in
         check_python_env
         install_dependencies
         run_production_query_test
+        ;;
+    "check-ci")
+        echo -e "${BLUE}🤖 執行 GitHub Actions CI/CD 檢測${NC}"
+        if [[ -f "$PROJECT_ROOT/github-actions-detector.sh" ]]; then
+            "$PROJECT_ROOT/github-actions-detector.sh"
+        else
+            echo -e "${RED}❌ GitHub Actions 檢測腳本不存在${NC}"
+            exit 1
+        fi
+        ;;
+    "check-ci-report")
+        echo -e "${BLUE}📊 生成 GitHub Actions CI/CD 狀態報告${NC}"
+        if [[ -f "$PROJECT_ROOT/github-actions-detector.sh" ]]; then
+            "$PROJECT_ROOT/github-actions-detector.sh" --report
+        else
+            echo -e "${RED}❌ GitHub Actions 檢測腳本不存在${NC}"
+            exit 1
+        fi
         ;;
     "install")
         echo -e "${BLUE}📦 智能安裝依賴${NC}"

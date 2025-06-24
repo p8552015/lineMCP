@@ -329,6 +329,10 @@ class ApplicationFacade:
         except Exception as e:
             logger.error("關閉應用門面時發生錯誤", error=str(e))
 
+    async def close(self) -> None:
+        """關閉應用門面和所有服務（shutdown 的別名方法）"""
+        await self.shutdown()
+
     def _get_current_time(self) -> float:
         """獲取當前時間戳"""
         import time
