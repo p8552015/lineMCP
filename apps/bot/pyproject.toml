@@ -27,6 +27,7 @@ structlog = "^24.4.0"
 tenacity = "^9.0.0"
 mcp = "^1.9.4"
 websockets = "^15.0.1"
+asyncpg = "^0.30.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.0"

@@ -34,7 +34,6 @@ from src.services.nl_to_sql.services.query_statistics_service import (
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 from src.services.openai_client import OpenAIClient
 from src.services.unified_mcp_client import get_unified_mcp_client
-from src.services.mcp import get_mcp_client_manager
 
 from .service_registry import ServiceProvider, ServiceRegistry, ServiceScope
 

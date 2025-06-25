@@ -572,6 +572,15 @@ class ProductionMCPClient:
         await self._ensure_pool_started()
         return await self.connection_pool.get_pool_status()
 
+    async def close(self):
+        """關閉客戶端和所有連接"""
+        try:
+            if hasattr(self, 'connection_pool') and self.connection_pool:
+                await self.connection_pool.stop()
+            logger.info("✅ 生產級 MCP 客戶端已關閉")
+        except Exception as e:
+            logger.warning(f"⚠️ 關閉客戶端時發生警告: {e}")
+
 
 # 單例模式
 _production_mcp_client = None
@@ -585,7 +594,4 @@ def get_production_mcp_client() -> ProductionMCPClient:
     return _production_mcp_client
 
 
-# 兼容性包裝函數
-async def get_unified_mcp_client():
-    """兼容性函數 - 返回生產級客戶端"""
-    return get_production_mcp_client()
+# 命名衝突已移除 - 統一使用 get_production_mcp_client()

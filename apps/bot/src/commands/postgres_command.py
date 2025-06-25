@@ -8,7 +8,7 @@ from typing import Dict, Any, List, Optional
 import structlog
 
 from src.infrastructure.service_factory_interface import IServiceFactory
-from src.services.mcp.client_manager import get_mcp_client_manager
+from src.services.unified_mcp_client import get_unified_mcp_client
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 
 logger = structlog.get_logger()
@@ -117,10 +117,10 @@ class PostgreSQLCommand:
         """執行 PostgreSQL 查詢"""
         try:
             # 獲取 MCP 客戶端管理器
-            manager = await get_mcp_client_manager()
+            client = await get_unified_mcp_client()
             
             # 調用 PostgreSQL MCP 服務
-            result = await manager.call_tool("postgres", "query", {"sql": sql_query})
+            result = await client.call_tool("postgres", "query", {"sql": sql_query})
             
             if result.get("success"):
                 # 處理查詢結果

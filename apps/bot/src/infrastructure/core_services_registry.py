@@ -12,7 +12,7 @@ from src.services.ai_model_service_enhanced import EnhancedAIModelService
 from src.services.mcp_response_parser import MCPResponseParser
 from src.services.message_formatter import MessageFormatter
 from src.services.openai_client import OpenAIClient
-from src.services.unified_mcp_client import get_unified_mcp_client
+from src.services.production_mcp_client import get_production_mcp_client
 
 from .service_registry import ServiceRegistry, ServiceScope
 
@@ -58,7 +58,7 @@ def register_core_services(registry: ServiceRegistry) -> None:
     # MCP 相關服務
     registry.register_factory(
         type[Any],  # MCP Client type
-        lambda provider: get_unified_mcp_client,
+        lambda provider: get_production_mcp_client,
         scope=ServiceScope.SINGLETON,
     )
 

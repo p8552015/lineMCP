@@ -9,7 +9,7 @@ from linebot.v3.messaging import Message, TextMessage
 from src.domain.command_handler import CommandContext, CommandHandler
 from src.domain.exceptions import create_db_error
 from src.services.error_handlers import ErrorContext
-from src.services.mcp_response_parser import MCPResponseParser
+from src.services.unified_mcp_client import MCPResponseParser
 
 logger = structlog.get_logger()
 
