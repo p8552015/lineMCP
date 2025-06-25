@@ -26,8 +26,6 @@ class Settings(BaseSettings):
 
     # MCP STDIO Configuration (生產級)
     mcp_project_root: str = ""  # 自動推斷項目根目錄
-    mcp_sqlite_server_script: str = "apps/servers/src/sqlite/server_fixed.py"
-    mcp_sqlite_database_path: str = "apps/servers/src/sqlite/test.db"
     mcp_stdio_timeout: int = 10
     mcp_connection_retry_attempts: int = 3
     mcp_connection_retry_delay: float = 1.0
@@ -110,15 +108,6 @@ class Settings(BaseSettings):
         # config.py -> src -> bot -> apps -> lineMCP (根目錄)
         return str(current_file.parent.parent.parent.parent)
 
-    @property
-    def mcp_sqlite_server_path(self) -> str:
-        """MCP SQLite 服務器腳本的完整路徑"""
-        return str(Path(self.project_root) / self.mcp_sqlite_server_script)
-
-    @property
-    def mcp_sqlite_db_path(self) -> str:
-        """MCP SQLite 資料庫的完整路徑"""
-        return str(Path(self.project_root) / self.mcp_sqlite_database_path)
 
 
 @lru_cache

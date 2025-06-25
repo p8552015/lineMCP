@@ -104,38 +104,26 @@ class MCPConfigManager:
     def _init_default_servers(self):
         """初始化預設服務器配置"""
 
-        # SQLite STDIO 服務器 (生產級)
-        sqlite_env = {
-            "ASYNCIO_FORCE_SELECT_SELECTOR": "1",
+        # PostgreSQL STDIO 服務器 (主要數據庫)
+        postgres_env = {
+            "NODE_ENV": "production",
             "PYTHONUNBUFFERED": "1",
-            "PYTHONUTF8": "1",
         }
-
-        self._servers["sqlite"] = MCPServerConfig(
-            name="sqlite",
+        
+        self._servers["postgres"] = MCPServerConfig(
+            name="postgres",
             protocol="stdio",
-            command="python3",
+            command="npx",
             args=[
-                self.settings.mcp_sqlite_server_path,
-                self.settings.mcp_sqlite_db_path,
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://admin:admin@localhost:5432/mydb"
             ],
-            cwd=str(Path(self.settings.mcp_sqlite_server_path).parent),
-            env=sqlite_env,
-            timeout=self.settings.mcp_stdio_timeout,
-            retry_attempts=self.settings.mcp_connection_retry_attempts,
-            retry_delay=self.settings.mcp_connection_retry_delay,
+            env=postgres_env,
+            timeout=30,
+            retry_attempts=3,
+            retry_delay=1.0,
         )
-
-        # PostgreSQL HTTP 服務器 (可選)
-        if hasattr(self.settings, "postgres_mcp_url"):
-            self._servers["postgres"] = MCPServerConfig(
-                name="postgres",
-                protocol="http",
-                url=self.settings.postgres_mcp_url,
-                timeout=30,
-                retry_attempts=3,
-                retry_delay=1.0,
-            )
 
         # Context7 HTTP 服務器 (可選)
         if hasattr(self.settings, "context7_mcp_url"):
@@ -457,22 +445,11 @@ def get_mcp_config() -> MCPConfigManager:
 
             # 直接在這裡定義基本設定
             project_root = str(Path(__file__).parent.parent.parent.parent.parent)
-            sqlite_server_path = os.path.join(
-                project_root, "apps/servers/src/sqlite/server_fixed.py"
-            )
-            sqlite_db_path = os.path.join(
-                project_root, "apps/servers/src/sqlite/test.db"
-            )
 
             # 創建一個簡單的設定物件
             class SimpleSettings:
                 def __init__(self):
                     self.project_root = project_root
-                    self.mcp_sqlite_server_path = sqlite_server_path
-                    self.mcp_sqlite_db_path = sqlite_db_path
-                    self.mcp_stdio_timeout = 10
-                    self.mcp_connection_retry_attempts = 3
-                    self.mcp_connection_retry_delay = 1.0
 
             simple_settings = SimpleSettings()
             _mcp_config_manager = MCPConfigManager(simple_settings)

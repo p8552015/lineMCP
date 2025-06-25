@@ -55,6 +55,7 @@ class CommandExecutor:
             HelpCommandHandler,
             InfoCommandHandler,
             ModelsCommandHandler,
+            PostgresCommandHandler,
             SqlCommandHandler,
             StatusCommandHandler,
             TablesCommandHandler,
@@ -68,6 +69,7 @@ class CommandExecutor:
             HelpCommandHandler(self.context),
             InfoCommandHandler(self.context),
             ModelsCommandHandler(self.context),
+            PostgresCommandHandler(self.context),
         ]
 
         for handler in handlers:

@@ -34,6 +34,7 @@ from src.services.nl_to_sql.services.query_statistics_service import (
 from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 from src.services.openai_client import OpenAIClient
 from src.services.unified_mcp_client import get_unified_mcp_client
+from src.services.mcp import get_mcp_client_manager
 
 from .service_registry import ServiceProvider, ServiceRegistry, ServiceScope
 
@@ -74,7 +75,14 @@ def _register_domain_services(registry: ServiceRegistry) -> None:
         scope=ServiceScope.SINGLETON,
     )
 
-    # 資料庫服務
+    # 新一代 MCP 客戶端管理器（暫時註解，避免異步問題）
+    # registry.register_factory(
+    #     "mcp_client_manager",
+    #     lambda provider: get_mcp_client_manager(),
+    #     scope=ServiceScope.SINGLETON,
+    # )
+
+    # 資料庫服務（保持向下兼容）
     registry.register_factory(
         DatabaseService,
         lambda provider: DatabaseService(get_unified_mcp_client),

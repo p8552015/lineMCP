@@ -192,7 +192,7 @@ class MessageHandlerDI:
             # 使用注入的資料庫服務
             mcp_client = await self._get_mcp_client()
             result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": sql_query}
+                "postgres", "read_query", {"query": sql_query}
             )
 
             parser = MCPResponseParser()

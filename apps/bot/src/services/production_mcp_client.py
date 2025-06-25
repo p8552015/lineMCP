@@ -79,7 +79,7 @@ class ProductionMCPClient:
             await self.connection_pool.start()
             self._pool_started = True
 
-    async def connect_to_server(self, server_name: str = "sqlite") -> bool:
+    async def connect_to_server(self, server_name: str = "postgres") -> bool:
         """連接到 MCP 服務器 - 使用連接池管理"""
         await self._ensure_pool_started()
 
@@ -458,7 +458,7 @@ class ProductionMCPClient:
                     continue
                 return {"success": False, "error": f"工具調用失敗：{str(e)}"}
 
-    async def list_tools(self, server_name: str = "sqlite") -> dict[str, Any]:
+    async def list_tools(self, server_name: str = "postgres") -> dict[str, Any]:
         """列出服務器工具"""
         server_config = get_server_config(server_name)
         timeout = server_config.timeout if server_config else 10

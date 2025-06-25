@@ -53,7 +53,7 @@ class DatabaseService:
 
             mcp_client = await self.get_mcp_client()
             result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": sql_query}
+                "postgres", "read_query", {"query": sql_query}
             )
 
             return self.parser.parse_query_result(result)

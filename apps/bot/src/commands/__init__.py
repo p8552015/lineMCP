@@ -6,6 +6,7 @@
 from .help_command import HelpCommandHandler
 from .info_command import InfoCommandHandler
 from .models_command import ModelsCommandHandler
+from .postgres_command_handler import PostgresCommandHandler
 from .sql_command import SqlCommandHandler
 from .status_command import StatusCommandHandler
 from .tables_command import TablesCommandHandler
@@ -17,4 +18,5 @@ __all__ = [
     "HelpCommandHandler",
     "InfoCommandHandler",
     "ModelsCommandHandler",
+    "PostgresCommandHandler",
 ]
