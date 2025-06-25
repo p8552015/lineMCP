@@ -364,8 +364,8 @@ class MCPConfigManager:
             if not config.command:
                 return False, f"STDIO 服務器 '{server_name}' 缺少 command"
 
-            # 檢查命令文件是否存在
-            if config.args and len(config.args) > 0:
+            # 檢查命令文件是否存在（對於 npx 命令跳過檢查）
+            if config.command not in ["npx", "node"] and config.args and len(config.args) > 0:
                 script_path = config.args[0]
                 if not os.path.exists(script_path):
                     return False, f"服務器腳本不存在：{script_path}"

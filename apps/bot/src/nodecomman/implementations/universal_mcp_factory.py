@@ -27,6 +27,7 @@ import structlog
 
 from ..interfaces.server_interfaces import (
     IMCPServerFactory,
+    IMCPServer,
     MCPServerConfig,
     MCPServerType,
     MCPConnectionInfo,
@@ -40,6 +41,8 @@ from ..interfaces.runtime_interfaces import (
     IProcess
 )
 from .nodejs_runtime_manager import NodeJSRuntimeManager
+from .python_runtime_manager import PythonRuntimeManager
+from .mcp_server_impl import MCPServerImpl
 
 logger = structlog.get_logger()
 
@@ -75,8 +78,9 @@ class UniversalMCPServerFactory(IMCPServerFactory):
             self._runtime_managers[RuntimeType.NODEJS] = NodeJSRuntimeManager()
             logger.info("✅ Node.js 運行時管理器已初始化")
             
-            # Python 運行時管理器將在 T-07 任務中添加
-            # self._runtime_managers[RuntimeType.PYTHON] = PythonRuntimeManager()
+            # 初始化 Python 運行時管理器
+            self._runtime_managers[RuntimeType.PYTHON] = PythonRuntimeManager()
+            logger.info("✅ Python 運行時管理器已初始化")
             
         except Exception as e:
             logger.error(f"❌ 初始化運行時管理器失敗: {e}")
@@ -89,10 +93,12 @@ class UniversalMCPServerFactory(IMCPServerFactory):
                 server_type=MCPServerType.DATABASE,
                 runtime_type=RuntimeType.NODEJS,
                 command="npx",
-                args=["-y", "@modelcontextprotocol/server-postgres"],
-                env={
-                    "POSTGRES_CONNECTION_STRING": "postgresql://postgres:password@localhost:5432/manufacturing_db"
-                },
+                args=[
+                    "-y", 
+                    "@modelcontextprotocol/server-postgres",
+                    "postgresql://admin:admin@localhost:5432/mydb"
+                ],
+                env={},
                 working_directory=None,
                 auto_restart=True,
                 description="PostgreSQL MCP 服務器 - 支援資料庫查詢和操作"
@@ -123,7 +129,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
             )
         }
     
-    async def create_server(self, config: MCPServerConfig) -> MCPServerInfo:
+    async def create_server(self, config: MCPServerConfig) -> IMCPServer:
         """創建 MCP 服務器"""
         try:
             logger.info(f"🚀 創建 MCP 服務器: {config.name} ({config.runtime_type.value})")
@@ -155,7 +161,10 @@ class UniversalMCPServerFactory(IMCPServerFactory):
                 working_dir=config.working_directory
             )
             
-            # 生成服務器資訊
+            # 創建 MCP 服務器實例
+            server = MCPServerImpl(config, runtime_manager, process)
+            
+            # 生成服務器資訊用於內部跟蹤
             server_info = MCPServerInfo(
                 config=config,
                 process_id=None,  # 將在啟動後設置
@@ -175,7 +184,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
             self._active_servers[config.name] = process
             
             logger.info(f"✅ MCP 服務器 {config.name} 創建成功")
-            return server_info
+            return server
             
         except Exception as e:
             logger.error(f"❌ 創建 MCP 服務器失敗: {e}")

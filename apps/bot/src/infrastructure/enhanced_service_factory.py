@@ -35,6 +35,14 @@ from src.services.nl_to_sql_service import NaturalLanguageToSQLService
 from src.services.openai_client import OpenAIClient
 from src.services.unified_mcp_client import get_unified_mcp_client
 
+# 整合 nodecomman 架構
+try:
+    from src.services.enhanced_mcp_client import get_enhanced_mcp_client
+    from src.config.enhanced_mcp_config import get_enhanced_mcp_config
+    ENHANCED_MCP_AVAILABLE = True
+except ImportError:
+    ENHANCED_MCP_AVAILABLE = False
+
 from .application_services_registry import register_application_services
 
 # 模組化註冊器
@@ -83,6 +91,9 @@ class EnhancedServiceFactory(IServiceFactory):
         register_core_services(self._registry)
         register_application_services(self._registry)
         register_infrastructure_services(self._registry)
+        
+        # 註冊 nodecomman 增強服務
+        self._register_enhanced_mcp_services()
 
         # 創建服務提供者
         self._provider = self._registry.create_provider()
@@ -160,6 +171,76 @@ class EnhancedServiceFactory(IServiceFactory):
             info["by_tag"][tag] = len(services)
 
         return info
+    
+    def _register_enhanced_mcp_services(self):
+        """註冊 nodecomman 增強 MCP 服務"""
+        if not ENHANCED_MCP_AVAILABLE:
+            logger.info("⚠️ nodecomman 增強服務不可用，跳過註冊")
+            return
+        
+        try:
+            logger.info("📋 註冊 nodecomman 增強 MCP 服務")
+            
+            # 註冊增強型 MCP 客戶端
+            self._registry.register(
+                service_type=type(get_enhanced_mcp_client()),
+                implementation=lambda: get_enhanced_mcp_client(),
+                scope=ServiceScope.SINGLETON,
+                tags=["mcp", "enhanced", "nodecomman"],
+                metadata={
+                    "description": "增強型 MCP 客戶端，整合 nodecomman 架構",
+                    "features": ["multi-runtime", "lifecycle-management", "fallback-support"],
+                    "version": "1.0.0"
+                }
+            )
+            
+            # 註冊增強型 MCP 配置
+            self._registry.register(
+                service_type=type(get_enhanced_mcp_config()),
+                implementation=lambda: get_enhanced_mcp_config(),
+                scope=ServiceScope.SINGLETON,
+                tags=["config", "enhanced", "nodecomman"],
+                metadata={
+                    "description": "增強型 MCP 配置管理，支援運行時檢測和驗證",
+                    "features": ["runtime-detection", "config-validation", "optimization-suggestions"],
+                    "version": "1.0.0"
+                }
+            )
+            
+            logger.info("✅ nodecomman 增強服務註冊完成")
+            
+        except Exception as e:
+            logger.error(f"❌ 註冊 nodecomman 增強服務失敗: {e}")
+    
+    # 基本 MCP 服務方法（與原有服務工廠兼容）
+    def get_mcp_config(self):
+        """獲取 MCP 配置管理器"""
+        from src.config.mcp_config import get_mcp_config
+        return get_mcp_config()
+    
+    def get_mcp_connection_pool(self):
+        """獲取 MCP 連接池"""
+        from src.services.mcp_connection_pool import get_connection_pool
+        return get_connection_pool()
+    
+    def get_enhanced_mcp_client(self):
+        """獲取增強型 MCP 客戶端"""
+        if ENHANCED_MCP_AVAILABLE:
+            return get_enhanced_mcp_client()
+        else:
+            # 回退到統一 MCP 客戶端
+            logger.warning("⚠️ 增強型 MCP 客戶端不可用，使用統一 MCP 客戶端")
+            return get_unified_mcp_client()
+    
+    def get_enhanced_mcp_config(self):
+        """獲取增強型 MCP 配置"""
+        if ENHANCED_MCP_AVAILABLE:
+            return get_enhanced_mcp_config()
+        else:
+            # 回退到基礎配置
+            logger.warning("⚠️ 增強型 MCP 配置不可用，使用基礎配置")
+            from src.config.mcp_config import get_mcp_config
+            return get_mcp_config()
 
     # 保持與原有 ServiceFactory 的兼容性
     def get_ai_model_service(self) -> EnhancedAIModelService:

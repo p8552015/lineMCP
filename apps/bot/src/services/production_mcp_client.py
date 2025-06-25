@@ -126,11 +126,12 @@ class ProductionMCPClient:
                 )
                 return False
 
-            # 檢查服務器腳本文件
-            server_script = server_config.args[0] if server_config.args else None
-            if not server_script or not os.path.exists(server_script):
-                logger.error(f"❌ 服務器腳本不存在：{server_script}")
-                return False
+            # 檢查服務器腳本文件（對於 npx 命令跳過檢查）
+            if server_config.command not in ["npx", "node"]:
+                server_script = server_config.args[0] if server_config.args else None
+                if not server_script or not os.path.exists(server_script):
+                    logger.error(f"❌ 服務器腳本不存在：{server_script}")
+                    return False
 
             # 準備環境變數
             env = os.environ.copy()
@@ -290,7 +291,8 @@ class ProductionMCPClient:
             return False
 
     async def call_tool(
-        self, server_name: str, tool_name: str, parameters: dict[str, Any]
+        self, server_name: str, tool_name: str, parameters: dict[str, Any],
+        timeout: float | None = None
     ) -> dict[str, Any]:
         """調用工具 - 增強錯誤處理和重試機制 + 連接池監控"""
         await self._ensure_pool_started()
