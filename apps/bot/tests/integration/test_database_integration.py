@@ -202,10 +202,10 @@ class TestDatabaseQueries:
         assert len(faults) > 0, "故障資料表應該包含資料"
         
         for fault in faults:
-            assert fault['id'] is not None
+            assert fault['fault_id'] is not None
             assert fault['machine_id'] is not None
             assert fault['fault_type'] is not None
-            assert fault['severity'] in ['Low', 'Medium', 'High', 'Critical']
+            assert fault['severity'] in ['low', 'medium', 'high', 'critical']
     
     @pytest.mark.asyncio
     async def test_join_query_machines_faults(self, db_connection):
@@ -214,7 +214,7 @@ class TestDatabaseQueries:
             SELECT 
                 m.id as machine_id,
                 m.name as machine_name,
-                COUNT(mf.id) as fault_count,
+                COUNT(mf.fault_id) as fault_count,
                 MAX(mf.fault_date) as latest_fault
             FROM machines m
             LEFT JOIN machine_faults mf ON m.id = mf.machine_id
@@ -249,7 +249,8 @@ class TestDatabaseQueries:
         
         for util in utilizations:
             assert util['machine_id'] is not None
-            assert isinstance(util['utilization_rate'], (int, float))
+            from decimal import Decimal
+            assert isinstance(util['utilization_rate'], (int, float, Decimal))
             assert 0 <= util['utilization_rate'] <= 100
     
     @pytest.mark.asyncio
@@ -257,7 +258,7 @@ class TestDatabaseQueries:
         """測試關鍵故障查詢"""
         critical_faults = await db_connection.fetch("""
             SELECT 
-                mf.id as fault_id,
+                mf.fault_id as fault_id,
                 mf.machine_id,
                 m.name as machine_name,
                 mf.fault_type,
@@ -265,7 +266,7 @@ class TestDatabaseQueries:
                 mf.description
             FROM machine_faults mf
             JOIN machines m ON mf.machine_id = m.id
-            WHERE mf.severity = 'Critical'
+            WHERE mf.severity = 'critical'
                 AND mf.resolved = false
             ORDER BY mf.fault_date DESC
         """)

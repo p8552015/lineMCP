@@ -119,7 +119,8 @@
       "mcp__serena__think_about_whether_you_are_done",
       "Bash(gh auth:*)",
       "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\dt\")",
-      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\d machine_faults\")"
+      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\d machine_faults\")",
+      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"SELECT DISTINCT severity FROM machine_faults;\")"
     ],
     "deny": []
   }
