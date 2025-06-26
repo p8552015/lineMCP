@@ -421,6 +421,11 @@ class EnhancedServiceFactory(IServiceFactory):
         except Exception:
             return None
 
+    def get_application_facade(self):
+        """獲取應用門面實例"""
+        from src.application.application_facade import ApplicationFacade
+        return ApplicationFacade(self)
+
 
 # 全域增強版服務工廠實例
 _enhanced_factory: EnhancedServiceFactory | None = None

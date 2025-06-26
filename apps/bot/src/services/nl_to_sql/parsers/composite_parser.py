@@ -70,7 +70,7 @@ class CompositeParser(IParser):
 
         self._parsers.append(parser)
         # 優先使用 parser 的 name 屬性，回退到類名
-        parser_name = getattr(parser, 'name', parser.__class__.__name__)
+        parser_name = getattr(parser, "name", parser.__class__.__name__)
         self._strategy_weights[parser_name] = weight
 
         logger.info(
@@ -91,7 +91,7 @@ class CompositeParser(IParser):
             bool: 是否成功移除
         """
         for i, parser in enumerate(self._parsers):
-            parser_name = getattr(parser, 'name', parser.__class__.__name__)
+            parser_name = getattr(parser, "name", parser.__class__.__name__)
             if parser_name == parser_class_name:
                 self._parsers.pop(i)
                 self._strategy_weights.pop(parser_class_name, None)
@@ -125,29 +125,33 @@ class CompositeParser(IParser):
         if not self._parsers:
             return self._create_empty_query("無可用解析器")
 
-        logger.debug("🎯 開始組合解析（支援回退）", text=text, parser_count=len(self._parsers))
+        logger.debug(
+            "🎯 開始組合解析（支援回退）", text=text, parser_count=len(self._parsers)
+        )
 
         # 評估所有解析器的處理能力
         parser_capabilities = await self._evaluate_parser_capabilities(text)
-        
+
         # 🔥 新增：按信心度排序，準備回退策略
-        sorted_capabilities = sorted(parser_capabilities, key=lambda x: x[1], reverse=True)
+        sorted_capabilities = sorted(
+            parser_capabilities, key=lambda x: x[1], reverse=True
+        )
 
         # 依序嘗試每個解析器，直到找到成功的結果
         for parser, confidence in sorted_capabilities:
             if confidence < self._fallback_confidence_threshold:
                 logger.info(
                     "⚠️ 跳過信心度低於門檻的解析器",
-                    parser=getattr(parser, 'name', parser.__class__.__name__),
+                    parser=getattr(parser, "name", parser.__class__.__name__),
                     confidence=confidence,
-                    threshold=self._fallback_confidence_threshold
+                    threshold=self._fallback_confidence_threshold,
                 )
                 continue
 
             try:
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.debug(f"🔄 嘗試解析器：{parser_name}，信心度：{confidence}")
-                
+
                 # 執行解析
                 result = await parser.parse(text, context)
 
@@ -181,35 +185,28 @@ class CompositeParser(IParser):
                         "⚠️ 解析器返回無效結果，嘗試下一個",
                         parser=parser_name,
                         query_type=result.query_type.value,
-                        confidence=result.confidence
+                        confidence=result.confidence,
                     )
                     continue
 
             except Exception as e:
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.warning(
-                    "⚠️ 解析器執行異常，嘗試下一個", 
-                    parser=parser_name, 
-                    error=str(e)
+                    "⚠️ 解析器執行異常，嘗試下一個", parser=parser_name, error=str(e)
                 )
                 continue
 
         # 🔥 所有解析器都失敗時的處理
         logger.error(
-            "❌ 所有解析器都無法成功解析", 
+            "❌ 所有解析器都無法成功解析",
             text=text,
-            attempted_parsers=[getattr(p[0], 'name', p[0].__class__.__name__) 
-                              for p in sorted_capabilities]
+            attempted_parsers=[
+                getattr(p[0], "name", p[0].__class__.__name__)
+                for p in sorted_capabilities
+            ],
         )
-        
-        return self._create_fallback_query(text, sorted_capabilities)
 
-        except Exception as e:
-            parser_name = getattr(best_parser, 'name', best_parser.__class__.__name__)
-            logger.error(
-                "❌ 解析執行失敗", parser=parser_name, error=str(e)
-            )
-            return self._create_error_query(text, str(e))
+        return self._create_fallback_query(text, sorted_capabilities)
 
     def can_handle(self, text: str) -> float:
         """
@@ -234,14 +231,14 @@ class CompositeParser(IParser):
         for parser in self._parsers:
             try:
                 parser_confidence = parser.can_handle(text)
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 parser_weight = self._strategy_weights.get(parser_name, 1.0)
 
                 total_confidence += parser_confidence * parser_weight
                 total_weight += parser_weight
 
             except Exception as e:
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.warning(
                     "⚠️ 解析器能力評估失敗",
                     parser=parser_name,
@@ -267,11 +264,11 @@ class CompositeParser(IParser):
         for parser in self._parsers:
             try:
                 info = parser.get_parser_info()
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 info["weight"] = self._strategy_weights.get(parser_name, 1.0)
                 parser_info_list.append(info)
             except Exception as e:
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.warning(
                     "⚠️ 獲取解析器資訊失敗",
                     parser=parser_name,
@@ -322,7 +319,7 @@ class CompositeParser(IParser):
         }
 
         for parser in self._parsers:
-            parser_name = getattr(parser, 'name', parser.__class__.__name__)
+            parser_name = getattr(parser, "name", parser.__class__.__name__)
             try:
                 parser_info = parser.get_parser_info()
                 stats["parser_details"].append(
@@ -357,7 +354,7 @@ class CompositeParser(IParser):
                 confidence = parser.can_handle(text)
                 capabilities.append((parser, confidence))
 
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.debug(
                     "📊 解析器能力評估",
                     parser=parser_name,
@@ -365,7 +362,7 @@ class CompositeParser(IParser):
                 )
 
             except Exception as e:
-                parser_name = getattr(parser, 'name', parser.__class__.__name__)
+                parser_name = getattr(parser, "name", parser.__class__.__name__)
                 logger.warning(
                     "⚠️ 解析器能力評估異常",
                     parser=parser_name,
@@ -451,52 +448,50 @@ class CompositeParser(IParser):
     def _is_valid_result(self, result: ParsedQuery) -> bool:
         """
         檢查解析結果是否有效
-        
+
         Args:
             result: 解析結果
-            
+
         Returns:
             bool: 是否為有效結果
         """
         # 基本有效性檢查
         if not result:
             return False
-            
+
         # 檢查查詢類型
         if result.query_type == QueryType.UNKNOWN:
             return False
-            
+
         # 檢查信心度
         if result.confidence <= 0.0:
             return False
-            
+
         # 檢查是否有錯誤參數
-        if result.parameters and "error" in result.parameters:
-            return False
-            
-        return True
+        return not (result.parameters and "error" in result.parameters)
 
     def _create_fallback_query(self, text: str, attempted_parsers: list) -> ParsedQuery:
         """
         創建回退查詢結果（所有解析器都失敗時）
-        
+
         Args:
             text: 原始查詢文字
             attempted_parsers: 嘗試過的解析器列表
-            
+
         Returns:
             ParsedQuery: 回退查詢結果
         """
-        parser_names = [getattr(p[0], 'name', p[0].__class__.__name__) 
-                       for p in attempted_parsers]
-        
+        parser_names = [
+            getattr(p[0], "name", p[0].__class__.__name__) for p in attempted_parsers
+        ]
+
         return ParsedQuery(
             query_type=QueryType.UNKNOWN,
             sql_query="",
             parameters={
                 "original_text": text,
                 "attempted_parsers": parser_names,
-                "fallback_reason": "所有解析器都無法成功處理此查詢"
+                "fallback_reason": "所有解析器都無法成功處理此查詢",
             },
             confidence=0.0,
             explanation=f"組合解析器完全失敗，已嘗試解析器：{', '.join(parser_names)}",
@@ -523,7 +518,7 @@ class CompositeParser(IParser):
 
         # 驗證每個解析器
         for parser in self._parsers:
-            parser_name = getattr(parser, 'name', parser.__class__.__name__)
+            parser_name = getattr(parser, "name", parser.__class__.__name__)
             parser_validation = {"name": parser_name, "is_valid": True, "errors": []}
 
             # 檢查解析器是否實現正確的介面
