@@ -12,6 +12,7 @@ from src.middleware import setup_middleware
 from src.routes import webhook
 from src.utils.observability import setup_observability
 from src.utils.redis_client import get_redis_client
+from src.utils.startup_health_check import verify_database_schema
 
 logger = structlog.get_logger()
 settings = get_settings()
@@ -19,6 +20,15 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 資料庫健康檢查 - 必須在應用啟動前完成
+    try:
+        logger.info("Starting database health check...")
+        await verify_database_schema()
+        logger.info("Database health check passed")
+    except Exception as e:
+        logger.fatal("Database health check failed", error=str(e))
+        raise  # 阻止應用程式啟動
+
     try:
         setup_observability()
         logger.info("Observability setup complete")
