@@ -266,7 +266,7 @@ class TestMCPQueries:
                            SUM(bad_count) as total_bad,
                            AVG(efficiency_rate) as avg_efficiency
                     FROM production_data
-                    WHERE DATE(record_time) = DATE('now')
+                    WHERE record_time::date = CURRENT_DATE
                     GROUP BY machine_id
                 """,
             },
@@ -276,7 +276,7 @@ class TestMCPQueries:
                     SELECT DATE(record_time) as date,
                            AVG(utilization_rate) as avg_utilization
                     FROM production_data
-                    WHERE record_time >= DATE('now', '-7 days')
+                    WHERE record_time >= CURRENT_DATE - INTERVAL '7 days'
                     GROUP BY DATE(record_time)
                     ORDER BY date
                 """,

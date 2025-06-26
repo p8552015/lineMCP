@@ -536,7 +536,7 @@ class QueryTemplateManager(ITemplateManager):
                     MAX(u.date) as last_record_date
                 FROM machines m
                 LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
-                    AND u.date >= date('now', '-7 days')
+                    AND u.date >= CURRENT_DATE - INTERVAL '7 days'
                 GROUP BY m.machine_id, m.machine_name, m.department
                 ORDER BY m.machine_id
             """,
@@ -547,7 +547,7 @@ class QueryTemplateManager(ITemplateManager):
                     severity,
                     COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage
                 FROM machine_faults
-                WHERE fault_date >= date('now', '-{days} days')
+                WHERE fault_date >= CURRENT_DATE - INTERVAL '{days} days'
                 GROUP BY fault_type, severity
                 ORDER BY COUNT(*) DESC
             """,
@@ -561,7 +561,7 @@ class QueryTemplateManager(ITemplateManager):
                     COALESCE(SUM(u.defective_parts), 0) as total_defective_parts
                 FROM machines m
                 LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
-                    AND u.date >= date('now', '-7 days')
+                    AND u.date >= CURRENT_DATE - INTERVAL '7 days'
                 GROUP BY m.department
                 ORDER BY avg_utilization DESC
             """,
@@ -574,7 +574,7 @@ class QueryTemplateManager(ITemplateManager):
                     MAX(u.date) as last_record_date
                 FROM machines m
                 LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
-                    AND u.date >= date('now', '-7 days')
+                    AND u.date >= CURRENT_DATE - INTERVAL '7 days'
                 WHERE m.department = '{department}'
                 GROUP BY m.machine_id, m.machine_name
                 ORDER BY avg_utilization DESC

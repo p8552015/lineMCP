@@ -338,7 +338,7 @@ class DatabaseService:
             fault_query = f"""
                 SELECT COUNT(*) as fault_count
                 FROM machine_faults
-                WHERE machine_id = '{machine_id}' AND fault_date >= date('now', '-{days} days')
+                WHERE machine_id = '{machine_id}' AND fault_date >= CURRENT_DATE - INTERVAL '{days} days'
             """
 
             result = await self._execute_query(fault_query)
