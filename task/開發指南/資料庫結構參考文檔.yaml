@@ -1,0 +1,228 @@
+# 資料庫結構參考文檔
+# 基於實際資料庫結構分析結果 (T-01 報告)
+
+tables:
+  machines:
+    description: 機台基本資訊表
+    columns:
+      - name: id
+        type: integer
+        primary_key: true
+        description: 機台唯一識別碼
+        notes: "注意：不是 machine_id"
+      - name: name
+        type: varchar(100)
+        description: 機台名稱
+        notes: "注意：不是 machine_name"
+      - name: location
+        type: varchar(100)
+        description: 機台位置/部門
+        notes: "注意：不是 department"
+      - name: created_at
+        type: timestamp
+        description: 創建時間
+      - name: updated_at
+        type: timestamp
+        description: 更新時間
+    
+    relationships:
+      - table: machine_utilization
+        type: one_to_many
+        foreign_key: machine_id
+        description: 一台機台可以有多筆效能記錄
+      - table: machine_faults
+        type: one_to_many
+        foreign_key: machine_id
+        description: 一台機台可以有多筆故障記錄
+
+  machine_utilization:
+    description: 機台效能利用率表
+    columns:
+      - name: id
+        type: integer
+        primary_key: true
+        description: 記錄唯一識別碼
+      - name: machine_id
+        type: integer
+        foreign_key: machines.id
+        description: 關聯機台ID
+        notes: "正確的外鍵欄位"
+      - name: utilization_rate
+        type: decimal(5,2)
+        description: 稼動率百分比 (0.00-100.00)
+      - name: efficiency_rate
+        type: decimal(5,2)
+        description: 效率百分比 (0.00-100.00)
+      - name: good_count
+        type: integer
+        description: 良品數量
+      - name: defect_count
+        type: integer
+        description: 不良品數量
+      - name: recorded_at
+        type: timestamp
+        description: 記錄時間
+      - name: created_at
+        type: timestamp
+        description: 創建時間
+      - name: updated_at
+        type: timestamp
+        description: 更新時間
+
+    relationships:
+      - table: machines
+        type: many_to_one
+        local_key: machine_id
+        foreign_key: id
+        description: 多筆效能記錄屬於一台機台
+
+  machine_faults:
+    description: 機台故障記錄表
+    columns:
+      - name: id
+        type: integer
+        primary_key: true
+        description: 故障記錄唯一識別碼
+      - name: machine_id
+        type: integer
+        foreign_key: machines.id
+        description: 關聯機台ID
+        notes: "正確的外鍵欄位"
+      - name: fault_type
+        type: varchar(100)
+        description: 故障類型
+      - name: description
+        type: text
+        description: 故障描述
+      - name: occurred_at
+        type: timestamp
+        description: 故障發生時間
+      - name: resolved_at
+        type: timestamp
+        nullable: true
+        description: 故障解決時間
+      - name: created_at
+        type: timestamp
+        description: 記錄創建時間
+      - name: updated_at
+        type: timestamp
+        description: 記錄更新時間
+
+    relationships:
+      - table: machines
+        type: many_to_one
+        local_key: machine_id
+        foreign_key: id
+        description: 多筆故障記錄屬於一台機台
+
+# 常見的 SQL 模板錯誤對照表
+common_field_errors:
+  machines:
+    wrong_fields:
+      - wrong: machine_id
+        correct: id
+        note: machines 表的主鍵是 id，不是 machine_id
+      - wrong: machine_name
+        correct: name
+        note: 機台名稱欄位是 name，不是 machine_name
+      - wrong: department
+        correct: location
+        note: 部門/位置欄位是 location，不是 department
+
+  join_conditions:
+    wrong_joins:
+      - wrong: "m.machine_id = u.machine_id"
+        correct: "m.id = u.machine_id"
+        note: machines 表沒有 machine_id 欄位，應該使用 id
+      - wrong: "m.machine_id = f.machine_id"
+        correct: "m.id = f.machine_id"
+        note: machines 表沒有 machine_id 欄位，應該使用 id
+
+# SQL 模板最佳實踐範例
+sql_template_examples:
+  correct_basic_query:
+    description: "正確的基本查詢範例"
+    sql: |
+      SELECT 
+          m.id,
+          m.name,
+          m.location
+      FROM machines m
+      WHERE m.location = :location
+
+  correct_join_query:
+    description: "正確的 JOIN 查詢範例"
+    sql: |
+      SELECT 
+          m.id,
+          m.name,
+          m.location,
+          u.utilization_rate,
+          u.efficiency_rate
+      FROM machines m
+      LEFT JOIN machine_utilization u ON m.id = u.machine_id
+      WHERE m.location = :location
+
+  correct_aggregation_query:
+    description: "正確的聚合查詢範例"
+    sql: |
+      SELECT 
+          m.location,
+          COUNT(DISTINCT m.id) as machine_count,
+          AVG(u.utilization_rate) as avg_utilization,
+          AVG(u.efficiency_rate) as avg_efficiency
+      FROM machines m
+      LEFT JOIN machine_utilization u ON m.id = u.machine_id
+      GROUP BY m.location
+
+# 資料類型轉換注意事項
+data_type_handling:
+  decimal_fields:
+    - field: utilization_rate
+      type: decimal(5,2)
+      safe_conversion: "safe_decimal_conversion(value)"
+      notes: "可能包含 None 值，需要安全轉換"
+    - field: efficiency_rate
+      type: decimal(5,2)
+      safe_conversion: "safe_decimal_conversion(value)"
+      notes: "可能包含 None 值，需要安全轉換"
+
+  integer_fields:
+    - field: good_count
+      type: integer
+      safe_conversion: "safe_int_conversion(value)"
+      notes: "可能是字串格式的數字，需要安全轉換"
+    - field: defect_count
+      type: integer
+      safe_conversion: "safe_int_conversion(value)"
+      notes: "可能是字串格式的數字，需要安全轉換"
+
+# 驗證檢查清單
+validation_checklist:
+  before_development:
+    - "檢查資料庫最新結構"
+    - "確認所有欄位名稱正確性"
+    - "驗證 JOIN 條件準確性"
+    - "檢查資料類型轉換安全性"
+
+  code_review:
+    - "SQL 模板欄位名稱與資料庫一致"
+    - "JOIN 條件使用正確欄位"
+    - "資料類型轉換有錯誤處理"
+    - "添加相應測試用例"
+
+  testing:
+    - "SQL 語法正確性測試"
+    - "欄位存在性驗證"
+    - "資料格式驗證"
+    - "邊界條件測試"
+
+# 更新記錄
+update_history:
+  - date: "2025-01-24"
+    version: "1.0"
+    changes:
+      - "初始版本，基於 T-01 資料庫結構分析"
+      - "包含實際資料庫結構和常見錯誤對照"
+      - "添加 SQL 模板最佳實踐範例"
+    author: "SQL模板修復專案小組" 
