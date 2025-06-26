@@ -84,6 +84,86 @@ INSERT INTO machines (id, name, status, temperature, utilization_rate, last_main
 ('M004', '切割機B', '運行中', 52.3, 68.9, '2024-05-28', '工廠A-1樓'),
 ('M005', '組裝線C', '運行中', 28.5, 89.1, '2024-06-10', '工廠B-2樓');
 
+-- 創建機台使用率歷史記錄表
+CREATE TABLE machine_utilization (
+    id SERIAL PRIMARY KEY,
+    machine_id VARCHAR(10) REFERENCES machines(id),
+    date DATE NOT NULL,
+    utilization_rate DECIMAL(5,2),
+    efficiency_rate DECIMAL(5,2),
+    good_parts INTEGER DEFAULT 0,
+    defective_parts INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入機台使用率歷史數據
+INSERT INTO machine_utilization (machine_id, date, utilization_rate, efficiency_rate, good_parts, defective_parts) VALUES
+-- M001 近7天數據
+('M001', CURRENT_DATE - INTERVAL '6 days', 75.5, 92.3, 1200, 25),
+('M001', CURRENT_DATE - INTERVAL '5 days', 78.2, 89.1, 1180, 30),
+('M001', CURRENT_DATE - INTERVAL '4 days', 72.8, 91.5, 1150, 20),
+('M001', CURRENT_DATE - INTERVAL '3 days', 80.1, 88.7, 1220, 35),
+('M001', CURRENT_DATE - INTERVAL '2 days', 74.2, 90.2, 1190, 28),
+('M001', CURRENT_DATE - INTERVAL '1 day', 76.8, 93.1, 1210, 22),
+('M001', CURRENT_DATE, 74.2, 91.8, 1175, 24),
+
+-- M002 近7天數據（停機狀態）
+('M002', CURRENT_DATE - INTERVAL '6 days', 65.3, 85.2, 850, 45),
+('M002', CURRENT_DATE - INTERVAL '5 days', 62.1, 82.8, 820, 50),
+('M002', CURRENT_DATE - INTERVAL '4 days', 0.0, 0.0, 0, 0),
+('M002', CURRENT_DATE - INTERVAL '3 days', 0.0, 0.0, 0, 0),
+('M002', CURRENT_DATE - INTERVAL '2 days', 0.0, 0.0, 0, 0),
+('M002', CURRENT_DATE - INTERVAL '1 day', 0.0, 0.0, 0, 0),
+('M002', CURRENT_DATE, 0.0, 0.0, 0, 0),
+
+-- M004 近7天數據
+('M004', CURRENT_DATE - INTERVAL '6 days', 70.2, 87.5, 950, 38),
+('M004', CURRENT_DATE - INTERVAL '5 days', 68.9, 86.2, 920, 42),
+('M004', CURRENT_DATE - INTERVAL '4 days', 71.5, 88.9, 980, 35),
+('M004', CURRENT_DATE - INTERVAL '3 days', 69.8, 85.7, 940, 40),
+('M004', CURRENT_DATE - INTERVAL '2 days', 68.9, 87.1, 930, 37),
+('M004', CURRENT_DATE - INTERVAL '1 day', 72.3, 89.4, 990, 33),
+('M004', CURRENT_DATE, 68.9, 86.8, 945, 39),
+
+-- M005 近7天數據
+('M005', CURRENT_DATE - INTERVAL '6 days', 88.5, 94.2, 1580, 15),
+('M005', CURRENT_DATE - INTERVAL '5 days', 91.2, 95.8, 1620, 12),
+('M005', CURRENT_DATE - INTERVAL '4 days', 87.9, 93.5, 1550, 18),
+('M005', CURRENT_DATE - INTERVAL '3 days', 89.7, 96.1, 1590, 10),
+('M005', CURRENT_DATE - INTERVAL '2 days', 89.1, 94.8, 1575, 13),
+('M005', CURRENT_DATE - INTERVAL '1 day', 90.3, 95.2, 1600, 11),
+('M005', CURRENT_DATE, 89.1, 94.5, 1580, 14);
+
+-- 創建機台故障記錄表
+CREATE TABLE machine_faults (
+    id SERIAL PRIMARY KEY,
+    machine_id VARCHAR(10) REFERENCES machines(id),
+    fault_type VARCHAR(100) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    fault_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    description TEXT,
+    resolved BOOLEAN DEFAULT FALSE,
+    resolution_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入機台故障記錄數據
+INSERT INTO machine_faults (machine_id, fault_type, severity, fault_date, description, resolved, resolution_date) VALUES
+-- 最近的故障記錄
+('M001', '過熱', 'High', CURRENT_DATE - INTERVAL '3 days', 'CNC車床A溫度達到58°C，超過安全閾值55°C', TRUE, CURRENT_DATE - INTERVAL '2 days'),
+('M002', '電機故障', 'Critical', CURRENT_DATE - INTERVAL '5 days', '包裝機主電機異常，無法正常運轉', FALSE, NULL),
+('M002', '感應器失效', 'Medium', CURRENT_DATE - INTERVAL '4 days', '位置感應器回傳異常數值', FALSE, NULL),
+('M003', '油壓不足', 'Medium', CURRENT_DATE - INTERVAL '7 days', '焊接機油壓系統壓力下降至80%', TRUE, CURRENT_DATE - INTERVAL '6 days'),
+('M004', '振動異常', 'Low', CURRENT_DATE - INTERVAL '2 days', '切割機運行時檢測到輕微振動', TRUE, CURRENT_DATE - INTERVAL '1 day'),
+('M005', '皮帶鬆動', 'Low', CURRENT_DATE - INTERVAL '1 day', '組裝線傳送帶略有鬆動', TRUE, CURRENT_DATE),
+
+-- 歷史故障記錄
+('M001', '刀具磨損', 'Medium', CURRENT_DATE - INTERVAL '15 days', 'CNC刀具磨損需要更換', TRUE, CURRENT_DATE - INTERVAL '14 days'),
+('M002', '潤滑油不足', 'Low', CURRENT_DATE - INTERVAL '20 days', '包裝機潤滑系統需要補充潤滑油', TRUE, CURRENT_DATE - INTERVAL '19 days'),
+('M003', '焊條用盡', 'Low', CURRENT_DATE - INTERVAL '12 days', '焊接機焊條庫存不足', TRUE, CURRENT_DATE - INTERVAL '11 days'),
+('M004', '冷卻液溫度高', 'Medium', CURRENT_DATE - INTERVAL '18 days', '切割機冷卻系統效率下降', TRUE, CURRENT_DATE - INTERVAL '16 days'),
+('M005', '品檢感應器校準', 'Low', CURRENT_DATE - INTERVAL '25 days', '組裝線品檢感應器需要重新校準', TRUE, CURRENT_DATE - INTERVAL '24 days');
+
 -- 創建一些視圖方便查詢
 CREATE VIEW employee_summary AS
 SELECT 
@@ -112,11 +192,52 @@ SELECT
 FROM machines 
 GROUP BY status;
 
+-- 創建機台效能摘要視圖
+CREATE VIEW machine_performance_summary AS
+SELECT 
+    m.id as machine_id,
+    m.name as machine_name,
+    m.status,
+    COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+    COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+    COALESCE(SUM(u.good_parts), 0) as total_good_parts,
+    COALESCE(SUM(u.defective_parts), 0) as total_defective_parts,
+    MAX(u.date) as last_record_date
+FROM machines m
+LEFT JOIN machine_utilization u ON m.id = u.machine_id 
+    AND u.date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY m.id, m.name, m.status;
+
+-- 創建故障統計視圖
+CREATE VIEW fault_statistics AS
+SELECT 
+    fault_type,
+    severity,
+    COUNT(*) as fault_count,
+    COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage,
+    COUNT(CASE WHEN resolved = TRUE THEN 1 END) as resolved_count,
+    COUNT(CASE WHEN resolved = FALSE THEN 1 END) as unresolved_count
+FROM machine_faults 
+WHERE fault_date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY fault_type, severity
+ORDER BY fault_count DESC;
+
 -- 創建索引提升查詢性能
 CREATE INDEX idx_employees_department ON employees(department);
 CREATE INDEX idx_products_category ON products(category);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_machines_status ON machines(status);
+
+-- 機台相關索引
+CREATE INDEX idx_machine_utilization_machine_id ON machine_utilization(machine_id);
+CREATE INDEX idx_machine_utilization_date ON machine_utilization(date);
+CREATE INDEX idx_machine_utilization_machine_date ON machine_utilization(machine_id, date);
+
+-- 故障記錄索引
+CREATE INDEX idx_machine_faults_machine_id ON machine_faults(machine_id);
+CREATE INDEX idx_machine_faults_date ON machine_faults(fault_date);
+CREATE INDEX idx_machine_faults_severity ON machine_faults(severity);
+CREATE INDEX idx_machine_faults_resolved ON machine_faults(resolved);
 
 -- 顯示初始化完成信息
 DO $$

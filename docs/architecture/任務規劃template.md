@@ -8,8 +8,11 @@
 
 任務執行期間，每隔30分鐘自動執行git提交當前版本
 
-將產出的自定義任務名稱.md文件存放於 /Users/yen/Desktop/lineMCP/task/任務規劃書 這個路徑下
-將每個任務測試結果存放於 /Users/yen/Desktop/lineMCP/task/任務測試報告 這個路徑下
+
+### 必須遵守的文件存放規則
+將產出的自定義任務名稱.md文件存放於 /Users/yen/Desktop/lineMCP/task/任務規劃書 這個路徑下的資料夾
+將計劃中的每個任務測試結果存放於 /Users/yen/Desktop/lineMCP/task/任務測試報告 這個路徑下的資料夾
+將計劃中的執行完的完整報告存放於 /Users/yen/Desktop/lineMCP/task/最終報告 這個路徑下的資料夾
 
 ### 核心流程
 1. **規劃階段**：撰寫 `自定義任務名稱.md` 規格檔案
