@@ -3,6 +3,7 @@ Pytest 配置和共用 fixtures
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock
@@ -12,6 +13,12 @@ import pytest
 # 添加 src 到 Python path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
+
+# 載入測試環境變數
+env_test_file = Path(__file__).parent.parent / ".env.test"
+if env_test_file.exists():
+    from dotenv import load_dotenv
+    load_dotenv(env_test_file)
 
 
 @pytest.fixture(scope="session")
@@ -121,6 +128,46 @@ def sample_line_event():
 @pytest.fixture
 def sample_command_context():
     """命令上下文範例"""
-    from src.models.commands import Command
+    # Command 類已移除，使用新的解析邏輯
 
-    return Command(name="sql", args=["SELECT * FROM machines LIMIT 5"])
+    # 返回模擬的指令數據，用於測試
+    return {"name": "sql", "args": ["SELECT * FROM machines LIMIT 5"]}
+
+
+@pytest.fixture
+def test_database_url():
+    """測試資料庫連接字串"""
+    return os.getenv("DATABASE_URL", "postgresql://admin:admin@localhost:5432/mydb")
+
+
+@pytest.fixture
+async def real_db_connection(test_database_url):
+    """真實的資料庫連接（僅用於整合測試）"""
+    try:
+        import asyncpg
+        conn = await asyncpg.connect(test_database_url)
+        yield conn
+        await conn.close()
+    except Exception as e:
+        pytest.skip(f"無法連接到測試資料庫: {e}")
+
+
+@pytest.fixture
+def test_environment_setup():
+    """設置測試環境變數"""
+    original_env = os.environ.copy()
+    
+    # 設置測試專用環境變數
+    os.environ.update({
+        "ENVIRONMENT": "test",
+        "LINE_CHANNEL_ACCESS_TOKEN": "test_token",
+        "AI_MODEL_PROVIDER": "google",
+        "ASYNCIO_FORCE_SELECT_SELECTOR": "1",
+        "DATABASE_URL": "postgresql://admin:admin@localhost:5432/mydb",
+    })
+    
+    yield
+    
+    # 恢復原始環境變數
+    os.environ.clear()
+    os.environ.update(original_env)

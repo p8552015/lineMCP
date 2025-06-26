@@ -115,7 +115,11 @@
       "Bash(./scripts/run_layer_tests.sh:*)",
       "Bash(./CICD/scripts/run_service_registry_test.sh:*)",
       "Bash(./CICD/scripts/test_nodecomman_runtime.sh:*)",
-      "Bash(./CICD/scripts/test_m001_e2e.sh:*)"
+      "Bash(./CICD/scripts/test_m001_e2e.sh:*)",
+      "mcp__serena__think_about_whether_you_are_done",
+      "Bash(gh auth:*)",
+      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\dt\")",
+      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\d machine_faults\")"
     ],
     "deny": []
   }

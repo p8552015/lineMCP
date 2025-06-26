@@ -10,7 +10,7 @@ from linebot.v3.messaging import TextMessage
 
 # 確保可以導入 MessageHandler
 try:
-    from src.models.commands import Command, parse_command
+    # Command 和 parse_command 已移除
     from src.services.message_handler import MessageHandler
 except ImportError as e:
     pytest.skip(f"Cannot import required modules: {e}", allow_module_level=True)

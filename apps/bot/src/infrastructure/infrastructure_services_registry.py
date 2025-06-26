@@ -227,6 +227,7 @@ def _create_command_executor(provider: ServiceProvider) -> CommandExecutor:
         nl_service=provider.get_required_service(NaturalLanguageToSQLService),
         db_service=provider.get_required_service(DatabaseService),
         formatter=provider.get_required_service(MessageFormatter),
+        service_factory=None,  # 避免循環依賴，與 MessagingApplicationService 保持一致
         openai_client=provider.get_service(OpenAIClient),
     )
 

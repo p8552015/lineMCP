@@ -187,7 +187,7 @@ class TestDatabaseQueries:
         for machine in machines:
             assert machine['id'] is not None
             assert machine['name'] is not None
-            assert machine['status'] in ['運行', '停機', '維修', '故障', '運行中', '維護中', 'running']
+            assert machine['status'] in ['運行', '停機', '維修', '故障', '運行中', '維護中', '待機中', 'running']
     
     @pytest.mark.asyncio
     async def test_machine_faults_query(self, db_connection):
@@ -202,10 +202,10 @@ class TestDatabaseQueries:
         assert len(faults) > 0, "故障資料表應該包含資料"
         
         for fault in faults:
-            assert fault['fault_id'] is not None
+            assert fault['id'] is not None
             assert fault['machine_id'] is not None
             assert fault['fault_type'] is not None
-            assert fault['severity'] in ['low', 'medium', 'high', 'critical']
+            assert fault['severity'] in ['Low', 'Medium', 'High', 'Critical']
     
     @pytest.mark.asyncio
     async def test_join_query_machines_faults(self, db_connection):
@@ -214,7 +214,7 @@ class TestDatabaseQueries:
             SELECT 
                 m.id as machine_id,
                 m.name as machine_name,
-                COUNT(mf.fault_id) as fault_count,
+                COUNT(mf.id) as fault_count,
                 MAX(mf.fault_date) as latest_fault
             FROM machines m
             LEFT JOIN machine_faults mf ON m.id = mf.machine_id
@@ -237,10 +237,10 @@ class TestDatabaseQueries:
             SELECT 
                 machine_id,
                 utilization_rate,
-                timestamp
+                date
             FROM machine_utilization
-            WHERE timestamp >= $1
-            ORDER BY timestamp DESC
+            WHERE date >= $1
+            ORDER BY date DESC
             LIMIT 10
         """, datetime.now() - timedelta(days=7))
         
@@ -257,7 +257,7 @@ class TestDatabaseQueries:
         """測試關鍵故障查詢"""
         critical_faults = await db_connection.fetch("""
             SELECT 
-                mf.fault_id,
+                mf.id as fault_id,
                 mf.machine_id,
                 m.name as machine_name,
                 mf.fault_type,
@@ -265,7 +265,7 @@ class TestDatabaseQueries:
                 mf.description
             FROM machine_faults mf
             JOIN machines m ON mf.machine_id = m.id
-            WHERE mf.severity = 'critical'
+            WHERE mf.severity = 'Critical'
                 AND mf.resolved = false
             ORDER BY mf.fault_date DESC
         """)

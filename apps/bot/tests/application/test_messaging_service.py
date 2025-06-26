@@ -9,7 +9,7 @@ from linebot.v3.messaging import TextMessage
 
 from src.application.messaging_service import MessagingApplicationService
 from src.domain.command_handler import CommandContext
-from src.models.commands import Command
+# Command 類已移除
 from src.services.nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 

@@ -12,7 +12,7 @@ from src.domain.command_handler import (
     get_command_registry,
 )
 from src.domain.exceptions import create_command_error, create_validation_error
-from src.models.commands import parse_command
+# 移除對 models.commands 的依賴，改用內建解析邏輯
 
 logger = structlog.get_logger()
 
@@ -48,6 +48,37 @@ class CommandExecutor:
         logger.info(
             f"指令執行器初始化完成，註冊了 {len(self.registry.list_commands())} 個指令"
         )
+
+    def parse_and_validate_command(self, message_text: str) -> tuple[str, list[str]] | None:
+        """
+        解析並驗證指令，只依賴註冊表中的指令
+
+        Args:
+            message_text: 訊息文字
+
+        Returns:
+            tuple[str, list[str]] | None: (指令名稱, 參數列表) 或 None (如果不是有效指令)
+        """
+        message = message_text.strip()
+
+        # 檢查是否為指令格式
+        if not message.startswith("/"):
+            return None
+
+        # 解析指令和參數
+        parts = message.split()
+        command_name = parts[0][1:].lower()  # 移除 '/' 並轉為小寫
+        args = parts[1:] if len(parts) > 1 else []
+
+        # 確保已初始化
+        if not self._initialized:
+            self.initialize()
+
+        # 驗證指令是否在註冊表中存在（包括別名）
+        if not self.registry.has_command(command_name):
+            return None
+
+        return command_name, args
 
     def _register_all_commands(self):
         """註冊所有指令處理器"""
@@ -99,30 +130,32 @@ class CommandExecutor:
             self.initialize()
 
         # 解析指令
-        command = parse_command(message_text)
-        if not command:
+        parsed_result = self.parse_and_validate_command(message_text)
+        if not parsed_result:
             raise create_command_error(message_text, "無法解析為有效指令")
 
+        command_name, args = parsed_result
+
         logger.info(
-            "執行指令", user_id=user_id, command=command.name, args=command.args
+            "執行指令", user_id=user_id, command=command_name, args=args
         )
 
         try:
             # 獲取指令處理器
-            handler = self.registry.get_handler(command.name)
+            handler = self.registry.get_handler(command_name)
 
             # 驗證參數
-            if not handler.validate_args(command.args):
+            if not handler.validate_args(args):
                 raise create_validation_error(
-                    f"command_{command.name}_args",
-                    command.args,
-                    f"指令 /{command.name} 的參數無效",
+                    f"command_{command_name}_args",
+                    args,
+                    f"指令 /{command_name} 的參數無效",
                 )
 
             # 執行指令
-            result = await handler.handle(user_id, command.args)
+            result = await handler.handle(user_id, args)
 
-            logger.info("指令執行成功", user_id=user_id, command=command.name)
+            logger.info("指令執行成功", user_id=user_id, command=command_name)
 
             return result
 
@@ -131,11 +164,11 @@ class CommandExecutor:
             available_commands = [h.command_name for h in self.registry.list_commands()]
 
             logger.warning(
-                "未知指令", command=command.name, available_commands=available_commands
+                "未知指令", command=command_name, available_commands=available_commands
             )
 
             raise create_command_error(
-                command.name,
+                command_name,
                 f"未知的指令，可用指令：{', '.join(available_commands[:5])}",
             ) from e
 
@@ -144,7 +177,7 @@ class CommandExecutor:
             logger.error(
                 "指令執行失敗",
                 user_id=user_id,
-                command=command.name,
+                command=command_name,
                 error=str(e),
                 exc_info=True,
             )

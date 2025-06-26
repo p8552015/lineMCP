@@ -10,7 +10,7 @@ from linebot.v3.messaging import TextMessage
 from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import CommandContext, CommandHandler
 from src.domain.exceptions import CommandParsingException, ValidationException
-from src.models.commands import Command
+# 移除對 Command 類的依賴，使用新的解析邏輯
 
 
 class MockCommandHandler(CommandHandler):
@@ -45,6 +45,8 @@ class TestCommandExecutor:
     def setup_method(self):
         """測試設置"""
         self.mock_context = MagicMock(spec=CommandContext)
+        # 添加 PostgresCommandHandler 需要的屬性
+        self.mock_context.service_factory = None
 
     def test_initialization(self):
         """測試初始化"""
@@ -108,19 +110,15 @@ class TestCommandExecutor:
         assert mock_registry.register.call_count >= 2
 
     @pytest.mark.asyncio
-    @patch("src.domain.command_executor.parse_command")
-    async def test_execute_command_success(self, mock_parse_command):
+    async def test_execute_command_success(self):
         """測試成功執行指令"""
-        # 設置模擬 - 使用支持的指令名稱
-        mock_command = Command(name="help", args=["arg1"])
-        mock_parse_command.return_value = mock_command
-
         mock_handler = AsyncMock(spec=CommandHandler)
         mock_handler.validate_args.return_value = True
         mock_handler.handle.return_value = TextMessage(text="Success")
 
         mock_registry = MagicMock()
         mock_registry.get_handler.return_value = mock_handler
+        mock_registry.has_command.return_value = True
 
         executor = CommandExecutor(self.mock_context)
         executor.registry = mock_registry
@@ -130,35 +128,32 @@ class TestCommandExecutor:
 
         assert isinstance(result, TextMessage)
         assert result.text == "Success"
-        mock_parse_command.assert_called_once_with("/help arg1")
         mock_registry.get_handler.assert_called_once_with("help")
         mock_handler.validate_args.assert_called_once_with(["arg1"])
         mock_handler.handle.assert_called_once_with("user123", ["arg1"])
 
     @pytest.mark.asyncio
-    @patch("src.domain.command_executor.parse_command")
-    async def test_execute_command_parsing_failure(self, mock_parse_command):
+    async def test_execute_command_parsing_failure(self):
         """測試指令解析失敗"""
-        mock_parse_command.return_value = None
+        mock_registry = MagicMock()
+        mock_registry.has_command.return_value = False
 
         executor = CommandExecutor(self.mock_context)
+        executor.registry = mock_registry
         executor._initialized = True
 
         with pytest.raises(CommandParsingException):
             await executor.execute_command("user123", "invalid command")
 
     @pytest.mark.asyncio
-    @patch("src.models.commands.parse_command")
-    async def test_execute_command_validation_failure(self, mock_parse_command):
+    async def test_execute_command_validation_failure(self):
         """測試參數驗證失敗"""
-        mock_command = Command(name="sql", args=["invalid"])
-        mock_parse_command.return_value = mock_command
-
         mock_handler = MagicMock(spec=CommandHandler)
         mock_handler.validate_args.return_value = False
 
         mock_registry = MagicMock()
         mock_registry.get_handler.return_value = mock_handler
+        mock_registry.has_command.return_value = True
 
         executor = CommandExecutor(self.mock_context)
         executor.registry = mock_registry
@@ -168,13 +163,10 @@ class TestCommandExecutor:
             await executor.execute_command("user123", "/sql invalid")
 
     @pytest.mark.asyncio
-    @patch("src.models.commands.parse_command")
-    async def test_execute_command_handler_not_found(self, mock_parse_command):
+    async def test_execute_command_handler_not_found(self):
         """測試找不到指令處理器"""
-        mock_command = Command(name="help", args=[])
-        mock_parse_command.return_value = mock_command
-
         mock_registry = MagicMock()
+        mock_registry.has_command.return_value = True
         mock_registry.get_handler.side_effect = KeyError("Command not found")
         mock_registry.list_commands.return_value = [
             MagicMock(command_name="sql"),
@@ -191,17 +183,14 @@ class TestCommandExecutor:
         assert "未知的指令" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    @patch("src.models.commands.parse_command")
-    async def test_execute_command_handler_exception(self, mock_parse_command):
+    async def test_execute_command_handler_exception(self):
         """測試指令處理器拋出異常"""
-        mock_command = Command(name="status", args=[])
-        mock_parse_command.return_value = mock_command
-
         mock_handler = AsyncMock(spec=CommandHandler)
         mock_handler.validate_args.return_value = True
         mock_handler.handle.side_effect = Exception("Handler error")
 
         mock_registry = MagicMock()
+        mock_registry.has_command.return_value = True
         mock_registry.get_handler.return_value = mock_handler
 
         executor = CommandExecutor(self.mock_context)
@@ -218,14 +207,14 @@ class TestCommandExecutor:
         """測試自動初始化"""
         mock_registry = MagicMock()
         mock_registry.list_commands.return_value = []
+        mock_registry.has_command.return_value = False
 
         executor = CommandExecutor(self.mock_context)
         executor.registry = mock_registry
 
-        # 模擬parse_command返回None以觸發初始化但不執行指令
-        with patch("src.models.commands.parse_command", return_value=None):
-            with pytest.raises(CommandParsingException):
-                await executor.execute_command("user123", "invalid")
+        # 模擬無效指令以觸發初始化但不執行指令
+        with pytest.raises(CommandParsingException):
+            await executor.execute_command("user123", "invalid")
 
         assert executor._initialized is True
 

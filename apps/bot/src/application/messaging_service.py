@@ -10,7 +10,7 @@ from linebot.v3.messaging import Message, TextMessage
 
 from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import CommandContext
-from src.models.commands import parse_command
+# 移除對已刪除模組的依賴
 
 from .base_service import BaseApplicationService
 

@@ -10,7 +10,7 @@ from collections.abc import Awaitable, Callable
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
-from src.models.commands import Command, parse_command
+# 移除對已刪除模組的依賴，不再使用 Command 和 parse_command
 from src.utils.observability import get_tracer
 
 from .ai_model_service import AIModelService
@@ -107,13 +107,13 @@ class MessageHandlerDI:
             span.set_attribute("user.id", user_id)
 
             try:
-                # 解析指令
-                command = parse_command(message_text)
-
-                if command:
+                # 檢查是否為指令格式
+                if message_text.strip().startswith("/"):
                     span.set_attribute("message.type", "command")
-                    span.set_attribute("command.name", command.name)
-                    return await self._handle_command(user_id, command)
+                    # 委託給指令執行器處理
+                    if not hasattr(self, "_command_executor"):
+                        self._initialize_command_executor()
+                    return await self._command_executor.execute_command(user_id, message_text)
                 else:
                     span.set_attribute("message.type", "natural_language")
                     return await self._handle_natural_language(user_id, message_text)
@@ -127,20 +127,7 @@ class MessageHandlerDI:
                     e, {"user_id": user_id, "message_text": message_text}
                 )
 
-    async def _handle_command(self, user_id: str, command: Command) -> Message:
-        """處理指令式查詢（使用 Command Pattern）"""
-        logger.info(f"Processing command: {command.name}", args=command.args)
-
-        # 使用指令執行器處理指令
-        if not hasattr(self, "_command_executor"):
-            self._initialize_command_executor()
-
-        # 重建完整的指令文字以供執行器解析
-        command_text = f"/{command.name}"
-        if command.args:
-            command_text += " " + " ".join(command.args)
-
-        return await self._command_executor.execute_command(user_id, command_text)
+# _handle_command 方法已移除，改為直接使用 CommandExecutor
 
     def _initialize_command_executor(self):
         """初始化指令執行器"""

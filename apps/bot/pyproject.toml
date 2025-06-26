@@ -28,6 +28,7 @@ tenacity = "^9.0.0"
 mcp = "^1.9.4"
 websockets = "^15.0.1"
 asyncpg = "^0.30.0"
+psycopg2-binary = "^2.9.9"
 alembic = "^1.16.2"
 sqlalchemy = {extras = ["postgresql"], version = "^2.0.41"}
 
@@ -46,6 +47,7 @@ radon = "^6.0.1"
 xenon = "^0.9.0"
 requests-mock = "^1.11.0"
 pytest-timeout = "^2.4.0"
+python-dotenv = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]
