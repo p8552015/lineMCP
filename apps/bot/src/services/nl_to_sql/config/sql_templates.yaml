@@ -12,16 +12,21 @@
 specific_machine:
   template: |
     SELECT 
-        id as machine_id,
-        name as machine_name,
-        location as department,
-        utilization_rate,
-        status,
-        temperature,
-        last_maintenance,
-        created_at
-    FROM machines 
-    WHERE id = '{machine_id}'
+        m.id as machine_id,
+        m.name as machine_name,
+        m.location as department,
+        m.utilization_rate,
+        m.status,
+        m.temperature,
+        COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
+        COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
+        COALESCE(SUM(u.good_parts), 0) as total_good_parts,
+        COALESCE(SUM(u.defective_parts), 0) as total_defective_parts,
+        MAX(u.date) as last_record_date
+    FROM machines m
+    LEFT JOIN machine_utilization u ON m.id = u.machine_id
+    WHERE m.id = '{machine_id}'
+    GROUP BY m.id, m.name, m.location, m.utilization_rate, m.status, m.temperature
   description: "查詢特定機台的詳細狀態和效能資料"
   parameters: ["machine_id"]
   performance_hint: "使用機台 ID 索引，查詢速度較快"
