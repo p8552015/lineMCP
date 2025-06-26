@@ -4,6 +4,7 @@
 重構為模組化架構以提升可維護性
 """
 
+import time
 from typing import Any
 
 import structlog
@@ -43,6 +44,14 @@ try:
 except ImportError:
     ENHANCED_MCP_AVAILABLE = False
 
+# 循環依賴檢測
+from .circular_dependency_detector import get_circular_dependency_detector
+from .dependency_injection_guard import (
+    DependencyInjectionGuard,
+    dependency_guard,
+    get_dependency_guard,
+)
+
 from .application_services_registry import register_application_services
 
 # 模組化註冊器
@@ -74,6 +83,10 @@ class EnhancedServiceFactory(IServiceFactory):
         self._registry = registry or get_service_registry()
         self._provider: ServiceProvider | None = None
         self._initialized = False
+        
+        # 循環依賴檢測器
+        self._dependency_detector = get_circular_dependency_detector()
+        self._dependency_guard = get_dependency_guard()
 
     def initialize(self, config: dict[str, Any] | None = None):
         """
@@ -103,7 +116,7 @@ class EnhancedServiceFactory(IServiceFactory):
 
     def get_service(self, service_type: type) -> Any | None:
         """
-        獲取服務實例
+        獲取服務實例（帶循環依賴檢測）
 
         Args:
             service_type: 服務類型
@@ -114,7 +127,26 @@ class EnhancedServiceFactory(IServiceFactory):
         if not self._initialized:
             self.initialize()
 
-        return self._provider.get_service(service_type)
+        # 使用依賴防護進行安全注入
+        service_name = getattr(service_type, '__name__', str(service_type))
+        
+        try:
+            # 檢查是否正在解析此服務（避免循環）
+            if not self._dependency_detector.begin_resolution(service_name):
+                logger.warning(f"檢測到循環依賴，跳過服務創建: {service_name}")
+                return None
+            
+            try:
+                service = self._provider.get_service(service_type)
+                if service:
+                    self._dependency_detector.register_service_type(service_name, service_type)
+                return service
+            finally:
+                self._dependency_detector.end_resolution(service_name)
+                
+        except Exception as e:
+            logger.warning(f"服務獲取失敗 {service_name}: {e}")
+            return self._provider.get_service(service_type)
 
     def get_required_service(self, service_type: type) -> Any:
         """
@@ -171,6 +203,63 @@ class EnhancedServiceFactory(IServiceFactory):
             info["by_tag"][tag] = len(services)
 
         return info
+    
+    def get_dependency_health_report(self) -> dict[str, Any]:
+        """
+        獲取依賴健康狀況報告
+        
+        Returns:
+            包含循環依賴檢測、風險分析等的健康報告
+        """
+        try:
+            # 獲取系統健康狀況
+            health_status = self._dependency_guard.check_system_health()
+            
+            # 獲取註冊表資訊
+            registry_info = self.get_registry_info()
+            
+            # 獲取依賴圖摘要
+            graph_summary = self._dependency_detector.get_dependency_graph_summary()
+            
+            # 獲取風險分析
+            risk_analysis = self._dependency_detector.analyze_dependency_risks()
+            
+            report = {
+                "timestamp": time.time(),
+                "overall_status": health_status["status"],
+                "risk_level": health_status["risk_level"],
+                "factory_info": {
+                    "initialized": self._initialized,
+                    "provider_available": self._provider is not None,
+                    "registry_services": registry_info["total_services"]
+                },
+                "dependency_graph": graph_summary,
+                "risk_analysis": {
+                    "high_risk_services": len(risk_analysis.get("high_risk_services", [])),
+                    "total_dependencies": risk_analysis.get("total_dependencies", 0),
+                    "recommendations": risk_analysis.get("recommendations", [])
+                },
+                "issues": health_status.get("issues", []),
+                "recommendations": health_status.get("recommendations", [])
+            }
+            
+            # 添加具體的高風險服務詳情
+            if risk_analysis.get("high_risk_services"):
+                report["high_risk_services_detail"] = risk_analysis["high_risk_services"][:5]  # 顯示前5個
+            
+            return report
+            
+        except Exception as e:
+            logger.error(f"獲取依賴健康報告失敗: {e}")
+            return {
+                "timestamp": time.time(),
+                "overall_status": "error",
+                "error": str(e),
+                "factory_info": {
+                    "initialized": self._initialized,
+                    "provider_available": self._provider is not None
+                }
+            }
     
     def _register_enhanced_mcp_services(self):
         """註冊 nodecomman 增強 MCP 服務"""

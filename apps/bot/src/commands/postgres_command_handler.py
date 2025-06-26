@@ -2,6 +2,7 @@
 """
 PostgreSQL 查詢命令處理器
 整合到 LINE Bot 指令系統中
+包含增強的延遲初始化錯誤處理
 """
 
 import structlog
@@ -9,6 +10,11 @@ from linebot.v3.messaging import Message, TextMessage
 
 from src.domain.command_handler import CommandContext, CommandHandler
 from src.commands.postgres_command import PostgreSQLCommand
+from src.infrastructure.lazy_initialization_error_handler import (
+    LazyServiceConfig,
+    LazyInitializationErrorHandler,
+    get_lazy_service_registry,
+)
 
 logger = structlog.get_logger()
 
@@ -17,17 +23,60 @@ class PostgresCommandHandler(CommandHandler):
     """PostgreSQL 查詢命令處理器"""
 
     def __init__(self, context: CommandContext):
-        """初始化 PostgreSQL 命令處理器"""
+        """初始化 PostgreSQL 命令處理器（增強錯誤處理）"""
         self.context = context
+        self.postgres_command = None
         
-        # 處理初始化階段 service_factory 為 None 的情況
-        if context.service_factory is None:
-            # 延遲初始化，在第一次使用時再創建
-            self.postgres_command = None
-            logger.info("🐘 PostgreSQL 命令處理器已初始化（延遲創建）")
+        # 創建延遲初始化錯誤處理器
+        config = LazyServiceConfig(
+            service_name="PostgreSQLCommand",
+            max_retry_attempts=3,
+            retry_delay_base=1.0,
+            timeout_seconds=10.0,
+            auto_recovery=True,
+            user_notifications=True
+        )
+        
+        # 註冊到全局註冊表
+        registry = get_lazy_service_registry()
+        self.error_handler = registry.register_service("PostgreSQLCommand", config)
+        
+        # 如果 service_factory 可用，嘗試立即初始化
+        if context.service_factory is not None:
+            self._try_immediate_initialization()
         else:
-            self.postgres_command = PostgreSQLCommand(context.service_factory)
+            logger.info("🐘 PostgreSQL 命令處理器已初始化（延遲創建，含錯誤處理）")
+    
+    def _try_immediate_initialization(self):
+        """嘗試立即初始化"""
+        try:
+            self.postgres_command = PostgreSQLCommand(self.context.service_factory)
             logger.info("🐘 PostgreSQL 命令處理器已初始化")
+        except Exception as e:
+            logger.warning(f"立即初始化失敗，將使用延遲初始化: {e}")
+            self.postgres_command = None
+    
+    async def _safe_lazy_initialization(self) -> tuple[bool, any, str]:
+        """安全的延遲初始化"""
+        def create_postgres_command():
+            if self.context.service_factory is None:
+                raise RuntimeError("service_factory 不可用")
+            return PostgreSQLCommand(self.context.service_factory)
+        
+        success, result, user_message = await self.error_handler.safe_initialize(create_postgres_command)
+        
+        if success:
+            self.postgres_command = result
+        
+        return success, result, user_message
+    
+    def get_initialization_status(self) -> dict:
+        """獲取初始化狀態"""
+        return {
+            "postgres_command_ready": self.postgres_command is not None,
+            "service_factory_available": self.context.service_factory is not None,
+            "error_handler_status": self.error_handler.get_health_status()
+        }
 
     @property
     def command_name(self) -> str:
@@ -63,7 +112,7 @@ class PostgresCommandHandler(CommandHandler):
 
     async def handle(self, user_id: str, args: list[str]) -> Message:
         """
-        處理 PostgreSQL 查詢命令
+        處理 PostgreSQL 查詢命令（增強錯誤處理）
         
         Args:
             args: 命令參數
@@ -73,13 +122,15 @@ class PostgresCommandHandler(CommandHandler):
             處理結果訊息
         """
         try:
-            # 延遲初始化 PostgreSQL 命令
+            # 使用增強的延遲初始化
             if self.postgres_command is None:
-                if self.context.service_factory is None:
-                    # 如果仍然沒有 service_factory，返回錯誤
-                    return TextMessage(text="❌ PostgreSQL 服務暫時不可用，請稍後再試")
+                success, result, user_message = await self._safe_lazy_initialization()
                 
-                self.postgres_command = PostgreSQLCommand(self.context.service_factory)
+                if not success:
+                    # 初始化失敗，返回用戶友好的錯誤消息
+                    error_text = user_message or "❌ PostgreSQL 服務暫時不可用，請稍後再試"
+                    return TextMessage(text=error_text)
+                
                 logger.info("🐘 PostgreSQL 命令延遲初始化完成")
             if not args:
                 return TextMessage(text=self.command_usage)
