@@ -95,7 +95,7 @@ class SqlCommandHandler(CommandHandler):
                 # 使用 MCP 客戶端執行查詢
                 mcp_client = await self.context.get_mcp_client()
                 result = await mcp_client.call_tool(
-                    "sqlite", "read_query", {"query": sql_query}
+                    "postgres", "query", {"sql": sql_query}
                 )
 
                 # 解析結果

@@ -78,7 +78,7 @@ class StatusCommandHandler(CommandHandler):
             # 嘗試簡單的查詢測試連接
             test_query = "SELECT 1 as test"
             result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": test_query}
+                "postgres", "query", {"sql": test_query}
             )
 
             if result:

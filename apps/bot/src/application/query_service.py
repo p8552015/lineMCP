@@ -114,7 +114,7 @@ class QueryApplicationService(BaseApplicationService):
             # 使用 MCP 客戶端執行查詢
             mcp_client = await self.mcp_client_factory()
             raw_result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": query}
+                "postgres", "query", {"sql": query}
             )
 
             # 解析結果
@@ -193,11 +193,11 @@ class QueryApplicationService(BaseApplicationService):
         if not query_lower:
             raise create_validation_error("query", query, "查詢不能為空")
 
-        # 安全檢查：只允許 SELECT 和 PRAGMA 查詢
-        allowed_prefixes = ["select", "pragma", "explain"]
+        # 安全檢查：只允許 SELECT 查詢
+        allowed_prefixes = ["select", "explain"]
         if not any(query_lower.startswith(prefix) for prefix in allowed_prefixes):
             raise create_validation_error(
-                "query", query, "只允許 SELECT、PRAGMA 和 EXPLAIN 查詢"
+                "query", query, "只允許 SELECT 和 EXPLAIN 查詢"
             )
 
         # 禁止的關鍵字
@@ -331,7 +331,18 @@ class QueryApplicationService(BaseApplicationService):
         """
         if table_name:
             # 獲取特定資料表的詳細資訊
-            schema_query = f"PRAGMA table_info({table_name})"
+            schema_query = f"""
+                SELECT 
+                    column_name, 
+                    data_type, 
+                    is_nullable,
+                    column_default,
+                    ordinal_position
+                FROM information_schema.columns 
+                WHERE table_name = '{table_name}' 
+                AND table_schema = 'public'
+                ORDER BY ordinal_position
+            """
             count_query = f"SELECT COUNT(*) as count FROM {table_name}"
 
             try:
@@ -355,7 +366,7 @@ class QueryApplicationService(BaseApplicationService):
         else:
             # 獲取所有資料表列表
             tables_query = (
-                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+                "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
             )
 
             try:
@@ -411,7 +422,7 @@ class QueryApplicationService(BaseApplicationService):
         try:
             mcp_client = await self.mcp_client_factory()
             test_result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": "SELECT 1 as test"}
+                "postgres", "query", {"sql": "SELECT 1 as test"}
             )
 
             checks["mcp_connection"] = {

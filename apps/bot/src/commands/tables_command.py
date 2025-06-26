@@ -60,9 +60,9 @@ class TablesCommandHandler(CommandHandler):
         # 使用 MCP 客戶端查詢資料表
         mcp_client = await self.context.get_mcp_client()
 
-        # SQLite 查詢所有資料表
-        query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-        result = await mcp_client.call_tool("sqlite", "read_query", {"query": query})
+        # PostgreSQL 查詢所有資料表
+        query = "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
+        result = await mcp_client.call_tool("postgres", "query", {"sql": query})
 
         parser = MCPResponseParser()
         tables = parser.parse_query_result(result)
@@ -97,9 +97,20 @@ class TablesCommandHandler(CommandHandler):
         mcp_client = await self.context.get_mcp_client()
 
         # 查詢資料表結構
-        schema_query = f"PRAGMA table_info({table_name})"
+        schema_query = f"""
+            SELECT 
+                column_name as name, 
+                data_type as type, 
+                is_nullable,
+                column_default as dflt_value,
+                ordinal_position
+            FROM information_schema.columns 
+            WHERE table_name = '{table_name}' 
+            AND table_schema = 'public'
+            ORDER BY ordinal_position
+        """
         schema_result = await mcp_client.call_tool(
-            "sqlite", "read_query", {"query": schema_query}
+            "postgres", "query", {"sql": schema_query}
         )
 
         parser = MCPResponseParser()
@@ -115,7 +126,7 @@ class TablesCommandHandler(CommandHandler):
         count_query = f"SELECT COUNT(*) as count FROM {table_name}"
         try:
             count_result = await mcp_client.call_tool(
-                "sqlite", "read_query", {"query": count_query}
+                "postgres", "query", {"sql": count_query}
             )
             count_data = parser.parse_query_result(count_result)
             row_count = count_data[0]["count"] if count_data else 0
@@ -134,13 +145,12 @@ class TablesCommandHandler(CommandHandler):
         for field in schema_data:
             name = field.get("name", "unknown")
             data_type = field.get("type", "unknown")
-            not_null = "NOT NULL" if field.get("notnull") else ""
-            primary_key = "PRIMARY KEY" if field.get("pk") else ""
+            not_null = "NOT NULL" if field.get("is_nullable") == "NO" else ""
             default_value = (
                 f"DEFAULT {field.get('dflt_value')}" if field.get("dflt_value") else ""
             )
 
-            field_info = [data_type, not_null, primary_key, default_value]
+            field_info = [data_type, not_null, default_value]
             field_desc = " ".join([info for info in field_info if info])
 
             response_lines.append(f"   • {name}: {field_desc}")

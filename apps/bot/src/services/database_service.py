@@ -53,7 +53,7 @@ class DatabaseService:
 
             mcp_client = await self.get_mcp_client()
             result = await mcp_client.call_tool(
-                "postgres", "read_query", {"query": sql_query}
+                "postgres", "query", {"sql": sql_query}
             )
 
             return self.parser.parse_query_result(result)
@@ -363,17 +363,21 @@ class DatabaseService:
         """獲取資料庫表格資訊"""
         try:
             # 獲取表格列表
-            tables_query = "SELECT name FROM sqlite_master WHERE type='table'"
+            tables_query = "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public'"
             await self._execute_query(tables_query)
 
-            # 手動定義已知的表格結構，避免使用 PRAGMA
+            # 手動定義已知的表格結構，基於實際 PostgreSQL 資料庫
             table_info = {
                 "machines": {
                     "columns": [
-                        {"name": "machine_id", "type": "TEXT"},
-                        {"name": "machine_name", "type": "TEXT"},
-                        {"name": "machine_type", "type": "TEXT"},
-                        {"name": "department", "type": "TEXT"},
+                        {"name": "id", "type": "TEXT"},
+                        {"name": "name", "type": "TEXT"},
+                        {"name": "location", "type": "TEXT"},
+                        {"name": "utilization_rate", "type": "REAL"},
+                        {"name": "status", "type": "TEXT"},
+                        {"name": "temperature", "type": "REAL"},
+                        {"name": "last_maintenance", "type": "TIMESTAMP"},
+                        {"name": "created_at", "type": "TIMESTAMP"},
                     ],
                     "row_count": 0,
                 },
