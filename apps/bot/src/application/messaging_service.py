@@ -3,6 +3,7 @@
 負責協調 LINE 訊息的處理流程
 """
 
+import time
 from typing import Any
 
 import structlog
@@ -147,8 +148,13 @@ class MessagingApplicationService(BaseApplicationService):
         Returns:
             訊息類型: "command" 或 "natural_language"
         """
-        command = parse_command(message_text)
-        return "command" if command else "natural_language"
+        # 使用指令執行器的新解析方法
+        if self._command_executor:
+            command_result = self._command_executor.parse_and_validate_command(message_text)
+            return "command" if command_result else "natural_language"
+        else:
+            # 如果執行器未初始化，簡單檢查是否以 / 開頭
+            return "command" if message_text.strip().startswith("/") else "natural_language"
 
     async def _process_command_message(
         self, user_id: str, message_text: str
@@ -253,9 +259,11 @@ class MessagingApplicationService(BaseApplicationService):
         session["message_count"] += 1
 
         # 更新指令歷史
-        command = parse_command(message_text)
-        if command:
-            session["last_command"] = command.name
+        if self._command_executor:
+            command_result = self._command_executor.parse_and_validate_command(message_text)
+            if command_result:
+                command_name, args = command_result
+                session["last_command"] = command_name
 
         # 合併額外上下文
         if additional_context:

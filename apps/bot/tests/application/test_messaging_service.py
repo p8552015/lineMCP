@@ -9,7 +9,6 @@ from linebot.v3.messaging import TextMessage
 
 from src.application.messaging_service import MessagingApplicationService
 from src.domain.command_handler import CommandContext
-# Command 類已移除
 from src.services.nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 
@@ -44,14 +43,26 @@ class TestMessagingApplicationService:
         return formatter
 
     @pytest.fixture
+    def mock_command_executor(self):
+        """模擬指令執行器"""
+        executor = Mock()
+        executor.execute_command = AsyncMock(return_value=TextMessage(text="test response"))
+        executor.initialize = Mock()
+        executor.get_command_info = Mock(return_value={"total_commands": 5, "total_aliases": 3})
+        # 默認情況下，對於非指令文本返回 None
+        executor.parse_and_validate_command = Mock(return_value=None)
+        return executor
+
+    @pytest.fixture
     def messaging_service(
-        self, mock_command_context, mock_nl_service, mock_message_formatter
+        self, mock_command_context, mock_nl_service, mock_message_formatter, mock_command_executor
     ):
         """訊息處理服務實例"""
         return MessagingApplicationService(
             command_context=mock_command_context,
             nl_service=mock_nl_service,
             message_formatter=mock_message_formatter,
+            command_executor=mock_command_executor,
         )
 
     @pytest.mark.asyncio
@@ -59,39 +70,20 @@ class TestMessagingApplicationService:
         """測試服務初始化"""
         assert not messaging_service.is_initialized
 
-        with patch("src.application.messaging_service.CommandExecutor") as MockExecutor:
-            with patch("src.utils.observability.get_tracer"):
-                mock_executor = Mock()
-                mock_executor.initialize = Mock()
-                MockExecutor.return_value = mock_executor
+        with patch("src.utils.observability.get_tracer"):
+            await messaging_service.initialize()
 
-                await messaging_service.initialize()
-
-                assert messaging_service.is_initialized
-                assert messaging_service._command_executor is not None
-                MockExecutor.assert_called_once_with(messaging_service.command_context)
-                mock_executor.initialize.assert_called_once()
+            assert messaging_service.is_initialized
+            assert messaging_service._command_executor is not None
 
     @pytest.mark.asyncio
     async def test_process_command_message(self, messaging_service):
         """測試處理指令訊息"""
-        with (
-            patch("src.models.commands.parse_command") as mock_parse,
-            patch("src.application.messaging_service.CommandExecutor") as MockExecutor,
-            patch("src.utils.observability.get_tracer"),
-        ):
-            # 設置模擬
-            mock_command = Mock(spec=Command)
-            mock_command.name = "help"
-            mock_parse.return_value = mock_command
-
-            mock_executor = Mock()
-            mock_executor.execute_command = AsyncMock(
-                return_value=TextMessage(text="help response")
-            )
-            MockExecutor.return_value = mock_executor
-            messaging_service._command_executor = mock_executor
+        with patch("src.utils.observability.get_tracer"):
             messaging_service._initialized = True
+            
+            # 設置 command_executor 返回值以識別這是一個指令
+            messaging_service._command_executor.parse_and_validate_command.return_value = ("help", [])
 
             # 執行
             result = await messaging_service.process_message(
@@ -103,98 +95,88 @@ class TestMessagingApplicationService:
             # 驗證
             assert isinstance(result, TextMessage)
             assert messaging_service._stats["command_messages"] == 1
-            mock_executor.execute_command.assert_called_once_with("test_user", "/help")
+            messaging_service._command_executor.execute_command.assert_called_once_with("test_user", "/help")
 
     @pytest.mark.asyncio
     async def test_process_natural_language_message_success(
         self, messaging_service, mock_nl_service, mock_message_formatter
     ):
         """測試處理自然語言訊息（成功）"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            with patch("src.utils.observability.get_tracer"):
-                with patch(
-                    "src.application.messaging_service.CommandExecutor"
-                ) as MockExecutor:
-                    # 設置模擬 - 不是指令
-                    mock_parse.return_value = None
+        with patch("src.utils.observability.get_tracer"):
+            messaging_service._initialized = True
+            
+            # 確保這不被識別為指令（返回 None）
+            messaging_service._command_executor.parse_and_validate_command.return_value = None
 
-                    # 創建模擬的指令執行器
-                    mock_executor = Mock()
-                    mock_executor.initialize = Mock()
-                    MockExecutor.return_value = mock_executor
+            # 設置自然語言處理成功 - 使用 ParsedQuery 對象
+            parse_result = ParsedQuery(
+                query_type=QueryType.MACHINE_STATUS,
+                sql_query="SELECT * FROM machines",
+                parameters={},
+                confidence=0.8,
+                explanation="機台狀態查詢",
+            )
+            mock_nl_service.parse_natural_language.return_value = parse_result
 
-                    messaging_service._initialized = True
-                    messaging_service._command_executor = mock_executor
+            # 模擬資料庫服務和工廠
+            with patch(
+                "src.infrastructure.enhanced_service_factory.get_enhanced_service_factory"
+            ) as mock_get_factory:
+                mock_factory = Mock()
+                mock_db_service = Mock()
+                mock_query_result = {
+                    "success": True,
+                    "data": [{"id": 1, "name": "M001"}],
+                }
+                mock_db_service.execute_parsed_query = AsyncMock(
+                    return_value=mock_query_result
+                )
+                mock_factory.get_service.return_value = mock_db_service
+                mock_get_factory.return_value = mock_factory
 
-                    # 設置自然語言處理成功 - 使用 ParsedQuery 對象
-                    parse_result = ParsedQuery(
-                        query_type=QueryType.MACHINE_STATUS,
-                        sql_query="SELECT * FROM machines",
-                        parameters={},
-                        confidence=0.8,
-                        explanation="機台狀態查詢",
-                    )
-                    mock_nl_service.parse_natural_language.return_value = parse_result
+                # 執行
+                result = await messaging_service.process_message(
+                    user_id="test_user",
+                    message_text="M001機台狀況如何",
+                    reply_token="test_token",
+                )
 
-                    # 模擬資料庫服務和工廠
-                    with patch(
-                        "src.infrastructure.enhanced_service_factory.get_enhanced_service_factory"
-                    ) as mock_get_factory:
-                        mock_factory = Mock()
-                        mock_db_service = Mock()
-                        mock_query_result = {
-                            "success": True,
-                            "data": [{"id": 1, "name": "M001"}],
-                        }
-                        mock_db_service.execute_parsed_query = AsyncMock(
-                            return_value=mock_query_result
-                        )
-                        mock_factory.get_service.return_value = mock_db_service
-                        mock_get_factory.return_value = mock_factory
-
-                        # 執行
-                        result = await messaging_service.process_message(
-                            user_id="test_user",
-                            message_text="M001機台狀況如何",
-                            reply_token="test_token",
-                        )
-
-                        # 驗證
-                        assert isinstance(result, TextMessage)
-                        assert (
-                            messaging_service._stats["natural_language_messages"] == 1
-                        )
-                        mock_message_formatter.format_query_result.assert_called_once_with(
-                            mock_query_result
-                        )
+                # 驗證
+                assert isinstance(result, TextMessage)
+                assert (
+                    messaging_service._stats["natural_language_messages"] == 1
+                )
+                mock_message_formatter.format_query_result.assert_called_once_with(
+                    mock_query_result
+                )
 
     @pytest.mark.asyncio
     async def test_process_natural_language_message_failure(
         self, messaging_service, mock_nl_service
     ):
         """測試處理自然語言訊息（失敗）"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            with patch("src.utils.observability.get_tracer"):
-                # 設置模擬 - 不是指令
-                mock_parse.return_value = None
-                messaging_service._initialized = True
+        with patch("src.utils.observability.get_tracer"):
+            messaging_service._initialized = True
+            
+            # 確保這不被識別為指令（返回 None）
+            messaging_service._command_executor.parse_and_validate_command.return_value = None
 
-                # 設置自然語言處理失敗
-                mock_nl_service.parse_natural_language.return_value = {
-                    "success": False,
-                    "error": "無法理解查詢",
-                }
+            # 設置自然語言處理失敗
+            mock_nl_service.parse_natural_language.return_value = {
+                "success": False,
+                "error": "無法理解查詢",
+            }
 
-                # 執行
-                result = await messaging_service.process_message(
-                    user_id="test_user",
-                    message_text="無效的查詢",
-                    reply_token="test_token",
-                )
+            # 執行
+            result = await messaging_service.process_message(
+                user_id="test_user",
+                message_text="無效的查詢",
+                reply_token="test_token",
+            )
 
-                # 驗證返回預設回應
-                assert isinstance(result, TextMessage)
-                assert "產線管理助手" in result.text
+            # 驗證返回預設回應
+            assert isinstance(result, TextMessage)
+            assert "產線管理助手" in result.text
 
     @pytest.mark.asyncio
     async def test_process_message_error_handling(self, messaging_service):
@@ -241,23 +223,25 @@ class TestMessagingApplicationService:
 
     def test_classify_message_command(self, messaging_service):
         """測試訊息分類 - 指令"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            mock_command = Mock()
-            mock_parse.return_value = mock_command
+        # 模擬 command_executor 的解析結果
+        messaging_service._command_executor.parse_and_validate_command.return_value = ("help", [])
 
-            result = messaging_service._classify_message("/help")
-            assert result == "command"
+        result = messaging_service._classify_message("/help")
+        assert result == "command"
 
     def test_classify_message_natural_language(self, messaging_service):
         """測試訊息分類 - 自然語言"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            mock_parse.return_value = None
+        # 模擬 command_executor 返回 None（非指令）
+        messaging_service._command_executor.parse_and_validate_command.return_value = None
 
-            result = messaging_service._classify_message("機台狀況如何")
-            assert result == "natural_language"
+        result = messaging_service._classify_message("機台狀況如何")
+        assert result == "natural_language"
 
     def test_user_session_management(self, messaging_service):
         """測試用戶會話管理"""
+        # 設置非指令訊息的返回值
+        messaging_service._command_executor.parse_and_validate_command.return_value = None
+        
         # 更新會話
         messaging_service._update_user_session(
             user_id="test_user",
@@ -287,17 +271,15 @@ class TestMessagingApplicationService:
 
     def test_session_command_tracking(self, messaging_service):
         """測試會話中的指令追蹤"""
-        with patch("src.models.commands.parse_command") as mock_parse:
-            mock_command = Mock()
-            mock_command.name = "help"
-            mock_parse.return_value = mock_command
+        # 模擬 command_executor 的解析結果
+        messaging_service._command_executor.parse_and_validate_command.return_value = ("help", [])
 
-            messaging_service._update_user_session(
-                user_id="test_user", message_text="/help", additional_context=None
-            )
+        messaging_service._update_user_session(
+            user_id="test_user", message_text="/help", additional_context=None
+        )
 
-            session = messaging_service._user_sessions["test_user"]
-            assert session["last_command"] == "help"
+        session = messaging_service._user_sessions["test_user"]
+        assert session["last_command"] == "help"
 
     def test_session_result_update(self, messaging_service):
         """測試會話結果更新"""
@@ -345,32 +327,25 @@ class TestMessagingApplicationService:
     @pytest.mark.asyncio
     async def test_health_checks(self, messaging_service):
         """測試健康檢查"""
-        with patch("src.domain.command_executor.CommandExecutor"):
-            # 設置模擬指令執行器
-            mock_executor = Mock()
-            mock_executor.get_command_info.return_value = {
-                "total_commands": 5,
-                "total_aliases": 3,
-            }
-            messaging_service._command_executor = mock_executor
-            messaging_service._initialized = True
+        # 設置模擬指令執行器
+        messaging_service._initialized = True
 
-            # 設置自然語言服務健康檢查
-            messaging_service.nl_service.health_check = AsyncMock(
-                return_value={"status": "healthy"}
-            )
+        # 設置自然語言服務健康檢查
+        messaging_service.nl_service.health_check = AsyncMock(
+            return_value={"status": "healthy"}
+        )
 
-            checks = await messaging_service._perform_health_checks()
+        checks = await messaging_service._perform_health_checks()
 
-            assert "command_executor" in checks
-            assert checks["command_executor"]["status"] == "healthy"
-            assert checks["command_executor"]["total_commands"] == 5
+        assert "command_executor" in checks
+        assert checks["command_executor"]["status"] == "healthy"
+        assert checks["command_executor"]["total_commands"] == 5
 
-            assert "natural_language_service" in checks
-            assert checks["natural_language_service"]["status"] == "healthy"
+        assert "natural_language_service" in checks
+        assert checks["natural_language_service"]["status"] == "healthy"
 
-            assert "processing_stats" in checks
-            assert checks["processing_stats"]["status"] == "healthy"
+        assert "processing_stats" in checks
+        assert checks["processing_stats"]["status"] == "healthy"
 
     @pytest.mark.asyncio
     async def test_health_checks_no_executor(self, messaging_service):
@@ -441,43 +416,32 @@ class TestMessagingServiceIntegration:
         command_context = Mock(spec=CommandContext)
         nl_service = Mock()
         message_formatter = Mock()
+        command_executor = Mock()
+        command_executor.execute_command = AsyncMock(return_value=TextMessage(text="help"))
+        command_executor.initialize = Mock()
 
         service = MessagingApplicationService(
             command_context=command_context,
             nl_service=nl_service,
             message_formatter=message_formatter,
+            command_executor=command_executor,
         )
 
         # 初始化
-        with patch("src.domain.command_executor.CommandExecutor") as MockExecutor:
-            mock_executor = Mock()
-            mock_executor.initialize = Mock()
-            MockExecutor.return_value = mock_executor
-
-            await service.initialize()
-            assert service.is_initialized
+        await service.initialize()
+        assert service.is_initialized
 
         # 處理指令訊息
-        with patch("src.models.commands.parse_command") as mock_parse:
-            mock_command = Mock()
-            mock_command.name = "help"
-            mock_parse.return_value = mock_command
-            mock_executor.execute_command = AsyncMock(
-                return_value=TextMessage(text="help")
-            )
-
-            result = await service.process_message("user1", "/help", "token")
-            assert isinstance(result, TextMessage)
+        result = await service.process_message("user1", "/help", "token")
+        assert isinstance(result, TextMessage)
 
         # 處理自然語言訊息
-        with patch("src.models.commands.parse_command") as mock_parse:
-            mock_parse.return_value = None
-            nl_service.parse_natural_language = AsyncMock(
-                return_value={"success": False}
-            )
+        nl_service.parse_natural_language = AsyncMock(
+            return_value={"success": False}
+        )
 
-            result = await service.process_message("user1", "hello", "token")
-            assert isinstance(result, TextMessage)
+        result = await service.process_message("user1", "hello", "token")
+        assert isinstance(result, TextMessage)
 
         # 關閉服務
         await service.shutdown()
