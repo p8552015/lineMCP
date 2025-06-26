@@ -153,7 +153,7 @@ class TestCompositeParser:
             result = await parser.parse("M001機台")
 
             assert result.query_type == QueryType.SPECIFIC_MACHINE
-            assert result.confidence == 0.9 * 1.2  # 原始信心度 * 權重
+            assert result.confidence == min(1.0, 0.9 * 1.2)  # 原始信心度 * 權重，但不超過1.0
             assert "[RuleParser]" in result.explanation
             assert result.parameters["parser"] == "RuleParser"
 
@@ -227,8 +227,8 @@ class TestCompositeParser:
 
             assert result.query_type == QueryType.UNKNOWN
             assert result.confidence == 0.0
-            assert "解析執行失敗" in result.explanation
-            assert "RuleParser 解析失敗" in result.parameters.get("error", "")
+            assert "組合解析器完全失敗" in result.explanation
+            assert "RuleParser" in result.parameters.get("attempted_parsers", [])
 
         @pytest.mark.asyncio
         async def test_parse_with_capability_assessment_exception(
@@ -281,9 +281,11 @@ class TestCompositeParser:
 
             result = await parser.parse("測試")
 
-            # 即使信心度低於門檻，仍應返回結果（只是會有警告）
-            assert result.query_type == QueryType.MACHINE_STATUS
-            assert result.confidence == 0.3
+            # 信心度低於門檻時，應該返回失敗結果（嚴格模式）
+            assert result.query_type == QueryType.UNKNOWN
+            assert result.confidence == 0.0
+            assert "組合解析器完全失敗" in result.explanation
+            assert "LowConfidence" in result.parameters.get("attempted_parsers", [])
 
     class TestCapabilityAssessment:
         """能力評估測試"""
