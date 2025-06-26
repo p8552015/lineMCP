@@ -6,7 +6,7 @@
 
 ## 📋 任務規格執行器機制
 
-每執行一個任務建立Git工作流程管理
+任務執行期間，每隔30分鐘自動執行git提交當前版本
 
 將產出的自定義任務名稱.md文件存放於 /Users/yen/Desktop/lineMCP/task/任務規劃書 這個路徑下
 將每個任務測試結果存放於 /Users/yen/Desktop/lineMCP/task/任務測試報告 這個路徑下
