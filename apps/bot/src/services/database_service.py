@@ -237,18 +237,47 @@ class DatabaseService:
                 "message": f"近 {days} 天沒有故障記錄",
             }
 
-        total_faults = sum(row.get("total_faults", 0) for row in data)
+        # 修復資料類型轉換問題
+        total_faults = 0
+        for row in data:
+            try:
+                count = row.get("total_faults", 0)
+                # 確保轉換為整數
+                if isinstance(count, str):
+                    count = int(count)
+                elif isinstance(count, float):
+                    count = int(count)
+                total_faults += count
+            except (ValueError, TypeError):
+                logger.warning(f"無法轉換故障計數: {row.get('total_faults')}")
+                continue
 
         fault_types = []
         for row in data:
-            fault_types.append(
-                {
-                    "fault_type": row.get("fault_type", "未知"),
-                    "severity": row.get("severity", "未知"),
-                    "count": int(row.get("total_faults", 0)),
-                    "percentage": float(row.get("percentage", 0)),
-                }
-            )
+            try:
+                count = row.get("total_faults", 0)
+                percentage = row.get("percentage", 0)
+                
+                # 安全的類型轉換
+                if isinstance(count, str):
+                    count = int(count)
+                elif isinstance(count, float):
+                    count = int(count)
+                    
+                if isinstance(percentage, str):
+                    percentage = float(percentage)
+                    
+                fault_types.append(
+                    {
+                        "fault_type": row.get("fault_type", "未知"),
+                        "severity": row.get("severity", "未知"),
+                        "count": count,
+                        "percentage": percentage,
+                    }
+                )
+            except (ValueError, TypeError) as e:
+                logger.warning(f"故障資料轉換錯誤: {e}, row: {row}")
+                continue
 
         return {
             "total_faults": total_faults,

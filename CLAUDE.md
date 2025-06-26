@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LINE MCP 智慧製造監控系統 - 基於 Model Context Protocol (MCP) 的企業級 LINE Bot，整合 AI 模型與工業資料庫。採用 SOLID 原則的四層架構設計，實現依賴注入模式與依賴倒置原則 (DIP)。
 
+
 ### 🏆 系統優化強化成果 (2025-06-24 完成)
 - **穩定性革命提升**: 100% 查詢成功率，系統架構完全穩定
 - **效能突破優化**: < 1ms 平均回應時間 (原 1.2s，提升 99.9%)  
@@ -30,16 +31,6 @@ LINE MCP 智慧製造監控系統 - 基於 Model Context Protocol (MCP) 的企�
 - **方法簽名統一**: 統一 `call_tool` 方法參數（支援 timeout 參數）
 - **100% 問題解決**: 配置 API、服務註冊、兼容性問題全部修復
 - **測試套件建立**: 新增 nodecomman 完整測試套件與問題檢測機制
-
-### 🎯 系統架構修復與優化 (2025-06-26 最新完成) 🆕🔥
-- **SQLite 完全移除**: 6個檔案中的 sqlite/read_query 全面轉換為 PostgreSQL
-- **循環依賴根治**: ApplicationFacade 初始化問題完全解決，service_factory 延遲注入
-- **PostgreSQL 延遲初始化**: postgres_command 延遲創建機制，避免啟動時循環依賴
-- **系統性能基準**: 初始化 2.169秒，記憶體優化 -8.89MB，綜合評分 75/100
-- **依賴注入架構**: A+ 等級評估，SOLID 原則符合度 95%，模組化 71% 優化
-- **M001 機台驗證**: 74.40% 稼動率查詢功能完全正常，PostgreSQL 連接穩定
-- **全機台狀態查詢**: 5台機台概覽顯示完整，包含稼動率和狀態資訊
-- **架構穩定性**: 100% 核心功能測試通過，系統整體架構完全穩定
 
 ### 🚀 CI/CD 全自動檢測系統 (2025-06-24 新增)
 - **完美綠燈狀態**: 所有 GitHub Actions workflows 優化完成
@@ -120,7 +111,7 @@ cd apps/bot && poetry install
 
 # 查看服務日誌
 tail -f apps/bot/logs/webhook.log
-tail -f apps/bot/logs/postgresql-mcp.log
+tail -f apps/bot/logs/sqlite-mcp.log
 
 # Docker 服務管理 🆕
 docker-compose -f docker-compose.postgres.yml up -d     # 啟動 PostgreSQL MCP
@@ -175,8 +166,8 @@ docker exec line_mcp_postgres psql -U admin -d mydb     # 連接資料庫
 ### MCP 相關
 - **生產級 MCP 修復** - 解決 macOS KqueueSelector 掛起問題
 - **統一 MCP 客戶端** - `UnifiedMCPClient` 抽象層
-- **PostgreSQL MCP 主服務器** 🔥 - Docker 化 PostgreSQL MCP 服務器 (postgresql://admin:admin@localhost:5432/mydb)
-- **SQLite 完全移除** 🆕 - 全面轉換為 PostgreSQL，提升數據一致性和性能
+- **MCP 服務器** - SQLite MCP 在 port 3003
+- **PostgreSQL MCP** 🆕 - Docker 化 PostgreSQL MCP 服務器 (postgresql://admin:admin@localhost:5432/mydb)
 - **多運行時支援** 🆕 - 支援 Node.js (npx) 和 Python 運行時
 - **連接池管理** 🆕 - 自動進程健康檢查和錯誤恢復機制
 
@@ -318,7 +309,7 @@ ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
 ## 常見問題處理
 
 ### MCP 連接失敗
-1. 檢查 PostgreSQL MCP 服務器是否正常運行 (Docker 容器)
+1. 檢查 SQLite MCP 服務器是否運行在 port 3003
 2. 執行 `./start-production.sh test` 進行診斷
 3. 確認環境變數 `ASYNCIO_FORCE_SELECT_SELECTOR=1`
 

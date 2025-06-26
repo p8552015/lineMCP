@@ -42,7 +42,13 @@ openssl rand -base64 32
 # 或使用 Python
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
+ 方法一 (OpenSSL)：
+  v+pHeB4fM/K9gcbC76Ibop0OLdScqbXQTYYHNPD1gYs=
 
+  方法二 (Python)：
+  ZmIR-mvNl-UKTbyEd90yc5u5dMqTb9R4PkqfIqD_VfQ
+
+  
 ## 🔧 GitHub Actions 中的使用方式
 
 ### 基本用法

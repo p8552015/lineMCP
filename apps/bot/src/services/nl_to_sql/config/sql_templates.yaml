@@ -36,17 +36,17 @@ specific_machine:
 all_machines:
   template: |
     SELECT 
-        m.machine_id,
-        m.machine_name,
-        m.department,
+        m.id as machine_id,
+        m.name as machine_name,
+        m.location as department,
         COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
         COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
         MAX(u.date) as last_record_date
     FROM machines m
-    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+    LEFT JOIN machine_utilization u ON m.id = u.machine_id 
         AND u.date >= CURRENT_DATE - INTERVAL '7 days'
-    GROUP BY m.machine_id, m.machine_name, m.department
-    ORDER BY m.machine_id
+    GROUP BY m.id, m.name, m.location
+    ORDER BY m.id
   description: "獲取所有機台的狀態概覽"
   parameters: []
   performance_hint: "查詢範圍較大，已限制為近 7 天資料"
@@ -72,16 +72,16 @@ fault_analysis:
 production_stats:
   template: |
     SELECT 
-        m.department,
-        COUNT(DISTINCT m.machine_id) as machine_count,
+        m.location as department,
+        COUNT(DISTINCT m.id) as machine_count,
         COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
         COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
         COALESCE(SUM(u.good_parts), 0) as total_good_parts,
         COALESCE(SUM(u.defective_parts), 0) as total_defective_parts
     FROM machines m
-    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+    LEFT JOIN machine_utilization u ON m.id = u.machine_id 
         AND u.date >= CURRENT_DATE - INTERVAL '7 days'
-    GROUP BY m.department
+    GROUP BY m.location
     ORDER BY avg_utilization DESC
   description: "生產統計報告，按部門分組"
   parameters: []
@@ -91,16 +91,16 @@ production_stats:
 department_status:
   template: |
     SELECT 
-        m.machine_id,
-        m.machine_name,
+        m.id as machine_id,
+        m.name as machine_name,
         COALESCE(AVG(u.utilization_rate), 0) as avg_utilization,
         COALESCE(AVG(u.efficiency_rate), 0) as avg_efficiency,
         MAX(u.date) as last_record_date
     FROM machines m
-    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id 
+    LEFT JOIN machine_utilization u ON m.id = u.machine_id 
         AND u.date >= CURRENT_DATE - INTERVAL '7 days'
-    WHERE m.department = '{department}'
-    GROUP BY m.machine_id, m.machine_name
+    WHERE m.location = '{department}'
+    GROUP BY m.id, m.name
     ORDER BY avg_utilization DESC
   description: "查詢特定部門的機台狀態"
   parameters: ["department"]
@@ -111,21 +111,21 @@ department_status:
 machine_status:
   template: |
     SELECT 
-        m.machine_id,
-        m.machine_name,
-        m.department,
+        m.id as machine_id,
+        m.name as machine_name,
+        m.location as department,
         m.status,
         COALESCE(u.utilization_rate, 0) as current_utilization,
         COALESCE(u.efficiency_rate, 0) as current_efficiency,
         u.date as last_update
     FROM machines m
-    LEFT JOIN machine_utilization u ON m.machine_id = u.machine_id
+    LEFT JOIN machine_utilization u ON m.id = u.machine_id
         AND u.date = (
             SELECT MAX(date) 
             FROM machine_utilization 
-            WHERE machine_id = m.machine_id
+            WHERE machine_id = m.id
         )
-    ORDER BY m.machine_id
+    ORDER BY m.id
   description: "查詢機台即時運行狀態"
   parameters: []
   performance_hint: "查詢最新狀態，使用子查詢獲取最新記錄"

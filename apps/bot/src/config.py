@@ -1,32 +1,25 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=[".env", "apps/bot/.env"], 
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     # LINE Configuration
-    line_channel_access_token: str = Field(alias="LINE_CHANNEL_ACCESS_TOKEN")
-    line_channel_secret: str = Field(alias="LINE_CHANNEL_SECRET")
+    line_channel_access_token: str
+    line_channel_secret: str
 
     # OpenAI Configuration
-    openai_api_key: str = Field(alias="OPENAI_API_KEY")
-    openai_model: str = Field(default="gpt-4o", alias="OPENAI_MODEL")
-    openai_max_tokens: int = Field(default=1000, alias="OPENAI_MAX_TOKENS")
-    openai_temperature: float = Field(default=0.7, alias="OPENAI_TEMPERATURE")
+    openai_api_key: str
+    openai_model: str = "gpt-4o"
+    openai_max_tokens: int = 1000
+    openai_temperature: float = 0.7
 
     # MCP Server Configuration
-    mcp_server_url: str = Field(alias="MCP_SERVER_URL")
-    mcp_api_key: str = Field(alias="MCP_API_KEY")
-    context7_mcp_url: str = "http://localhost:3001"
-    postgres_mcp_url: str = "http://localhost:3002"
+    mcp_server_url: str
+    mcp_api_key: str
     postgres_connection_string: str = "postgresql://localhost:5432/mcp_test"
 
     # MCP STDIO Configuration (生產級)
@@ -42,7 +35,7 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
 
     # Security
-    jwt_secret_key: str = Field(alias="JWT_SECRET_KEY")
+    jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_expiry_minutes: int = 15
 
