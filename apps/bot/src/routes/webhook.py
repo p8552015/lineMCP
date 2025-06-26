@@ -357,7 +357,7 @@ async def handle_text_message_async(event: dict):
                 message_handler.process_message(
                     user_id=user_id, message_text=message_text, reply_token=reply_token
                 ),
-                timeout=8.0,
+                timeout=25.0,
             )
 
             # 發送回覆訊息

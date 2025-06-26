@@ -150,6 +150,18 @@ class MessageHandlerDI:
 
         logger.info("✅ 指令執行器已初始化")
 
+    def _initialize_suggestion_service(self):
+        """初始化建議服務 - 符合 DIP 原則"""
+        from .suggestion_service import SuggestionService
+        
+        # 🔥 依賴注入：注入 AI 服務和格式化器
+        self._suggestion_service = SuggestionService(
+            ai_model_service=self.ai_model_service,
+            message_formatter=self.formatter
+        )
+        
+        logger.info("✅ 建議服務已初始化")
+
     @mcp_error_handler(
         "SQL查詢失敗", timeout_seconds=30, include_technical_details=True
     )
@@ -353,7 +365,7 @@ class MessageHandlerDI:
                 parsed_query.query_type == QueryType.UNKNOWN
                 or parsed_query.confidence < 0.3
             ):
-                return self._handle_unknown_query(message_text)
+                return await self._handle_unknown_query(message_text)
 
             # 3. 執行資料庫查詢
             result = await self.db_service.execute_parsed_query(parsed_query)
@@ -361,12 +373,15 @@ class MessageHandlerDI:
             # 4. 格式化並返回結果
             return self.formatter.format_query_result(result)
 
-    def _handle_unknown_query(self, message_text: str) -> Message:
-        """處理無法識別的查詢"""
+    async def _handle_unknown_query(self, message_text: str) -> Message:
+        """處理無法識別的查詢 - 委託給建議服務"""
         if self._is_greeting(message_text):
             return self._handle_greeting()
         else:
-            return self.formatter.format_suggestion_message()
+            # 🔥 符合 SRP：委託給專門的建議服務
+            if not hasattr(self, '_suggestion_service'):
+                self._initialize_suggestion_service()
+            return await self._suggestion_service.generate_suggestion(message_text)
 
     def _is_greeting(self, text: str) -> bool:
         """檢查是否為問候語"""
@@ -425,3 +440,18 @@ class MessageHandlerDI:
         """檢查是否為機台查詢（向後相容性）"""
         # 現在統一由自然語言服務處理
         return True  # 讓所有查詢都進入自然語言處理流程
+
+    def _handle_greeting(self) -> Message:
+        """處理問候語"""
+        message = "�� 您好！我是產線管理助手\n"
+        message += "━━━━━━━━━━━━━━━━━━━━\n"
+        message += "🔍 我可以幫您查詢：\n"
+        message += "   • 機台狀態和效能\n"
+        message += "   • 故障記錄和分析\n"
+        message += "   • 生產統計報告\n"
+        message += "   • 部門運行狀況\n\n"
+        message += "💡 試試問我：「M001機台狀況如何？」"
+        
+        return TextMessage(text=message)
+
+    # 建議生成功能已移至 SuggestionService，符合 SRP 原則
