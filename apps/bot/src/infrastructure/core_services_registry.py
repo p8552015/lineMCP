@@ -35,11 +35,12 @@ def register_core_services(registry: ServiceRegistry) -> None:
         metadata={"description": "增強版 AI 模型服務 - 支援重試和備用模型"},
     )
 
-    # 註冊基類 AIModelService 指向增強版實現
-    registry.register_factory(
+    # 註冊基類 AIModelService 指向增強版實現（直接註冊，避免循環依賴）
+    registry.register_singleton(
         AIModelService,
-        lambda provider: provider.get_required_service(EnhancedAIModelService),
-        scope=ServiceScope.SINGLETON,
+        EnhancedAIModelService,
+        tags=["core", "ai"],
+        metadata={"description": "AI 模型服務（指向增強版實現）"},
     )
 
     registry.register_singleton(
