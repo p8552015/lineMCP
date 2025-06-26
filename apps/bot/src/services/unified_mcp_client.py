@@ -27,7 +27,7 @@ class UnifiedMCPClient:
         self._production_client = get_production_mcp_client()
         logger.info("🔄 統一客戶端已簡化為生產級代理")
 
-    async def call_tool(self, server: str, tool: str, params: dict[str, Any]) -> dict[str, Any]:
+    async def call_tool(self, server: str, tool: str, params: dict[str, Any], timeout: float | None = None) -> dict[str, Any]:
         """
         調用 MCP 工具 - 代理到生產級客戶端
         
@@ -35,11 +35,12 @@ class UnifiedMCPClient:
             server: 服務器名稱
             tool: 工具名稱  
             params: 工具參數
+            timeout: 超時時間（秒）
             
         Returns:
             工具執行結果
         """
-        return await self._production_client.call_tool(server, tool, params)
+        return await self._production_client.call_tool(server, tool, params, timeout)
 
     async def list_tools(self, server: str) -> list[dict[str, Any]]:
         """
@@ -69,6 +70,15 @@ class UnifiedMCPClient:
         """關閉客戶端 - 代理到生產級客戶端"""
         await self._production_client.close()
 
+    @property
+    def server_configs(self) -> dict[str, Any]:
+        """獲取服務器配置字典 - 提供 API 一致性"""
+        return self._production_client.server_configs
+
+    def list_servers(self) -> list[str]:
+        """列出所有可用的服務器名稱 - 提供 API 一致性"""
+        return self._production_client.list_servers()
+
 
 # 單例模式
 _unified_mcp_client = None
@@ -84,7 +94,7 @@ async def get_unified_mcp_client() -> UnifiedMCPClient:
 
 # 向下兼容的函數
 async def call_mcp_tool(
-    server: str, tool: str, params: dict[str, Any]
+    server: str, tool: str, params: dict[str, Any], timeout: float | None = None
 ) -> dict[str, Any]:
     """
     調用 MCP 工具的向下兼容函數
@@ -93,12 +103,13 @@ async def call_mcp_tool(
         server: 服務器名稱
         tool: 工具名稱
         params: 工具參數
+        timeout: 超時時間（秒）
         
     Returns:
         工具執行結果
     """
     client = await get_unified_mcp_client()
-    return await client.call_tool(server, tool, params)
+    return await client.call_tool(server, tool, params, timeout)
 
 
 async def list_mcp_tools(server: str) -> list[dict[str, Any]]:

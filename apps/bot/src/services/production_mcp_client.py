@@ -73,6 +73,16 @@ class ProductionMCPClient:
 
         logger.info("✅ 生產級 MCP 客戶端初始化完成（含連接池）")
 
+    @property
+    def server_configs(self) -> dict[str, Any]:
+        """獲取服務器配置字典 - 提供 API 一致性"""
+        config_summary = mcp_config.get_config_summary()
+        return config_summary.get("servers", {})
+
+    def list_servers(self) -> list[str]:
+        """列出所有可用的服務器名稱 - 提供 API 一致性"""
+        return mcp_config.list_servers()
+
     async def _ensure_pool_started(self):
         """確保連接池已啟動"""
         if not self._pool_started:

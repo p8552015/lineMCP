@@ -349,6 +349,20 @@ class EnhancedMCPClient:
             logger.error(f"❌ 獲取系統資訊失敗: {e}")
             return {"error": str(e)}
     
+    @property
+    def server_configs(self) -> Dict[str, Any]:
+        """獲取服務器配置字典 - 提供 API 一致性"""
+        if self._production_client:
+            return self._production_client.server_configs
+        else:
+            # 直接從配置管理器獲取
+            config_summary = self.config.get_config_summary()
+            return config_summary.get("servers", {})
+
+    def list_servers(self) -> List[str]:
+        """列出所有可用的服務器名稱 - 提供 API 一致性"""
+        return self.config.list_servers()
+    
     async def close_all_connections(self) -> bool:
         """關閉所有連接"""
         try:

@@ -70,7 +70,7 @@ class TestUnifiedMCPClient:
         assert result["success"] is True
         assert result["data"] == "test_result"
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}
+            "sqlite", "read_query", {"query": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio
@@ -114,7 +114,7 @@ class TestUnifiedMCPClient:
 
         # 應該調用sqlite伺服器
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}
+            "sqlite", "read_query", {"query": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio
