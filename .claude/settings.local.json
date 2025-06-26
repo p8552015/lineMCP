@@ -111,7 +111,11 @@
       "mcp__serena__insert_before_symbol",
       "mcp__serena__summarize_changes",
       "Bash(gtimeout:*)",
-      "mcp__serena__think_about_task_adherence"
+      "mcp__serena__think_about_task_adherence",
+      "Bash(./scripts/run_layer_tests.sh:*)",
+      "Bash(./CICD/scripts/run_service_registry_test.sh:*)",
+      "Bash(./CICD/scripts/test_nodecomman_runtime.sh:*)",
+      "Bash(./CICD/scripts/test_m001_e2e.sh:*)"
     ],
     "deny": []
   }
