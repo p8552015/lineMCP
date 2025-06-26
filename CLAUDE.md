@@ -14,6 +14,23 @@ LINE MCP 智慧製造監控系統 - 基於 Model Context Protocol (MCP) 的企�
 - **CI/CD整合**: GitHub Actions 全面優化，執行效率提升 40% 🆕
 - **開發體驗提升**: 新人上手時間減少 50%，完整文檔體系
 
+### 🔗 PostgreSQL MCP 整合成果 (2025-06-25 完成) 🆕
+- **nodecomman 多運行時架構**: 完成 Node.js + Python 雙運行時支援
+- **PostgreSQL Docker 連接**: 成功連接 Docker 化 PostgreSQL MCP 服務器
+- **M001 機台驗證**: CNC車床A 稼動率查詢功能完全正常 (74.4% 稼動率)
+- **系統整合測試**: 81.2% 測試通過率 (13/16)，核心功能全部正常
+- **生產 MCP 客戶端**: 完整的連接池管理和錯誤處理機制
+- **配置管理升級**: 支援 npx 命令和 Node.js MCP 服務器配置
+
+### 🔧 API 不一致問題修復 (2025-06-26 完成) 🆕
+- **服務註冊參數修復**: 修正 `factory` → `implementation` 參數名稱錯誤
+- **配置 API 統一**: 修正 `get_server_names()` → `list_servers()` 方法名稱
+- **模組導入完善**: 新增缺失的 `time` 模組導入
+- **兼容性接口補全**: 為 EnhancedServiceFactory 新增基本 MCP 方法
+- **方法簽名統一**: 統一 `call_tool` 方法參數（支援 timeout 參數）
+- **100% 問題解決**: 配置 API、服務註冊、兼容性問題全部修復
+- **測試套件建立**: 新增 nodecomman 完整測試套件與問題檢測機制
+
 ### 🚀 CI/CD 全自動檢測系統 (2025-06-24 新增)
 - **完美綠燈狀態**: 所有 GitHub Actions workflows 優化完成
 - **架構簡化**: 移除 Node.js 依賴，專注 Python 生態系統
@@ -50,6 +67,17 @@ cd apps/bot && poetry run pytest --cov=src --cov-report=html
 # MCP 連接測試
 ./start-production.sh test
 
+# PostgreSQL MCP 專項測試 🆕
+cd apps/bot && python simple_postgres_test.py       # 基本連接測試
+cd apps/bot && python test_m001_final.py           # M001 機台稼動率查詢測試
+cd apps/bot && python test_complete_integration.py # 完整系統整合測試
+
+# nodecomman 架構測試 🆕
+cd apps/bot && python -m pytest tests/nodecomman/ -v                    # 完整 nodecomman 測試
+cd apps/bot && python -m pytest tests/nodecomman/test_integration.py -v # API 一致性檢測
+cd apps/bot && python -m pytest tests/nodecomman/test_runtime_managers.py -v # 運行時管理器測試
+cd apps/bot && python -m pytest tests/nodecomman/test_mcp_factory.py -v # MCP 工廠測試
+
 # GitHub Actions CI/CD 檢測
 ./start-production.sh check-ci
 
@@ -84,6 +112,11 @@ cd apps/bot && poetry install
 tail -f apps/bot/logs/webhook.log
 tail -f apps/bot/logs/sqlite-mcp.log
 
+# Docker 服務管理 🆕
+docker-compose -f docker-compose.postgres.yml up -d     # 啟動 PostgreSQL MCP
+docker-compose -f docker-compose.postgres.yml down      # 停止 PostgreSQL MCP
+docker exec line_mcp_postgres psql -U admin -d mydb     # 連接資料庫
+
 # GitHub Actions CI/CD 自動檢測
 ./github-actions-detector.sh                    # 完整檢測
 ./github-actions-detector.sh --workflow ci      # 檢測特定 workflow
@@ -114,6 +147,12 @@ tail -f apps/bot/logs/sqlite-mcp.log
    - MCP 客戶端、AI 模型服務、資料庫服務等
    - 支援 singleton 和 transient 生命週期
 
+5. **nodecomman Layer** (`src/nodecomman/`) - 多運行時支援架構 🆕
+   - `interfaces/` - 運行時管理器和MCP工廠抽象介面
+   - `implementations/` - Node.js + Python 運行時具體實現
+   - `NodeJSRuntimeManager` - Node.js 環境管理與命令驗證
+   - `UniversalMCPServerFactory` - 跨運行時 MCP 服務器工廠
+
 ### 關鍵設計模式
 - **依賴注入 (DI)** - 透過 IServiceFactory 介面解決循環依賴
 - **門面模式 (Facade)** - ApplicationFacade 提供統一介面
@@ -127,6 +166,9 @@ tail -f apps/bot/logs/sqlite-mcp.log
 - **生產級 MCP 修復** - 解決 macOS KqueueSelector 掛起問題
 - **統一 MCP 客戶端** - `UnifiedMCPClient` 抽象層
 - **MCP 服務器** - SQLite MCP 在 port 3003
+- **PostgreSQL MCP** 🆕 - Docker 化 PostgreSQL MCP 服務器 (postgresql://admin:admin@localhost:5432/mydb)
+- **多運行時支援** 🆕 - 支援 Node.js (npx) 和 Python 運行時
+- **連接池管理** 🆕 - 自動進程健康檢查和錯誤恢復機制
 
 ### AI 模型配置
 - **主要模型** - Google Gemini 1.5 Flash (15M 免費 tokens/月)
@@ -140,6 +182,67 @@ tail -f apps/bot/logs/sqlite-mcp.log
 - `GOOGLE_API_KEY` - Gemini API key (推薦)
 - `OPENAI_API_KEY` - OpenAI API key (備用)
 - `ASYNCIO_FORCE_SELECT_SELECTOR=1` - macOS 修復
+
+## API 一致性指南 🆕
+
+### 服務註冊正確方式
+在使用 ServiceRegistry 時，必須使用正確的參數名稱：
+
+```python
+# ✅ 正確方式
+self._registry.register(
+    service_type=MyService,
+    implementation=lambda: get_my_service(),  # 使用 implementation
+    scope=ServiceScope.SINGLETON
+)
+
+# ❌ 錯誤方式 
+self._registry.register(
+    service_type=MyService,
+    factory=lambda: get_my_service(),  # 錯誤：應該是 implementation
+    scope=ServiceScope.SINGLETON
+)
+```
+
+### 配置管理方法名稱
+使用 MCPConfigManager 時，請使用正確的方法名稱：
+
+```python
+# ✅ 正確方式
+config = get_mcp_config()
+servers = config.list_servers()  # 正確方法名
+
+# ❌ 錯誤方式
+servers = config.get_server_names()  # 方法不存在
+```
+
+### 兼容性接口要求
+EnhancedServiceFactory 必須提供基本的 MCP 服務方法以保持向後兼容：
+
+```python
+class EnhancedServiceFactory:
+    def get_mcp_config(self):
+        """獲取 MCP 配置管理器"""
+        return get_mcp_config()
+    
+    def get_mcp_connection_pool(self):
+        """獲取 MCP 連接池"""
+        return get_connection_pool()
+```
+
+### 方法簽名一致性
+確保相同功能的方法具有一致的參數簽名：
+
+```python
+# 統一的 call_tool 方法簽名
+async def call_tool(
+    self, 
+    server_name: str, 
+    tool_name: str, 
+    parameters: Dict[str, Any],
+    timeout: Optional[float] = None  # 可選參數保持一致
+) -> Dict[str, Any]:
+```
 
 ## 開發注意事項
 

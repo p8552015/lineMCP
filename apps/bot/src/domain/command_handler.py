@@ -93,6 +93,7 @@ class CommandContext:
         nl_service,
         db_service,
         formatter,
+        service_factory=None,
         openai_client=None,
     ):
         """
@@ -104,6 +105,7 @@ class CommandContext:
             nl_service: 自然語言服務
             db_service: 資料庫服務
             formatter: 訊息格式化器
+            service_factory: 服務工廠（用於依賴注入）
             openai_client: OpenAI 客戶端（可選）
         """
         self.mcp_client_factory = mcp_client_factory
@@ -111,6 +113,7 @@ class CommandContext:
         self.nl_service = nl_service
         self.db_service = db_service
         self.formatter = formatter
+        self.service_factory = service_factory
         self.openai_client = openai_client
 
     async def get_mcp_client(self):

@@ -18,9 +18,16 @@ class PostgresCommandHandler(CommandHandler):
 
     def __init__(self, context: CommandContext):
         """初始化 PostgreSQL 命令處理器"""
-        super().__init__(context)
-        self.postgres_command = PostgreSQLCommand(context.service_factory)
-        logger.info("🐘 PostgreSQL 命令處理器已初始化")
+        self.context = context
+        
+        # 處理初始化階段 service_factory 為 None 的情況
+        if context.service_factory is None:
+            # 延遲初始化，在第一次使用時再創建
+            self.postgres_command = None
+            logger.info("🐘 PostgreSQL 命令處理器已初始化（延遲創建）")
+        else:
+            self.postgres_command = PostgreSQLCommand(context.service_factory)
+            logger.info("🐘 PostgreSQL 命令處理器已初始化")
 
     @property
     def command_name(self) -> str:
@@ -66,11 +73,23 @@ class PostgresCommandHandler(CommandHandler):
             處理結果訊息
         """
         try:
+            # 延遲初始化 PostgreSQL 命令
+            if self.postgres_command is None:
+                if self.context.service_factory is None:
+                    # 如果仍然沒有 service_factory，返回錯誤
+                    return TextMessage(text="❌ PostgreSQL 服務暫時不可用，請稍後再試")
+                
+                self.postgres_command = PostgreSQLCommand(self.context.service_factory)
+                logger.info("🐘 PostgreSQL 命令延遲初始化完成")
             if not args:
                 return TextMessage(text=self.command_usage)
             
             # 處理幫助命令
             if args[0].lower() in ["help", "幫助", "?", "？"]:
+                # 對於幫助命令，如果 postgres_command 不可用，返回基本使用說明
+                if self.postgres_command is None:
+                    return TextMessage(text=self.command_usage)
+                
                 help_text = self.postgres_command.get_help_text()
                 return TextMessage(text=help_text)
             

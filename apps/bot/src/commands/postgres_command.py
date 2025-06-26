@@ -20,7 +20,7 @@ class PostgreSQLCommand:
     def __init__(self, service_factory: IServiceFactory):
         """初始化 PostgreSQL 命令"""
         self.service_factory = service_factory
-        self.nl_to_sql_service = service_factory.get_service("nl_to_sql_service")
+        self.nl_to_sql_service = service_factory.get_service(NaturalLanguageToSQLService)
         
         # PostgreSQL 特定的查詢模板
         self.postgres_queries = {
@@ -102,12 +102,23 @@ class PostgreSQLCommand:
             }
             
             # 調用 NL-to-SQL 服務
-            result = await self.nl_to_sql_service.process_query(
-                user_input, 
-                database_context=postgres_context
-            )
+            parsed_query = await self.nl_to_sql_service.parse_natural_language(user_input)
             
-            return result
+            # 轉換 ParsedQuery 對象為字典格式
+            if parsed_query.is_successful() and parsed_query.has_sql_query():
+                return {
+                    "success": True,
+                    "sql_query": parsed_query.sql_query,
+                    "confidence": parsed_query.confidence,
+                    "query_type": parsed_query.query_type.value,
+                    "explanation": parsed_query.explanation
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"解析失敗: {parsed_query.explanation}",
+                    "confidence": parsed_query.confidence
+                }
             
         except Exception as e:
             logger.error("❌ NL-to-SQL 轉換失敗", error=str(e))

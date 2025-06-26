@@ -28,7 +28,7 @@ class MessagingApplicationService(BaseApplicationService):
     - 處理用戶會話狀態
     """
 
-    def __init__(self, command_context: CommandContext, nl_service, message_formatter):
+    def __init__(self, command_context: CommandContext, nl_service, message_formatter, command_executor: CommandExecutor):
         """
         初始化訊息處理服務
 
@@ -36,14 +36,15 @@ class MessagingApplicationService(BaseApplicationService):
             command_context: 指令處理上下文
             nl_service: 自然語言處理服務
             message_formatter: 訊息格式化器
+            command_executor: 指令執行器（透過依賴注入）
         """
         super().__init__("messaging")
         self.command_context = command_context
         self.nl_service = nl_service
         self.message_formatter = message_formatter
 
-        # 指令執行器（延遲初始化）
-        self._command_executor: CommandExecutor | None = None
+        # 指令執行器（通過依賴注入）
+        self._command_executor = command_executor
 
         # 用戶會話管理
         self._user_sessions: dict[str, dict[str, Any]] = {}
@@ -58,14 +59,12 @@ class MessagingApplicationService(BaseApplicationService):
 
     async def _initialize_service(self) -> None:
         """初始化訊息處理服務"""
-        # 初始化指令執行器
-        self._command_executor = CommandExecutor(self.command_context)
-
-        # 同步初始化方法
-        if hasattr(self._command_executor, "initialize"):
+        # 指令執行器已通過依賴注入提供，無需手動創建
+        # 確保指令執行器已初始化
+        if hasattr(self._command_executor, "initialize") and not getattr(self._command_executor, "_initialized", False):
             self._command_executor.initialize()
 
-        self.logger.info("指令執行器已初始化")
+        self.logger.info("訊息處理服務已初始化")
 
     async def process_message(
         self,

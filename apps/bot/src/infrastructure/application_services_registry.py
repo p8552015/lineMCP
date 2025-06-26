@@ -9,6 +9,7 @@ from src.application.base_service import ApplicationServiceContext
 from src.application.messaging_service import MessagingApplicationService
 from src.application.monitoring_service import MonitoringApplicationService
 from src.application.query_service import QueryApplicationService
+from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import CommandContext
 from src.services.ai_model_service import AIModelService
 from src.services.database_service import DatabaseService
@@ -71,12 +72,15 @@ def register_application_services(registry: ServiceRegistry) -> None:
 
 def _create_messaging_service(provider: ServiceProvider) -> MessagingApplicationService:
     """創建訊息處理應用服務"""
+    # 避免循環依賴：在初始化階段暫時不設置 service_factory
+    # CommandContext 的 service_factory 可以在需要時通過其他方式獲取
     context = CommandContext(
         mcp_client_factory=get_unified_mcp_client,
         ai_model_service=provider.get_required_service(AIModelService),
         nl_service=provider.get_required_service(NaturalLanguageToSQLService),
         db_service=provider.get_required_service(DatabaseService),
         formatter=provider.get_required_service(MessageFormatter),
+        service_factory=None,  # 避免循環依賴，暫時設為 None
         openai_client=provider.get_service(OpenAIClient),
     )
 
@@ -84,4 +88,5 @@ def _create_messaging_service(provider: ServiceProvider) -> MessagingApplication
         command_context=context,
         nl_service=provider.get_required_service(NaturalLanguageToSQLService),
         message_formatter=provider.get_required_service(MessageFormatter),
+        command_executor=provider.get_required_service(CommandExecutor),
     )
