@@ -1,0 +1,74 @@
+# Docker Compose 配置文件用於 CI 環境
+# 針對測試驅動 CI 管道 (T-01 到 T-05) 優化
+
+version: '3.8'
+
+services:
+  # PostgreSQL MCP 測試資料庫 (用於 T-01 和 T-05)
+  postgres-test:
+    image: postgres:15
+    container_name: ci_postgres_mcp
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mydb
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # CI 優化設置
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      # 使用內存文件系統提升 CI 速度
+      - type: tmpfs
+        target: /var/lib/postgresql/data/pgdata
+        tmpfs:
+          size: 100m
+      # CI 專用初始化腳本
+      - ./ci-init:/docker-entrypoint-initdb.d:ro
+    command: >
+      postgres
+      -c shared_preload_libraries=''
+      -c max_connections=50
+      -c shared_buffers=32MB
+      -c effective_cache_size=128MB
+      -c maintenance_work_mem=16MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=4MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=2MB
+      -c min_wal_size=128MB
+      -c max_wal_size=256MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: "no"  # CI 環境不需要重啟
+    
+  # Redis 快取服務 (用於 T-02, T-03, T-04 測試)
+  redis-test:
+    image: redis:7-alpine
+    container_name: ci_redis_cache
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 64mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: "no"
+
+networks:
+  default:
+    name: ci-test-network
+    driver: bridge
