@@ -254,7 +254,7 @@ class QueryTemplateManager(ITemplateManager):
             r"EXEC\s*\(",  # 執行動態 SQL
             r"EXECUTE\s*\(",  # 執行動態 SQL
             # 檢查是否有系統函數調用
-            r"PRAGMA\s+",  # SQLite 的 PRAGMA 語句
+            r"PRAGMA\s+",  # SQLite 的 PRAGMA 語句（PostgreSQL 不支援）
             r"VACUUM\s+",  # 數據庫維護操作
             r"ANALYZE\s+",  # 統計更新操作
         ]

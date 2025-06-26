@@ -215,7 +215,7 @@ class MessageHandlerDI:
             message += f"📊 {table_name}\\n"
             message += f"   欄位數：{column_count} | 資料筆數：{row_count:,}\\n"
 
-        message += "\\n💡 使用 /sql PRAGMA table_info(表格名) 查看表格結構"
+        message += "\\n💡 使用 /sql SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '表格名' 查看表格結構"
         return TextMessage(text=message)
 
     async def _handle_status_command(self, user_id: str, args: list[str]) -> Message:

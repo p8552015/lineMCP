@@ -18,9 +18,10 @@ class Settings(BaseSettings):
     openai_temperature: float = 0.7
 
     # MCP Server Configuration
-    mcp_server_url: str
-    mcp_api_key: str
-    postgres_connection_string: str = "postgresql://localhost:5432/mcp_test"
+    mcp_server_url: str = "postgresql://admin:admin@localhost:5432/mydb"
+    mcp_api_key: str | None = None
+    postgres_connection_string: str = "postgresql://admin:admin@localhost:5432/mydb"
+    context7_mcp_url: str | None = None
 
     # MCP STDIO Configuration (生產級)
     mcp_project_root: str = ""  # 自動推斷項目根目錄

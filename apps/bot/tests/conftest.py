@@ -159,7 +159,7 @@ def test_environment_setup():
     
     # 設置測試專用環境變數
     os.environ.update({
-        "ENVIRONMENT": "test",
+        "APP_ENV": "test",
         "LINE_CHANNEL_ACCESS_TOKEN": "test_token",
         "AI_MODEL_PROVIDER": "google",
         "ASYNCIO_FORCE_SELECT_SELECTOR": "1",

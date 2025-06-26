@@ -158,7 +158,7 @@ class TestQueryApplicationService:
         valid_queries = [
             "SELECT * FROM machines",
             "select id, name from users",
-            "PRAGMA table_info(machines)",
+            "SELECT column_name FROM information_schema.columns WHERE table_name = 'machines'",
             "EXPLAIN SELECT * FROM test",
         ]
 
@@ -369,7 +369,7 @@ class TestQueryApplicationService:
             # 驗證正確的查詢被調用
             assert mock_execute.call_count == 2
             calls = mock_execute.call_args_list
-            assert "PRAGMA table_info(machines)" in calls[0][0][0]  # 第一個位置參數
+            assert "FROM information_schema.columns" in calls[0][0][0]  # 第一個位置參數
             assert (
                 "SELECT COUNT(*) as count FROM machines" in calls[1][0][0]
             )  # 第一個位置參數
@@ -395,7 +395,9 @@ class TestQueryApplicationService:
             # 驗證正確的查詢被調用
             mock_execute.assert_called_once()
             call_args = mock_execute.call_args[0][0]  # 第一個位置參數
-            assert "SELECT name FROM sqlite_master WHERE type='table'" in call_args
+            # PostgreSQL 查詢表名使用 information_schema.tables
+            assert "FROM information_schema.tables" in call_args
+            assert "table_schema = 'public'" in call_args
 
     def test_get_query_statistics(self, query_service):
         """測試獲取查詢統計"""

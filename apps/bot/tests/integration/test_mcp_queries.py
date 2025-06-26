@@ -39,7 +39,7 @@ class TestMCPQueries:
     async def test_query_structure_validation(self, mcp_client):
         """測試查詢結構驗證"""
         # 有效查詢結構
-        valid_query = {"query": "SELECT * FROM machines", "server_name": "sqlite"}
+        valid_query = {"query": "SELECT * FROM machines", "server_name": "postgres"}
 
         # 測試查詢結構（不實際執行）
         assert "query" in valid_query
@@ -125,7 +125,7 @@ class TestMCPQueries:
         ) as mock_query:
             # 使用 call_tool 方法，這是實際存在的方法
             result = await mcp_client.call_tool(
-                server_name="sqlite",
+                server_name="postgres",
                 tool_name="read_query",
                 arguments={"query": "SELECT * FROM machines WHERE machine_id = 'M001'"},
             )
@@ -142,9 +142,9 @@ class TestMCPQueries:
         """測試查詢中的錯誤處理"""
         # 無效查詢測試
         invalid_queries = [
-            {"query": "", "server_name": "sqlite"},  # 空查詢
-            {"query": "INVALID SQL SYNTAX", "server_name": "sqlite"},
-            {"query": "SELECT * FROM non_existent_table", "server_name": "sqlite"},
+            {"query": "", "server_name": "postgres"},  # 空查詢
+            {"query": "INVALID SQL SYNTAX", "server_name": "postgres"},
+            {"query": "SELECT * FROM non_existent_table", "server_name": "postgres"},
         ]
 
         for invalid_query in invalid_queries:
@@ -166,7 +166,7 @@ class TestMCPQueries:
     @pytest.mark.asyncio
     async def test_connection_retry_logic(self, mcp_client):
         """測試連接重試邏輯"""
-        query_data = {"query": "SELECT 1", "server_name": "sqlite"}
+        query_data = {"query": "SELECT 1", "server_name": "postgres"}
 
         # 模擬連接失敗然後成功的情況
         with patch.object(mcp_client, "connect_to_server") as mock_connect:
@@ -194,7 +194,7 @@ class TestMCPQueries:
         """測試查詢超時處理"""
         query_data = {
             "query": "SELECT * FROM large_table",  # 模擬可能很慢的查詢
-            "server_name": "sqlite",
+            "server_name": "postgres",
         }
 
         with patch.object(mcp_client, "call_tool") as mock_call_tool:

@@ -40,15 +40,15 @@ class TestMCPConnection:
         assert hasattr(mcp_client, "connection_pool")
 
     @pytest.mark.asyncio
-    async def test_sqlite_server_configuration(self, mcp_client):
-        """測試 SQLite 服務器配置"""
+    async def test_postgres_server_configuration(self, mcp_client):
+        """測試 PostgreSQL 服務器配置"""
         # 檢查默認配置
-        assert "sqlite" in mcp_client.server_configs
-        sqlite_config = mcp_client.server_configs["sqlite"]
+        assert "postgres" in mcp_client.server_configs
+        postgres_config = mcp_client.server_configs["postgres"]
 
-        assert "command" in sqlite_config
-        assert "args" in sqlite_config
-        assert sqlite_config["transport"]["type"] == "stdio"
+        assert "command" in postgres_config
+        assert "args" in postgres_config
+        assert postgres_config["transport"]["type"] == "stdio"
 
     @pytest.mark.asyncio
     async def test_connection_pool_initialization(self, mcp_client):
@@ -78,7 +78,7 @@ class TestMCPConnection:
 
             # 嘗試連接（這應該在模擬環境中安全運行）
             try:
-                result = await mcp_client.connect_to_server("sqlite")
+                result = await mcp_client.connect_to_server("postgres")
                 # 在測試環境中，這可能會失敗，但我們主要檢查代碼路徑
                 assert isinstance(result, bool)
             except Exception as e:
@@ -88,7 +88,7 @@ class TestMCPConnection:
     @pytest.mark.asyncio
     async def test_connection_state_management(self, mcp_client):
         """測試連接狀態管理"""
-        server_name = "sqlite"
+        server_name = "postgres"
 
         # 初始狀態應該是斷開的
         assert not mcp_client.connections.get(server_name, False)
@@ -104,7 +104,7 @@ class TestMCPConnection:
     @pytest.mark.asyncio
     async def test_process_management(self, mcp_client):
         """測試進程管理"""
-        server_name = "sqlite"
+        server_name = "postgres"
 
         # 初始狀態應該沒有進程
         assert server_name not in mcp_client.processes
@@ -123,7 +123,7 @@ class TestMCPConnection:
     @pytest.mark.asyncio
     async def test_health_check_logic(self, mcp_client):
         """測試健康檢查邏輯"""
-        server_name = "sqlite"
+        server_name = "postgres"
 
         # 測試無進程情況
         health_status = await mcp_client._verify_process_health(server_name)
@@ -149,7 +149,7 @@ class TestMCPConnection:
     @pytest.mark.asyncio
     async def test_error_handling_keyerror_fix(self, mcp_client):
         """測試 KeyError 修復的錯誤處理"""
-        server_name = "sqlite"
+        server_name = "postgres"
 
         # 確保進程字典為空（模擬 KeyError 情況）
         mcp_client.processes.clear()
@@ -180,9 +180,9 @@ class TestMCPConnection:
                 "type" in config["transport"]
             ), f"服務器 {server_name} 的 transport 缺少 type"
 
-            # 驗證 SQLite 特定配置
-            if server_name == "sqlite":
-                assert config["command"] == "npx", "SQLite 服務器應使用 npx 命令"
+            # 驗證 PostgreSQL 特定配置
+            if server_name == "postgres":
+                assert config["command"] == "npx", "PostgreSQL 服務器應使用 npx 命令"
                 assert (
-                    "@mcp/sqlite" in config["args"]
-                ), "SQLite 服務器應包含 @mcp/sqlite 參數"
+                    "@modelcontextprotocol/server-postgres" in config["args"]
+                ), "PostgreSQL 服務器應包含 @modelcontextprotocol/server-postgres 參數"

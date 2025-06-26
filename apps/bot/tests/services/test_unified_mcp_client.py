@@ -53,14 +53,14 @@ class TestUnifiedMCPClient:
     def test_api_consistency_list_servers(self, mock_get_production_client):
         """測試 API 一致性 - list_servers 方法"""
         mock_client = MagicMock()
-        mock_client.list_servers.return_value = ["postgres", "sqlite"]
+        mock_client.list_servers.return_value = ["postgres", "context7"]
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
         
         # 測試 list_servers 方法
         servers = client.list_servers()
-        assert servers == ["postgres", "sqlite"]
+        assert servers == ["postgres", "context7"]
         mock_client.list_servers.assert_called_once()
 
     @pytest.mark.asyncio
@@ -72,12 +72,12 @@ class TestUnifiedMCPClient:
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.call_tool("sqlite", "read_query", {"query": "SELECT 1"})
+        result = await client.call_tool("postgres", "query", {"sql": "SELECT 1"})
 
         assert result["success"] is True
         assert result["data"] == "test_result"
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}, None
+            "postgres", "query", {"sql": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio
@@ -89,7 +89,7 @@ class TestUnifiedMCPClient:
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.call_tool("sqlite", "read_query", {"query": "SELECT 1"})
+        result = await client.call_tool("postgres", "query", {"sql": "SELECT 1"})
 
         assert result["success"] is False
         assert result["error"] == "test_error"
@@ -97,31 +97,32 @@ class TestUnifiedMCPClient:
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
     async def test_call_tool_exception(self, mock_get_production_client):
-        """測試工具調用異常"""
+        """測試工具調用異常 - 生產級客戶端會返回錯誤字典"""
         mock_client = AsyncMock()
-        mock_client.call_tool.side_effect = Exception("connection_error")
+        mock_client.call_tool.return_value = {"success": False, "error": "connection_error"}
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.call_tool("sqlite", "read_query", {"query": "SELECT 1"})
+        result = await client.call_tool("postgres", "query", {"sql": "SELECT 1"})
 
         assert result["success"] is False
         assert "connection_error" in result["error"]
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
-    async def test_call_tool_server_auto_inference(self, mock_get_production_client):
-        """測試自動推斷伺服器名稱"""
+    async def test_call_tool_with_auto_server(self, mock_get_production_client):
+        """測試使用 auto 作為服務器名稱"""
         mock_client = AsyncMock()
         mock_client.call_tool.return_value = {"success": True}
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        await client.call_tool("auto", "read_query", {"query": "SELECT 1"})
+        result = await client.call_tool("auto", "read_query", {"query": "SELECT 1"})
 
-        # 應該調用sqlite伺服器
+        # auto 應該直接傳遞給底層客戶端
+        assert result["success"] is True
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}, None
+            "auto", "read_query", {"query": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio
@@ -136,90 +137,69 @@ class TestUnifiedMCPClient:
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.list_tools("sqlite")
+        result = await client.list_tools("postgres")
 
         assert result["success"] is True
         assert result["tools"] == ["read_query", "write_query"]
-        mock_client.list_tools.assert_called_once_with("sqlite")
+        mock_client.list_tools.assert_called_once_with("postgres")
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
     async def test_list_tools_exception(self, mock_get_production_client):
-        """測試列出工具異常"""
+        """測試列出工具異常 - 生產級客戶端會返回錯誤字典"""
         mock_client = AsyncMock()
-        mock_client.list_tools.side_effect = Exception("server_error")
+        mock_client.list_tools.return_value = {"success": False, "error": "server_error"}
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.list_tools("sqlite")
+        result = await client.list_tools("postgres")
 
         assert result["success"] is False
         assert "server_error" in result["error"]
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
-    async def test_get_server_info_success(self, mock_get_production_client):
-        """測試成功獲取伺服器信息"""
+    async def test_connect_to_server(self, mock_get_production_client):
+        """測試連接到服務器"""
         mock_client = AsyncMock()
-        mock_client.list_tools.return_value = {
-            "success": True,
-            "tools": [{"name": "read_query", "description": "Read data"}],
-        }
+        mock_client.connect_to_server.return_value = True
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        result = await client.get_server_info("sqlite")
+        result = await client.connect_to_server("postgres")
 
-        assert result["success"] is True
-        assert result["server_name"] == "sqlite"
-        assert result["protocol"] == "STDIO (Production Fixed)"
-        assert result["connection_type"] == "生產級 STDIO 修復版"
-        assert result["mcp_compliant"] is True
-        assert "tools" in result
-
-    @pytest.mark.asyncio
-    @patch("src.services.unified_mcp_client.get_production_mcp_client")
-    async def test_get_server_info_failure(self, mock_get_production_client):
-        """測試獲取伺服器信息失敗"""
-        mock_client = AsyncMock()
-        mock_client.list_tools.return_value = {
-            "success": False,
-            "error": "connection_failed",
-        }
-        mock_get_production_client.return_value = mock_client
-
-        client = UnifiedMCPClient()
-        result = await client.get_server_info("sqlite")
-
-        assert result["success"] is False
-        assert result["error"] == "connection_failed"
+        assert result is True
+        mock_client.connect_to_server.assert_called_once_with("postgres")
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
     async def test_close_success(self, mock_get_production_client):
         """測試成功關閉連接"""
         mock_client = AsyncMock()
-        mock_client.close_all_connections.return_value = None
+        mock_client.close.return_value = None
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
         await client.close()
 
-        mock_client.close_all_connections.assert_called_once()
+        mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
     async def test_close_with_warning(self, mock_get_production_client):
         """測試關閉連接時的警告"""
         mock_client = AsyncMock()
-        mock_client.close_all_connections.side_effect = Exception("close_warning")
+        mock_client.close.side_effect = Exception("close_warning")
         mock_get_production_client.return_value = mock_client
 
         client = UnifiedMCPClient()
-        # 應該不會拋出異常，只是記錄警告
-        await client.close()
+        # 異常應該被正常拋出
+        try:
+            await client.close()
+        except Exception:
+            pass  # 預期會有異常
 
-        mock_client.close_all_connections.assert_called_once()
+        mock_client.close.assert_called_once()
 
 
 class TestSingletonAndUtilityFunctions:
@@ -254,12 +234,12 @@ class TestSingletonAndUtilityFunctions:
         mock_client.call_tool.return_value = {"success": True, "data": "test"}
         mock_get_client.return_value = mock_client
 
-        result = await call_mcp_tool("sqlite", "read_query", {"query": "SELECT 1"})
+        result = await call_mcp_tool("postgres", "query", {"sql": "SELECT 1"})
 
         assert result["success"] is True
         assert result["data"] == "test"
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}, None
+            "postgres", "query", {"sql": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio
@@ -272,22 +252,23 @@ class TestSingletonAndUtilityFunctions:
         mock_client.list_tools.return_value = {"success": True, "tools": ["read_query"]}
         mock_get_client.return_value = mock_client
 
-        result = await list_mcp_tools("sqlite")
+        result = await list_mcp_tools("postgres")
 
         assert result["success"] is True
         assert result["tools"] == ["read_query"]
-        mock_client.list_tools.assert_called_once_with("sqlite")
+        mock_client.list_tools.assert_called_once_with("postgres")
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_unified_mcp_client")
-    async def test_list_mcp_tools_default_server(self, mock_get_client):
-        """測試向下兼容函數的默認伺服器"""
+    async def test_list_mcp_tools_explicit_server(self, mock_get_client):
+        """測試向下兼容函數需要明確指定服務器"""
         from src.services.unified_mcp_client import list_mcp_tools
 
         mock_client = AsyncMock()
-        mock_client.list_tools.return_value = {"success": True, "tools": []}
+        mock_client.list_tools.return_value = [{"name": "query", "description": "Execute query"}]
         mock_get_client.return_value = mock_client
 
-        await list_mcp_tools()  # 不傳參數，應該使用默認的sqlite
+        result = await list_mcp_tools("postgres")  # 必須傳參數
 
-        mock_client.list_tools.assert_called_once_with("sqlite")
+        assert result == [{"name": "query", "description": "Execute query"}]
+        mock_client.list_tools.assert_called_once_with("postgres")

@@ -421,8 +421,9 @@ class TestCriticalIssueDetection:
         else:
             print(f"✅ 配置 API 一致性檢查通過")
         
-        # 返回問題列表而不是失敗，這樣可以看到所有問題
-        return issues
+        # 檢查問題列表，如果有問題則測試失敗
+        if issues:
+            pytest.fail(f"發現 {len(issues)} 個配置 API 不一致問題: {issues}")
     
     def test_detect_service_registry_parameter_issues(self):
         """檢測服務註冊參數問題"""
@@ -466,7 +467,9 @@ class TestCriticalIssueDetection:
         else:
             print(f"✅ 服務註冊參數檢查通過")
         
-        return issues
+        # 檢查問題列表，如果有問題則測試失敗
+        if issues:
+            pytest.fail(f"發現 {len(issues)} 個服務註冊參數問題: {issues}")
     
     def test_detect_compatibility_interface_differences(self):
         """檢測兼容性接口差異"""
@@ -517,36 +520,47 @@ class TestCriticalIssueDetection:
         else:
             print(f"✅ 兼容性接口檢查通過")
         
-        return issues
+        # 檢查問題列表，如果有問題則測試失敗
+        if issues:
+            pytest.fail(f"發現 {len(issues)} 個兼容性接口問題: {issues}")
     
     def test_comprehensive_issue_detection(self):
         """綜合問題檢測"""
         print("🔍 執行綜合問題檢測...")
         
-        config_issues = self.test_detect_configuration_api_inconsistencies()
-        registry_issues = self.test_detect_service_registry_parameter_issues()
-        compat_issues = self.test_detect_compatibility_interface_differences()
+        # 嘗試執行所有檢測，如果任何一個失敗，會拋出 AssertionError
+        failed_tests = []
         
-        total_issues = len(config_issues) + len(registry_issues) + len(compat_issues)
+        try:
+            self.test_detect_configuration_api_inconsistencies()
+            print("✅ 配置 API 檢測通過")
+        except (AssertionError, Exception) as e:
+            failed_tests.append(f"配置 API: {str(e)}")
+            
+        try:
+            self.test_detect_service_registry_parameter_issues()
+            print("✅ 服務註冊參數檢測通過")
+        except (AssertionError, Exception) as e:
+            failed_tests.append(f"服務註冊: {str(e)}")
+            
+        try:
+            self.test_detect_compatibility_interface_differences()
+            print("✅ 兼容性接口檢測通過")
+        except (AssertionError, Exception) as e:
+            failed_tests.append(f"兼容性: {str(e)}")
         
-        print(f"\n📊 問題檢測結果:")
-        print(f"   - 配置 API 問題: {len(config_issues)}")
-        print(f"   - 服務註冊問題: {len(registry_issues)}")
-        print(f"   - 兼容性問題: {len(compat_issues)}")
-        print(f"   - 總計問題: {total_issues}")
+        print(f"\n📊 綜合檢測結果:")
+        print(f"   - 失敗測試數: {len(failed_tests)}")
         
-        if total_issues == 0:
+        if len(failed_tests) == 0:
             print(f"🎉 所有檢測通過，系統架構穩定！")
         else:
-            print(f"⚠️ 發現 {total_issues} 個需要關注的問題")
-        
-        # 驗證修復效果：確保所有問題都已解決
-        assert total_issues == 0, f"發現 {total_issues} 個未解決的問題：配置API({len(config_issues)})，服務註冊({len(registry_issues)})，兼容性({len(compat_issues)})"
-        
-        # 如果所有檢測都通過，測試成功
-        assert len(config_issues) == 0, f"配置 API 問題: {config_issues}"
-        assert len(registry_issues) == 0, f"服務註冊問題: {registry_issues}"  
-        assert len(compat_issues) == 0, f"兼容性問題: {compat_issues}"
+            print(f"⚠️ 發現 {len(failed_tests)} 個需要關注的問題:")
+            for test_fail in failed_tests:
+                print(f"   - {test_fail}")
+            
+            # 如果有失敗的測試，整體測試失敗
+            pytest.fail(f"綜合檢測發現 {len(failed_tests)} 個問題: {failed_tests}")
 
 
 if __name__ == "__main__":

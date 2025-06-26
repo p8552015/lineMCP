@@ -175,7 +175,7 @@ USER ${APP_USER}
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUTF8=1 \
     PYTHONPATH=/app/src:$PYTHONPATH \
-    ENVIRONMENT=development
+    APP_ENV=development
 
 # 暴露端口
 EXPOSE 8000 5678
@@ -203,7 +203,7 @@ USER ${APP_USER}
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUTF8=1 \
     PYTHONPATH=/app/src:$PYTHONPATH \
-    ENVIRONMENT=testing
+    APP_ENV=testing
 
 # 預設測試命令
 CMD ["pytest", "-v", "--cov=src", "--cov-report=xml", "--cov-report=html"]

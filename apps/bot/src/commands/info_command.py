@@ -79,7 +79,7 @@ class InfoCommandHandler(CommandHandler):
         """檢查是否為生產環境"""
         import os
 
-        return os.getenv("ENVIRONMENT", "development").lower() == "production"
+        return os.getenv("APP_ENV", "development").lower() == "production"
 
     def _get_available_features(self) -> list[str]:
         """獲取可用功能列表"""
@@ -135,7 +135,7 @@ class InfoCommandHandler(CommandHandler):
             "LINE Messaging API - LINE Bot 整合",
             "OpenAI API - AI 語言模型",
             "MCP Protocol - 模型上下文協議",
-            "SQLite - 資料庫引擎",
+            "PostgreSQL - 資料庫引擎",
             "Structlog - 結構化日誌",
             "Pydantic - 資料驗證",
             "AsyncIO - 非同步處理",

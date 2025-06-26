@@ -92,12 +92,12 @@ class TestCustomExceptions:
 
     def test_mcp_connection_exception(self):
         """測試 MCP 連接異常"""
-        error = MCPConnectionException("sqlite", "read_query", "連接超時")
+        error = MCPConnectionException("postgres", "query", "連接超時")
 
-        assert "sqlite.read_query" in str(error)
+        assert "postgres.query" in str(error)
         assert "服務連接失敗" in error.user_message
-        assert error.details["server"] == "sqlite"
-        assert error.details["operation"] == "read_query"
+        assert error.details["server"] == "postgres"
+        assert error.details["operation"] == "query"
         assert error.error_code == "MCP_CONNECTION_ERROR"
 
     def test_ai_service_exception(self):
@@ -191,7 +191,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_mcp_connection_exception(self, error_handler):
         """測試處理 MCP 連接異常"""
-        error = MCPConnectionException("sqlite", "read", "超時")
+        error = MCPConnectionException("postgres", "query", "超時")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
