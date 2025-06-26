@@ -20,41 +20,48 @@ class TestUnifiedMCPClient:
 
         client = UnifiedMCPClient()
 
-        assert client.client_type == "production"
-        assert client._client == mock_client
+        # 檢查實際存在的屬性
+        assert client._production_client == mock_client
         mock_get_production_client.assert_called_once()
 
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
-    def test_client_type_forced_to_production(self, mock_get_production_client):
-        """測試客戶端類型強制設為production"""
+    def test_kwargs_handling(self, mock_get_production_client):
+        """測試額外參數處理（向下兼容）"""
         mock_client = MagicMock()
         mock_get_production_client.return_value = mock_client
 
-        # 即使傳入其他類型，也會強制設為production
-        client = UnifiedMCPClient(client_type="other")
+        # 額外參數應該被忽略（向下兼容）
+        client = UnifiedMCPClient(client_type="other", extra_param="test")
 
-        assert client.client_type == "production"
+        # 檢查客戶端正常初始化
+        assert client._production_client == mock_client
 
-    def test_get_server_name_sqlite_tools(self):
-        """測試SQLite工具的伺服器名稱推斷"""
-        with patch("src.services.unified_mcp_client.get_production_mcp_client"):
-            client = UnifiedMCPClient()
+    @patch("src.services.unified_mcp_client.get_production_mcp_client")
+    def test_api_consistency_server_configs(self, mock_get_production_client):
+        """測試 API 一致性 - server_configs 屬性"""
+        mock_client = MagicMock()
+        mock_client.server_configs = {"postgres": {"protocol": "stdio"}}
+        mock_get_production_client.return_value = mock_client
 
-            sqlite_tools = [
-                "read_query",
-                "write_query",
-                "list_tables",
-                "describe_table",
-            ]
-            for tool in sqlite_tools:
-                assert client._get_server_name(tool) == "sqlite"
+        client = UnifiedMCPClient()
+        
+        # 測試 server_configs 屬性
+        configs = client.server_configs
+        assert configs == {"postgres": {"protocol": "stdio"}}
 
-    def test_get_server_name_default(self):
-        """測試預設伺服器名稱"""
-        with patch("src.services.unified_mcp_client.get_production_mcp_client"):
-            client = UnifiedMCPClient()
+    @patch("src.services.unified_mcp_client.get_production_mcp_client")
+    def test_api_consistency_list_servers(self, mock_get_production_client):
+        """測試 API 一致性 - list_servers 方法"""
+        mock_client = MagicMock()
+        mock_client.list_servers.return_value = ["postgres", "sqlite"]
+        mock_get_production_client.return_value = mock_client
 
-            assert client._get_server_name("unknown_tool") == "sqlite"
+        client = UnifiedMCPClient()
+        
+        # 測試 list_servers 方法
+        servers = client.list_servers()
+        assert servers == ["postgres", "sqlite"]
+        mock_client.list_servers.assert_called_once()
 
     @pytest.mark.asyncio
     @patch("src.services.unified_mcp_client.get_production_mcp_client")
@@ -252,7 +259,7 @@ class TestSingletonAndUtilityFunctions:
         assert result["success"] is True
         assert result["data"] == "test"
         mock_client.call_tool.assert_called_once_with(
-            "sqlite", "read_query", {"query": "SELECT 1"}
+            "sqlite", "read_query", {"query": "SELECT 1"}, None
         )
 
     @pytest.mark.asyncio

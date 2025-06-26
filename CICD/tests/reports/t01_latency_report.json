@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-06-26T12:36:51.464373",
+  "count": 10,
+  "mean": 10.4664677915629,
+  "p95": 20.154523153009357,
+  "max": 19.683904040954076,
+  "min": 0.00885479198768735,
+  "details": [
+    {
+      "query": "機台稼動率",
+      "elapsed": 19.683904040954076,
+      "status": "success"
+    },
+    {
+      "query": "查看所有機台",
+      "elapsed": 0.017036124947480857,
+      "status": "success"
+    },
+    {
+      "query": "M001 機台狀況如何",
+      "elapsed": 0.00885479198768735,
+      "status": "success"
+    },
+    {
+      "query": "最近三天故障記錄",
+      "elapsed": 18.638083791942336,
+      "status": "success"
+    },
+    {
+      "query": "加工部的生產統計報告",
+      "elapsed": 0.021268291980959475,
+      "status": "success"
+    },
+    {
+      "query": "目前所有機台的稼動率趨勢",
+      "elapsed": 0.014896540902554989,
+      "status": "success"
+    },
+    {
+      "query": "哪台機台最常停機",
+      "elapsed": 16.294402792002074,
+      "status": "success"
+    },
+    {
+      "query": "產線 A 本週產量",
+      "elapsed": 16.857258999953046,
+      "status": "success"
+    },
+    {
+      "query": "查詢機台維護時間表",
+      "elapsed": 16.52118329098448,
+      "status": "success"
+    },
+    {
+      "query": "產線總良率",
+      "elapsed": 16.607789249974303,
+      "status": "success"
+    }
+  ]
+}
