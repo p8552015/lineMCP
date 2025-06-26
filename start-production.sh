@@ -1175,6 +1175,9 @@ show_help() {
     echo -e "  ${GREEN}install-force${NC}  強制重新安裝"
     echo -e "  ${GREEN}config${NC}         檢查配置文件"
     echo -e "  ${GREEN}selftest${NC}       系統自檢測試"
+    echo -e "  ${GREEN}db-migrate${NC}     執行資料庫遷移"
+    echo -e "  ${GREEN}db-health${NC}      資料庫健康檢查"
+    echo -e "  ${GREEN}db-status${NC}      顯示資料庫狀態"
     echo -e "  ${GREEN}info${NC}           顯示架構資訊"
     echo -e "  ${GREEN}help${NC}           顯示此幫助"
     echo -e ""
@@ -1198,6 +1201,207 @@ show_help() {
     echo -e "  🎯 生產查詢測試：M001機台稼動率 + 所有機台概覽"
 }
 
+# 函數：資料庫遷移檢查和執行
+run_database_migration() {
+    echo -e "\n${BLUE}🗄️ 執行資料庫遷移檢查...${NC}"
+    cd "$BOT_DIR"
+    
+    # 檢查 Alembic 是否可用
+    if ! python3 -c "import alembic" 2>/dev/null; then
+        echo -e "${YELLOW}⚠️ Alembic 未安裝，跳過資料庫遷移${NC}"
+        return 0
+    fi
+    
+    # 檢查 alembic.ini 是否存在
+    if [[ ! -f "alembic.ini" ]]; then
+        echo -e "${YELLOW}⚠️ alembic.ini 不存在，跳過資料庫遷移${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}▶ 檢查資料庫遷移狀態...${NC}"
+    
+        # 檢查當前資料庫版本
+    if python3 -c "
+import asyncio
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+import sys
+
+try:
+    from src.utils.database_health_check import DatabaseHealthChecker
+    
+    async def check_migration():
+        health_checker = DatabaseHealthChecker()
+        connection_status = await health_checker.check_connection()
+        
+        if connection_status['status'] != 'healthy':
+            print('❌ 資料庫連接失敗，無法執行遷移')
+            return False
+            
+        # 檢查遷移狀態
+        alembic_cfg = Config('alembic.ini')
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_rev = script.get_current_head()
+        
+        # 使用 asyncpg 直接檢查遷移狀態
+        import asyncpg
+        conn = await asyncpg.connect(health_checker.database_url)
+        
+        try:
+            # 檢查 alembic_version 表是否存在
+            table_exists = await conn.fetchval('''
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = \'public\' 
+                    AND table_name = \'alembic_version\'
+                )
+            ''')
+            
+            if not table_exists:
+                print('當前資料庫版本: 未初始化 (無 alembic_version 表)')
+                print(f'最新遷移版本: {head_rev or \"無遷移\"}')
+                if head_rev:
+                    print('⚠️ 資料庫需要初始化')
+                    return True
+                else:
+                    print('✅ 無需遷移')
+                    return False
+            
+            # 獲取當前版本
+            current_rev = await conn.fetchval('SELECT version_num FROM alembic_version')
+            print(f'當前資料庫版本: {current_rev or \"未初始化\"}')
+            print(f'最新遷移版本: {head_rev or \"無遷移\"}')
+            
+            if current_rev != head_rev:
+                print('⚠️ 資料庫需要遷移')
+                return True
+            else:
+                print('✅ 資料庫已是最新版本')
+                return False
+        finally:
+            await conn.close()
+    
+    needs_migration = asyncio.run(check_migration())
+    sys.exit(0 if not needs_migration else 1)
+    
+except Exception as e:
+    print(f'❌ 遷移檢查失敗: {e}')
+    sys.exit(2)
+"; then
+        migration_status=$?
+        if [ $migration_status -eq 0 ]; then
+            echo -e "${GREEN}✅ 資料庫遷移狀態正常${NC}"
+            return 0
+        elif [ $migration_status -eq 1 ]; then
+            echo -e "${YELLOW}⚠️ 發現待執行的資料庫遷移${NC}"
+            
+            # 詢問是否執行遷移（生產環境自動執行）
+            if [[ "$APP_ENV" == "production" ]]; then
+                echo -e "${CYAN}▶ 生產環境自動執行資料庫遷移...${NC}"
+                if alembic upgrade head; then
+                    echo -e "${GREEN}✅ 資料庫遷移執行成功${NC}"
+                    return 0
+                else
+                    echo -e "${RED}❌ 資料庫遷移執行失敗${NC}"
+                    return 1
+                fi
+            else
+                echo -e "${CYAN}是否執行資料庫遷移？ (y/N)${NC}"
+                read -r response
+                if [[ "$response" =~ ^[Yy]$ ]]; then
+                    if alembic upgrade head; then
+                        echo -e "${GREEN}✅ 資料庫遷移執行成功${NC}"
+                        return 0
+                    else
+                        echo -e "${RED}❌ 資料庫遷移執行失敗${NC}"
+                        return 1
+                    fi
+                else
+                    echo -e "${YELLOW}⚠️ 跳過資料庫遷移，可能導致應用程式啟動失敗${NC}"
+                    return 0
+                fi
+            fi
+        else
+            echo -e "${RED}❌ 資料庫遷移檢查失敗${NC}"
+            return 1
+        fi
+    else
+        echo -e "${RED}❌ 無法檢查資料庫遷移狀態${NC}"
+        return 1
+    fi
+}
+
+# 函數：資料庫健康檢查
+run_database_health_check() {
+    echo -e "\n${BLUE}🏥 執行資料庫健康檢查...${NC}"
+    cd "$BOT_DIR"
+    
+    # 檢查健康檢查模組是否存在
+    if [[ ! -f "src/utils/database_health_check.py" ]]; then
+        echo -e "${YELLOW}⚠️ 資料庫健康檢查模組不存在，跳過檢查${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}▶ 執行完整資料庫健康檢查...${NC}"
+    
+    python3 -c "
+import asyncio
+import sys
+sys.path.insert(0, 'src')
+
+async def run_health_check():
+    try:
+        from src.utils.database_health_check import DatabaseHealthChecker
+        
+        checker = DatabaseHealthChecker()
+        result = await checker.comprehensive_health_check()
+        
+        print(f'整體健康狀態: {result[\"overall_status\"]}')
+        print(f'連接狀態: {result[\"connection\"][\"status\"]}')
+        print(f'資料表檢查: {result[\"tables\"][\"status\"]}')
+        print(f'功能測試: {result[\"functionality\"][\"status\"]}')
+        
+        # 顯示詳細資訊
+        if result['tables']['status'] == 'healthy':
+            tables = result['tables']['details']['found_tables']
+            print(f'找到 {len(tables)} 個資料表: {tables}')
+        
+        if result['functionality']['status'] == 'healthy':
+            tests = result['functionality']['details']['test_results']
+            passed = sum(1 for test in tests.values() if test['status'] == 'passed')
+            print(f'功能測試通過: {passed}/{len(tests)}')
+        
+        # 根據整體狀態決定返回值
+        if result['overall_status'] == 'healthy':
+            return 0
+        elif result['overall_status'] == 'warning':
+            print('⚠️ 發現非關鍵問題，但可以繼續啟動')
+            return 0
+        else:
+            print('❌ 發現嚴重問題，建議檢查後再啟動')
+            return 1
+            
+    except Exception as e:
+        print(f'❌ 健康檢查執行失敗: {e}')
+        import traceback
+        traceback.print_exc()
+        return 1
+
+result = asyncio.run(run_health_check())
+sys.exit(result)
+"
+    
+    health_status=$?
+    if [ $health_status -eq 0 ]; then
+        echo -e "${GREEN}✅ 資料庫健康檢查通過${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ 資料庫健康檢查失敗${NC}"
+        echo -e "${YELLOW}💡 建議檢查資料庫連接和Schema配置${NC}"
+        return 1
+    fi
+}
+
 # 函數：完整啟動流程
 full_startup() {
     show_architecture_overview
@@ -1208,6 +1412,19 @@ full_startup() {
     # 運行系統自檢
     if ! run_system_self_test; then
         echo -e "${RED}❌ 系統自檢失敗，建議檢查配置${NC}"
+        exit 1
+    fi
+    
+    # 新增：資料庫遷移檢查
+    if ! run_database_migration; then
+        echo -e "${RED}❌ 資料庫遷移失敗，無法啟動服務${NC}"
+        exit 1
+    fi
+    
+    # 新增：資料庫健康檢查
+    if ! run_database_health_check; then
+        echo -e "${RED}❌ 資料庫健康檢查失敗${NC}"
+        echo -e "${YELLOW}💡 您可以使用 'quick' 模式跳過健康檢查強制啟動${NC}"
         exit 1
     fi
     
@@ -1226,6 +1443,13 @@ quick_startup() {
     check_python_env
     install_dependencies
     check_config || exit 1
+    
+    # 快速模式仍執行基本的資料庫遷移檢查
+    echo -e "${CYAN}▶ 快速模式：僅檢查關鍵資料庫狀態...${NC}"
+    if ! run_database_migration; then
+        echo -e "${YELLOW}⚠️ 資料庫遷移檢查失敗，但繼續啟動${NC}"
+    fi
+    
     start_services
 }
 
@@ -1303,6 +1527,22 @@ case "${1:-start}" in
         echo -e "${BLUE}🔬 系統自檢測試${NC}"
         check_python_env
         run_system_self_test
+        ;;
+    "db-migrate")
+        echo -e "${BLUE}🗄️ 執行資料庫遷移${NC}"
+        check_python_env
+        run_database_migration
+        ;;
+    "db-health")
+        echo -e "${BLUE}🏥 資料庫健康檢查${NC}"
+        check_python_env
+        run_database_health_check
+        ;;
+    "db-status")
+        echo -e "${BLUE}📊 顯示資料庫狀態${NC}"
+        check_python_env
+        run_database_migration
+        run_database_health_check
         ;;
     "info")
         echo -e "${BLUE}ℹ️ 系統架構資訊${NC}"

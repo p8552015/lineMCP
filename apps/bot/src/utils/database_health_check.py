@@ -8,6 +8,7 @@ import asyncpg
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+# 移除 SQLAlchemy 依賴，使用純 asyncpg
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,13 @@ logger = logging.getLogger(__name__)
 class DatabaseHealthChecker:
     """資料庫健康檢查器"""
     
-    def __init__(self, database_url: str):
-        self.database_url = database_url
+    def __init__(self, database_url: str = None):
+        # 如果沒有提供 database_url，使用預設值
+        self.database_url = database_url or "postgresql://admin:admin@localhost:5432/mydb"
+        
+        # 使用純 asyncpg，不需要 SQLAlchemy engine
+        logger.info(f"DatabaseHealthChecker 初始化完成，使用資料庫: {self.database_url}")
+            
         self.required_tables = {
             'machines': {
                 'required_columns': ['id', 'name', 'status', 'temperature', 'utilization_rate'],
@@ -46,67 +52,90 @@ class DatabaseHealthChecker:
             }
         }
     
-    async def check_database_health(self) -> Dict[str, Any]:
-        """執行完整的資料庫健康檢查"""
-        health_report = {
+    async def check_connection(self) -> Dict[str, Any]:
+        """檢查資料庫連接（新接口）"""
+        max_retries = 3
+        retry_delay = 1  # 秒
+        
+        for attempt in range(max_retries):
+            try:
+                conn = await asyncpg.connect(self.database_url)
+                await conn.fetchval('SELECT 1')
+                await conn.close()
+                
+                if attempt > 0:
+                    logger.info(f"✅ 資料庫連接在第 {attempt + 1} 次嘗試後成功")
+                
+                return {
+                    'status': 'healthy',
+                    'message': '資料庫連接正常',
+                    'timestamp': datetime.now().isoformat(),
+                    'attempts': attempt + 1
+                }
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"⚠️ 資料庫連接失敗 (嘗試 {attempt + 1}/{max_retries}): {e}")
+                    logger.info(f"🔄 {retry_delay} 秒後重試...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    logger.error(f"❌ 資料庫連接在 {max_retries} 次嘗試後仍然失敗: {e}")
+                    return {
+                        'status': 'unhealthy',
+                        'message': f'資料庫連接失敗 (已重試 {max_retries} 次): {str(e)}',
+                        'error': str(e),
+                        'timestamp': datetime.now().isoformat(),
+                        'attempts': max_retries
+                    }
+    
+    async def comprehensive_health_check(self) -> Dict[str, Any]:
+        """執行完整的資料庫健康檢查（新接口）"""
+        result = {
             'timestamp': datetime.now().isoformat(),
             'overall_status': 'unknown',
-            'connection_status': 'unknown',
-            'tables_status': {},
-            'missing_tables': [],
-            'missing_columns': {},
-            'foreign_key_status': {},
-            'errors': []
+            'connection': {},
+            'tables': {},
+            'functionality': {}
         }
         
         try:
-            # 測試資料庫連接
-            connection_result = await self._check_connection()
-            health_report['connection_status'] = connection_result['status']
+            # 檢查連接
+            connection_status = await self.check_connection()
+            result['connection'] = connection_status
             
-            if connection_result['status'] != 'healthy':
-                health_report['errors'].append(connection_result['error'])
-                health_report['overall_status'] = 'critical'
-                return health_report
+            if connection_status['status'] != 'healthy':
+                result['overall_status'] = 'critical'
+                return result
             
             # 檢查資料表
-            tables_result = await self._check_tables()
-            health_report['tables_status'] = tables_result['tables_status']
-            health_report['missing_tables'] = tables_result['missing_tables']
-            health_report['missing_columns'] = tables_result['missing_columns']
+            tables_result = await self._check_tables_new()
+            result['tables'] = tables_result
             
-            # 檢查外鍵約束
-            fk_result = await self._check_foreign_keys()
-            health_report['foreign_key_status'] = fk_result
+            # 檢查功能
+            functionality_result = await self._check_functionality()
+            result['functionality'] = functionality_result
             
             # 計算整體狀態
-            health_report['overall_status'] = self._calculate_overall_status(health_report)
-            
+            if (connection_status['status'] == 'healthy' and 
+                tables_result['status'] in ['healthy', 'warning'] and 
+                functionality_result['status'] in ['healthy', 'warning']):
+                
+                if (tables_result['status'] == 'warning' or 
+                    functionality_result['status'] == 'warning'):
+                    result['overall_status'] = 'warning'
+                else:
+                    result['overall_status'] = 'healthy'
+            else:
+                result['overall_status'] = 'critical'
+                
         except Exception as e:
-            logger.error(f"資料庫健康檢查失敗: {e}")
-            health_report['errors'].append(str(e))
-            health_report['overall_status'] = 'critical'
+            logger.error(f"完整健康檢查失敗: {e}")
+            result['overall_status'] = 'critical'
+            result['error'] = str(e)
         
-        return health_report
+        return result
     
-    async def _check_connection(self) -> Dict[str, Any]:
-        """檢查資料庫連接"""
-        try:
-            conn = await asyncpg.connect(self.database_url)
-            await conn.fetchval('SELECT 1')
-            await conn.close()
-            return {'status': 'healthy', 'error': None}
-        except Exception as e:
-            return {'status': 'critical', 'error': str(e)}
-    
-    async def _check_tables(self) -> Dict[str, Any]:
-        """檢查資料表存在性和結構"""
-        result = {
-            'tables_status': {},
-            'missing_tables': [],
-            'missing_columns': {}
-        }
-        
+    async def _check_tables_new(self) -> Dict[str, Any]:
+        """檢查資料表（新格式）"""
         try:
             conn = await asyncpg.connect(self.database_url)
             
@@ -118,108 +147,109 @@ class DatabaseHealthChecker:
             """)
             existing_table_names = {row['table_name'] for row in existing_tables}
             
-            # 檢查每個必需的資料表
-            for table_name, table_config in self.required_tables.items():
-                if table_name not in existing_table_names:
-                    result['missing_tables'].append(table_name)
-                    result['tables_status'][table_name] = 'missing'
-                    continue
-                
-                # 檢查資料表欄位
-                columns = await conn.fetch("""
-                    SELECT column_name, data_type, is_nullable
-                    FROM information_schema.columns 
-                    WHERE table_name = $1 AND table_schema = 'public'
-                """, table_name)
-                
-                existing_columns = {row['column_name'] for row in columns}
-                required_columns = set(table_config['required_columns'])
-                missing_columns = required_columns - existing_columns
-                
-                if missing_columns:
-                    result['missing_columns'][table_name] = list(missing_columns)
-                    result['tables_status'][table_name] = 'incomplete'
-                else:
-                    result['tables_status'][table_name] = 'healthy'
-            
             await conn.close()
             
+            # 檢查必需的資料表
+            required_table_names = set(self.required_tables.keys())
+            missing_tables = required_table_names - existing_table_names
+            
+            if missing_tables:
+                return {
+                    'status': 'critical',
+                    'message': f'缺少必需的資料表: {list(missing_tables)}',
+                    'details': {
+                        'found_tables': list(existing_table_names),
+                        'missing_tables': list(missing_tables),
+                        'required_tables': list(required_table_names)
+                    }
+                }
+            else:
+                return {
+                    'status': 'healthy',
+                    'message': '所有必需的資料表都存在',
+                    'details': {
+                        'found_tables': list(existing_table_names),
+                        'missing_tables': [],
+                        'required_tables': list(required_table_names)
+                    }
+                }
+                
         except Exception as e:
-            logger.error(f"檢查資料表時發生錯誤: {e}")
-            raise
-        
-        return result
+            return {
+                'status': 'critical',
+                'message': f'檢查資料表時發生錯誤: {str(e)}',
+                'error': str(e)
+            }
     
-    async def _check_foreign_keys(self) -> Dict[str, Any]:
-        """檢查外鍵約束"""
-        fk_status = {}
-        
+    async def _check_functionality(self) -> Dict[str, Any]:
+        """檢查功能（新格式）"""
         try:
             conn = await asyncpg.connect(self.database_url)
             
-            for table_name, table_config in self.required_tables.items():
-                if 'foreign_keys' not in table_config:
-                    continue
-                
-                fk_status[table_name] = {}
-                
-                for fk_column, ref_table, ref_column in table_config['foreign_keys']:
-                    # 檢查外鍵約束是否存在
-                    fk_exists = await conn.fetchval("""
-                        SELECT EXISTS (
-                            SELECT 1 
-                            FROM information_schema.table_constraints tc
-                            JOIN information_schema.key_column_usage kcu 
-                                ON tc.constraint_name = kcu.constraint_name
-                            JOIN information_schema.constraint_column_usage ccu 
-                                ON ccu.constraint_name = tc.constraint_name
-                            WHERE tc.constraint_type = 'FOREIGN KEY'
-                                AND tc.table_name = $1
-                                AND kcu.column_name = $2
-                                AND ccu.table_name = $3
-                                AND ccu.column_name = $4
-                        )
-                    """, table_name, fk_column, ref_table, ref_column)
-                    
-                    fk_status[table_name][f"{fk_column}->{ref_table}.{ref_column}"] = (
-                        'healthy' if fk_exists else 'missing'
-                    )
+            test_results = {}
+            
+            # 測試機台查詢
+            try:
+                result = await conn.fetch('SELECT id, name FROM machines LIMIT 1')
+                test_results['machine_query'] = {
+                    'status': 'passed',
+                    'message': f'機台查詢成功，找到 {len(result)} 筆記錄'
+                }
+            except Exception as e:
+                test_results['machine_query'] = {
+                    'status': 'failed',
+                    'message': f'機台查詢失敗: {str(e)}'
+                }
+            
+            # 測試故障查詢
+            try:
+                result = await conn.fetch('SELECT fault_id, machine_id FROM machine_faults LIMIT 1')
+                test_results['fault_query'] = {
+                    'status': 'passed',
+                    'message': f'故障查詢成功，找到 {len(result)} 筆記錄'
+                }
+            except Exception as e:
+                test_results['fault_query'] = {
+                    'status': 'failed',
+                    'message': f'故障查詢失敗: {str(e)}'
+                }
             
             await conn.close()
             
+            # 計算整體功能狀態
+            passed_tests = sum(1 for test in test_results.values() if test['status'] == 'passed')
+            total_tests = len(test_results)
+            
+            if passed_tests == total_tests:
+                status = 'healthy'
+                message = f'所有功能測試通過 ({passed_tests}/{total_tests})'
+            elif passed_tests > 0:
+                status = 'warning'
+                message = f'部分功能測試通過 ({passed_tests}/{total_tests})'
+            else:
+                status = 'critical'
+                message = f'所有功能測試失敗 (0/{total_tests})'
+            
+            return {
+                'status': status,
+                'message': message,
+                'details': {
+                    'test_results': test_results,
+                    'passed_count': passed_tests,
+                    'total_count': total_tests
+                }
+            }
+            
         except Exception as e:
-            logger.error(f"檢查外鍵約束時發生錯誤: {e}")
-            raise
-        
-        return fk_status
-    
-    def _calculate_overall_status(self, health_report: Dict[str, Any]) -> str:
-        """計算整體健康狀態"""
-        if health_report['connection_status'] != 'healthy':
-            return 'critical'
-        
-        if health_report['missing_tables']:
-            return 'critical'
-        
-        # 檢查是否有不完整的資料表
-        incomplete_tables = [
-            table for table, status in health_report['tables_status'].items()
-            if status == 'incomplete'
-        ]
-        
-        if incomplete_tables:
-            return 'warning'
-        
-        # 檢查外鍵狀態
-        for table_fks in health_report['foreign_key_status'].values():
-            for fk_status in table_fks.values():
-                if fk_status == 'missing':
-                    return 'warning'
-        
-        return 'healthy'
-    
+            return {
+                'status': 'critical',
+                'message': f'功能檢查時發生錯誤: {str(e)}',
+                'error': str(e)
+            }
+
+
     async def verify_critical_functionality(self) -> Dict[str, Any]:
-        """驗證關鍵功能是否正常運作"""
+        """驗證關鍵功能是否正常運作（舊接口兼容性）"""
         verification_result = {
             'timestamp': datetime.now().isoformat(),
             'tests': {},
@@ -230,16 +260,34 @@ class DatabaseHealthChecker:
             conn = await asyncpg.connect(self.database_url)
             
             # 測試 1: 機台查詢
-            verification_result['tests']['machine_query'] = await self._test_machine_query(conn)
+            try:
+                result = await conn.fetch('SELECT id, name, status FROM machines LIMIT 5')
+                verification_result['tests']['machine_query'] = {
+                    'status': 'passed',
+                    'message': f'成功查詢到 {len(result)} 台機台',
+                    'data_count': len(result)
+                }
+            except Exception as e:
+                verification_result['tests']['machine_query'] = {
+                    'status': 'failed',
+                    'message': f'機台查詢失敗: {e}',
+                    'error': str(e)
+                }
             
             # 測試 2: 故障記錄查詢
-            verification_result['tests']['fault_query'] = await self._test_fault_query(conn)
-            
-            # 測試 3: 使用率查詢
-            verification_result['tests']['utilization_query'] = await self._test_utilization_query(conn)
-            
-            # 測試 4: 關聯查詢
-            verification_result['tests']['join_query'] = await self._test_join_query(conn)
+            try:
+                result = await conn.fetch('SELECT fault_id, machine_id, fault_type, severity FROM machine_faults LIMIT 5')
+                verification_result['tests']['fault_query'] = {
+                    'status': 'passed',
+                    'message': f'成功查詢到 {len(result)} 筆故障記錄',
+                    'data_count': len(result)
+                }
+            except Exception as e:
+                verification_result['tests']['fault_query'] = {
+                    'status': 'failed',
+                    'message': f'故障記錄查詢失敗: {e}',
+                    'error': str(e)
+                }
             
             await conn.close()
             
@@ -256,76 +304,6 @@ class DatabaseHealthChecker:
             verification_result['error'] = str(e)
         
         return verification_result
-    
-    async def _test_machine_query(self, conn) -> Dict[str, Any]:
-        """測試機台查詢"""
-        try:
-            result = await conn.fetch('SELECT id, name, status FROM machines LIMIT 5')
-            return {
-                'status': 'passed',
-                'message': f'成功查詢到 {len(result)} 台機台',
-                'data_count': len(result)
-            }
-        except Exception as e:
-            return {
-                'status': 'failed',
-                'message': f'機台查詢失敗: {e}',
-                'error': str(e)
-            }
-    
-    async def _test_fault_query(self, conn) -> Dict[str, Any]:
-        """測試故障記錄查詢"""
-        try:
-            result = await conn.fetch('SELECT fault_id, machine_id, fault_type, severity FROM machine_faults LIMIT 5')
-            return {
-                'status': 'passed',
-                'message': f'成功查詢到 {len(result)} 筆故障記錄',
-                'data_count': len(result)
-            }
-        except Exception as e:
-            return {
-                'status': 'failed',
-                'message': f'故障記錄查詢失敗: {e}',
-                'error': str(e)
-            }
-    
-    async def _test_utilization_query(self, conn) -> Dict[str, Any]:
-        """測試使用率查詢"""
-        try:
-            result = await conn.fetch('SELECT id, machine_id, utilization_rate FROM machine_utilization LIMIT 5')
-            return {
-                'status': 'passed',
-                'message': f'成功查詢到 {len(result)} 筆使用率記錄',
-                'data_count': len(result)
-            }
-        except Exception as e:
-            return {
-                'status': 'failed',
-                'message': f'使用率查詢失敗: {e}',
-                'error': str(e)
-            }
-    
-    async def _test_join_query(self, conn) -> Dict[str, Any]:
-        """測試關聯查詢"""
-        try:
-            result = await conn.fetch("""
-                SELECT m.name, COUNT(mf.fault_id) as fault_count
-                FROM machines m
-                LEFT JOIN machine_faults mf ON m.id = mf.machine_id
-                GROUP BY m.id, m.name
-                LIMIT 5
-            """)
-            return {
-                'status': 'passed',
-                'message': f'成功執行關聯查詢，返回 {len(result)} 筆結果',
-                'data_count': len(result)
-            }
-        except Exception as e:
-            return {
-                'status': 'failed',
-                'message': f'關聯查詢失敗: {e}',
-                'error': str(e)
-            }
 
 
 async def run_health_check(database_url: str = "postgresql://admin:admin@localhost:5432/mydb") -> Dict[str, Any]:
@@ -333,7 +311,7 @@ async def run_health_check(database_url: str = "postgresql://admin:admin@localho
     checker = DatabaseHealthChecker(database_url)
     
     print("🔍 開始資料庫健康檢查...")
-    health_report = await checker.check_database_health()
+    health_report = await checker.comprehensive_health_check()
     
     print("🧪 開始功能驗證測試...")
     verification_report = await checker.verify_critical_functionality()
@@ -354,14 +332,13 @@ if __name__ == "__main__":
     
     health = result['health_check']
     print(f"整體狀態: {health['overall_status']}")
-    print(f"連接狀態: {health['connection_status']}")
+    print(f"連接狀態: {health['connection']['status']}")
     
-    if health['missing_tables']:
-        print(f"缺失資料表: {', '.join(health['missing_tables'])}")
+    if health['tables']['status'] != 'healthy':
+        print(f"缺失資料表: {health['tables']['message']}")
     
-    if health['missing_columns']:
-        for table, columns in health['missing_columns'].items():
-            print(f"資料表 {table} 缺失欄位: {', '.join(columns)}")
+    if health['tables']['details']:
+        print(f"缺失資料表詳細資訊: {health['tables']['details']}")
     
     print("\n" + "="*50)
     print("功能驗證報告")

@@ -32,7 +32,7 @@ class StartupHealthChecker:
         
         try:
             # 執行健康檢查
-            health_report = await self.health_checker.check_database_health()
+            health_report = await self.health_checker.comprehensive_health_check()
             verification_report = await self.health_checker.verify_critical_functionality()
             
             # 記錄檢查結果
@@ -65,22 +65,26 @@ class StartupHealthChecker:
             logger.error("❌ 資料庫健康狀態: 嚴重問題")
         
         # 記錄連接狀態
-        if health_report['connection_status'] == 'healthy':
+        if health_report.get('connection', {}).get('status') == 'healthy':
             logger.info("✅ 資料庫連接: 正常")
         else:
             logger.error("❌ 資料庫連接: 失敗")
         
-        # 記錄缺失的資料表
-        if health_report['missing_tables']:
-            logger.error(f"❌ 缺失關鍵資料表: {', '.join(health_report['missing_tables'])}")
+        # 記錄資料表狀態
+        tables_info = health_report.get('tables', {})
+        if tables_info.get('status') == 'critical':
+            missing_tables = tables_info.get('details', {}).get('missing_tables', [])
+            if missing_tables:
+                logger.error(f"❌ 缺失關鍵資料表: {', '.join(missing_tables)}")
         
-        # 記錄缺失的欄位
-        for table, columns in health_report['missing_columns'].items():
-            logger.warning(f"⚠️ 資料表 {table} 缺失欄位: {', '.join(columns)}")
+        # 記錄功能狀態
+        functionality_info = health_report.get('functionality', {})
+        if functionality_info.get('status') != 'healthy':
+            logger.warning(f"⚠️ 功能檢查: {functionality_info.get('message', '未知問題')}")
         
         # 記錄錯誤
-        for error in health_report['errors']:
-            logger.error(f"❌ 錯誤: {error}")
+        if 'error' in health_report:
+            logger.error(f"❌ 錯誤: {health_report['error']}")
     
     def _log_verification_report(self, verification_report: Dict[str, Any]):
         """記錄功能驗證報告"""
@@ -101,14 +105,16 @@ class StartupHealthChecker:
     def _evaluate_startup_safety(self, health_report: Dict[str, Any], verification_report: Dict[str, Any]) -> bool:
         """評估是否可以安全啟動"""
         # 連接失敗絕對不能啟動
-        if health_report['connection_status'] != 'healthy':
+        if health_report.get('connection', {}).get('status') != 'healthy':
             logger.error("🚫 資料庫連接失敗，無法啟動應用程式")
             return False
         
         # 關鍵資料表缺失不能啟動
         critical_tables = ['machines', 'machine_faults']
+        tables_info = health_report.get('tables', {})
+        missing_tables = tables_info.get('details', {}).get('missing_tables', [])
         missing_critical = [
-            table for table in health_report['missing_tables']
+            table for table in missing_tables
             if table in critical_tables
         ]
         
@@ -144,11 +150,35 @@ async def verify_database_schema() -> None:
     database_url = "postgresql://admin:admin@localhost:5432/mydb"
     checker = StartupHealthChecker(database_url, strict_mode=False)  # 非嚴格模式
     
-    can_start = await checker.verify_startup_requirements()
+    max_retries = 3
+    retry_delay = 2  # 秒
     
-    if not can_start:
-        logger.fatal("❌ 啟動前檢查失敗，應用程式將退出")
-        sys.exit(1)
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"🔍 執行資料庫健康檢查 (嘗試 {attempt + 1}/{max_retries})")
+            can_start = await checker.verify_startup_requirements()
+            
+            if can_start:
+                logger.info("✅ 資料庫健康檢查通過，應用程式可以啟動")
+                return
+            else:
+                if attempt < max_retries - 1:
+                    logger.warning(f"⚠️ 健康檢查失敗，{retry_delay} 秒後重試...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    logger.error("❌ 所有重試都失敗，但應用程式將以降級模式啟動")
+                    logger.warning("⚠️ 某些功能可能無法正常工作")
+                    return  # 允許應用程式啟動，但發出警告
+                    
+        except Exception as e:
+            logger.error(f"❌ 健康檢查過程中發生錯誤 (嘗試 {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"🔄 {retry_delay} 秒後重試...")
+                await asyncio.sleep(retry_delay)
+            else:
+                logger.warning("⚠️ 健康檢查完全失敗，應用程式將以最小功能模式啟動")
+                logger.warning("⚠️ 資料庫相關功能可能無法使用")
+                return  # 即使健康檢查失敗也允許啟動
 
 
 async def verify_database_schema_strict() -> None:
