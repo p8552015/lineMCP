@@ -2,14 +2,14 @@ name: Performance Testing
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, stable/*, feature/*]
     tags: ['v*', 'perf/*']
   pull_request:
-    branches: [main]
+    branches: [main, develop, stable/*, feature/*]
     paths:
       - 'apps/bot/src/**'
       - 'apps/servers/**'
-      - '.github/workflows/performance.yml'
+      - 'performance.yml'
   schedule:
     # 每週一凌晨 3 點執行效能測試
     - cron: '0 3 * * 1'
@@ -509,8 +509,7 @@ jobs:
                   with open('memory_profile_results.json', 'w') as f:
                       json.dump(memory_report, f, indent=2)
                   
-                  print(f"
-Memory Profile Summary:")
+                  print(f"Memory Profile Summary:")
                   print(f"- Initial: {memory_report['initial_memory_mb']} MB")
                   print(f"- Final: {memory_report['final_memory_mb']} MB")
                   print(f"- Increase: {memory_report['memory_increase_mb']} MB ({memory_report['memory_increase_percent']}%)")
