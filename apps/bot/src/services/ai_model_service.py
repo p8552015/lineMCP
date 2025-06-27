@@ -274,7 +274,8 @@ class AIModelService:
             f"請以JSON格式回應：\n"
             f"{{\n"
             f'    "enhanced_query": "增強後的查詢描述，包含具體的表格和欄位資訊",\n'
-            f'    "query_type": "查詢類型 (machine_status|fault_analysis|production_stats|all_machines|department_status)",\n'
+            f'    "query_type": "查詢類型 '
+            f'(machine_status|fault_analysis|production_stats|all_machines|department_status)",\n'
             f'    "target_entities": ["相關的機台ID、部門名稱等"],\n'
             f'    "confidence": 0.9,\n'
             f'    "explanation": "解析說明"\n'

@@ -163,7 +163,8 @@ class ConfigurationService(IConfiguration):
         獲取特定設定值（支援路徑式存取）
 
         Args:
-            key_path: 設定鍵路徑，如 "global_parser_settings.default_confidence_threshold"
+            key_path: 設定鍵路徑，如
+                "global_parser_settings.default_confidence_threshold"
             default: 預設值
 
         Returns:

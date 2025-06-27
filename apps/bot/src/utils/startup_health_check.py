@@ -137,10 +137,12 @@ class StartupHealthChecker:
         # 檢查關鍵功能
         critical_tests = ["machine_query", "fault_query"]
         for test_name in critical_tests:
-            if test_name in verification_report["tests"]:
-                if verification_report["tests"][test_name]["status"] != "passed":
-                    logger.error(f"🚫 關鍵功能 {test_name} 驗證失敗，無法啟動應用程式")
-                    return False
+            if (
+                test_name in verification_report["tests"]
+                and verification_report["tests"][test_name]["status"] != "passed"
+            ):
+                logger.error(f"🚫 關鍵功能 {test_name} 驗證失敗，無法啟動應用程式")
+                return False
 
         # 如果只是警告級別的問題，可以啟動但需要記錄
         if health_report["overall_status"] == "warning":

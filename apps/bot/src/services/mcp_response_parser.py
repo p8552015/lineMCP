@@ -127,7 +127,7 @@ class MCPResponseParser:
                         error_response = MCPResponseParser._parse_error_text(
                             text_content
                         )
-                        raise MCPQueryError(error_response["error"])
+                        raise MCPQueryError(error_response["error"]) from None
                     else:
                         # 增強的 JSON 解析錯誤處理
                         logger.error(
@@ -162,7 +162,7 @@ class MCPResponseParser:
                                 else [recovered_data]
                             )
 
-                        raise MCPParseError(f"JSON 解析失敗且無法恢復：{str(e)}")
+                        raise MCPParseError(f"JSON 解析失敗且無法恢復：{str(e)}") from e
 
             # 處理其他字典格式
             if isinstance(data, dict):
@@ -176,7 +176,7 @@ class MCPResponseParser:
             raise
         except Exception as e:
             logger.error(f"MCP 回應解析時發生未預期錯誤：{e}", exc_info=True)
-            raise MCPParseError(f"回應解析失敗：{str(e)}")
+            raise MCPParseError(f"回應解析失敗：{str(e)}") from e
 
     @staticmethod
     def parse_single_value(result: dict[str, Any] | str, field_name: str) -> Any:
@@ -201,7 +201,7 @@ class MCPResponseParser:
         except (MCPQueryError, MCPParseError):
             raise
         except Exception as e:
-            raise MCPParseError(f"單一值解析失敗：{str(e)}")
+            raise MCPParseError(f"單一值解析失敗：{str(e)}") from e
 
     @staticmethod
     def parse_count_result(result: dict[str, Any] | str) -> int:
@@ -247,7 +247,7 @@ class MCPResponseParser:
         except (MCPQueryError, MCPParseError):
             raise
         except Exception as e:
-            raise MCPParseError(f"計數解析失敗：{str(e)}")
+            raise MCPParseError(f"計數解析失敗：{str(e)}") from e
 
     @staticmethod
     def is_success(result: dict[str, Any] | str) -> bool:
@@ -523,7 +523,7 @@ class MCPResponseParser:
                                 "data": recovered_data,
                                 "parsed_from": "recovery",
                             }
-                        raise MCPParseError(f"JSON 解析失敗且無法恢復：{str(e)}")
+                        raise MCPParseError(f"JSON 解析失敗且無法恢復：{str(e)}") from e
 
                 elif format_type == "error_text":
                     logger.info("處理錯誤文本格式")
@@ -572,4 +572,4 @@ class MCPResponseParser:
             raise
         except Exception as e:
             logger.error(f"回應解析時發生未預期錯誤：{e}", exc_info=True)
-            raise MCPParseError(f"回應解析失敗：{str(e)}")
+            raise MCPParseError(f"回應解析失敗：{str(e)}") from e

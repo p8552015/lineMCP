@@ -14,10 +14,6 @@ import asyncio
 import sys
 from pathlib import Path
 
-# 添加專案根目錄到 Python 路徑
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 import structlog
 
 from src.nodecomman.implementations.nodejs_runtime_manager import (
@@ -25,6 +21,10 @@ from src.nodecomman.implementations.nodejs_runtime_manager import (
     NodeJSRuntimeManager,
 )
 from src.nodecomman.interfaces.runtime_interfaces import RuntimeType
+
+# 添加專案根目錄到 Python 路徑
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # 設置日誌
 logger = structlog.get_logger()

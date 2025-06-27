@@ -416,7 +416,7 @@ class QueryTemplateManager(ITemplateManager):
 
         except Exception as e:
             logger.error("❌ 模板檔案載入失敗", file_path=file_path, error=str(e))
-            raise RuntimeError(f"模板載入失敗: {str(e)}")
+            raise RuntimeError(f"模板載入失敗: {str(e)}") from e
 
     def reload_templates(self) -> None:
         """

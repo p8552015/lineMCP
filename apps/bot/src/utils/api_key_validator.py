@@ -75,7 +75,10 @@ class APIKeyValidator:
                 length=len(key),
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
-                error_message=f"API Key 太短，預期至少 {pattern_info['min_length']} 字符，實際 {len(key)} 字符",
+                error_message=(
+                    f"API Key 太短，預期至少 {pattern_info['min_length']} 字符，"
+                    f"實際 {len(key)} 字符"
+                ),
             )
 
         if len(key) > pattern_info["max_length"]:
@@ -86,7 +89,10 @@ class APIKeyValidator:
                 length=len(key),
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
-                error_message=f"API Key 太長，預期最多 {pattern_info['max_length']} 字符，實際 {len(key)} 字符",
+                error_message=(
+                    f"API Key 太長，預期最多 {pattern_info['max_length']} 字符，"
+                    f"實際 {len(key)} 字符"
+                ),
             )
 
         # 檢查前綴
@@ -98,7 +104,9 @@ class APIKeyValidator:
                 length=len(key),
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
-                error_message=f"API Key 前綴錯誤，預期以 '{pattern_info['prefix']}' 開始",
+                error_message=(
+                    f"API Key 前綴錯誤，預期以 '{pattern_info['prefix']}' 開始"
+                ),
             )
 
         # 檢查必要部分
@@ -254,7 +262,7 @@ class APIKeyValidator:
 
                 shutil.copy2(self.backup_path, self.env_file_path)
                 logger.info("已恢復備份文件")
-            except:
+            except Exception:
                 pass
             return False
 

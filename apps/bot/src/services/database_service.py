@@ -361,7 +361,8 @@ class DatabaseService:
             fault_query = f"""
                 SELECT COUNT(*) as fault_count
                 FROM machine_faults
-                WHERE machine_id = '{machine_id}' AND fault_date >= CURRENT_DATE - INTERVAL '{days} days'
+                WHERE machine_id = '{machine_id}'
+                AND fault_date >= CURRENT_DATE - INTERVAL '{days} days'
             """
 
             result = await self._execute_query(fault_query)
@@ -386,7 +387,10 @@ class DatabaseService:
         """獲取資料庫表格資訊"""
         try:
             # 獲取表格列表
-            tables_query = "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public'"
+            tables_query = (
+                "SELECT table_name as name FROM information_schema.tables "
+                "WHERE table_schema = 'public'"
+            )
             await self._execute_query(tables_query)
 
             # 手動定義已知的表格結構，基於實際 PostgreSQL 資料庫

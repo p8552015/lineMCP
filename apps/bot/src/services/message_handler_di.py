@@ -226,7 +226,10 @@ class MessageHandlerDI:
             message += f"📊 {table_name}\\n"
             message += f"   欄位數：{column_count} | 資料筆數：{row_count:,}\\n"
 
-        message += "\\n💡 使用 /sql SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '表格名' 查看表格結構"
+        message += (
+            "\n💡 使用 /sql SELECT column_name, data_type "
+            "FROM information_schema.columns WHERE table_name = '表格名' 查看表格結構"
+        )
         return TextMessage(text=message)
 
     async def _handle_status_command(self, user_id: str, args: list[str]) -> Message:
@@ -322,7 +325,10 @@ class MessageHandlerDI:
         # AI增強狀態
         ai_enabled = self.nl_service.enable_ai_enhancement
         message += f"\\n🧠 AI增強解析: {'✅ 啟用' if ai_enabled else '❌ 禁用'}\\n"
-        message += f"🔄 規則回退: {'✅ 啟用' if self.nl_service.fallback_to_rules else '❌ 禁用'}\\n"
+        message += (
+            f"🔄 規則回退: "
+            f"{'✅ 啟用' if self.nl_service.fallback_to_rules else '❌ 禁用'}\n"
+        )
 
         # 使用建議
         message += "\\n💡 建議：\\n"
@@ -433,7 +439,7 @@ class MessageHandlerDI:
             from src.domain.exceptions import create_mcp_error
 
             logger.error(f"❌ MCP 工具調用失敗 {server}.{tool}：{e}", exc_info=True)
-            raise create_mcp_error(server, tool, str(e))
+            raise create_mcp_error(server, tool, str(e)) from e
 
     def _is_machine_query(self, text: str) -> bool:
         """檢查是否為機台查詢（向後相容性）"""

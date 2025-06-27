@@ -181,9 +181,12 @@ class MCPServerConfig:
         if self.protocol == MCPProtocol.STDIO and not self.command:
             errors.append("STDIO 協議需要指定命令")
 
-        if self.protocol in [MCPProtocol.HTTP, MCPProtocol.WEBSOCKET]:
-            if not self.url and not (self.host and self.port):
-                errors.append("網路協議需要指定 URL 或 host/port")
+        if (
+            self.protocol in [MCPProtocol.HTTP, MCPProtocol.WEBSOCKET]
+            and not self.url
+            and not (self.host and self.port)
+        ):
+            errors.append("網路協議需要指定 URL 或 host/port")
 
         if self.timeout <= 0:
             errors.append("超時時間必須大於 0")

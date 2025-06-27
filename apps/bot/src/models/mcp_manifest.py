@@ -18,7 +18,8 @@ def get_mcp_manifest() -> dict[str, Any]:
                     "query": {
                         "type": "string",
                         "description": (
-                            "Search query for documentation (e.g., 'Next.js app router', "
+                            "Search query for documentation "
+                            "(e.g., 'Next.js app router', "
                             "'React hooks', 'Python FastAPI')"
                         ),
                     },
@@ -43,17 +44,25 @@ def get_mcp_manifest() -> dict[str, Any]:
             },
         },
         "get_code_examples": {
-            "description": "Get specific code examples for a given technology or concept",
+            "description": (
+                "Get specific code examples for a given technology or concept"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "technology": {
                         "type": "string",
-                        "description": "Technology or framework name (e.g., 'React', 'FastAPI', 'Next.js')",
+                        "description": (
+                            "Technology or framework name "
+                            "(e.g., 'React', 'FastAPI', 'Next.js')"
+                        ),
                     },
                     "concept": {
                         "type": "string",
-                        "description": "Specific concept or feature (e.g., 'hooks', 'routing', 'authentication')",
+                        "description": (
+                            "Specific concept or feature "
+                            "(e.g., 'hooks', 'routing', 'authentication')"
+                        ),
                     },
                     "use_case": {
                         "type": "string",
@@ -65,7 +74,9 @@ def get_mcp_manifest() -> dict[str, Any]:
             },
         },
         "get_api_reference": {
-            "description": "Get API reference documentation for specific functions or methods",
+            "description": (
+                "Get API reference documentation for specific functions or methods"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -97,7 +108,10 @@ def get_mcp_manifest() -> dict[str, Any]:
                     },
                     "topic": {
                         "type": "string",
-                        "description": "Specific topic (e.g., 'security', 'performance', 'testing')",
+                        "description": (
+                            "Specific topic "
+                            "(e.g., 'security', 'performance', 'testing')"
+                        ),
                     },
                 },
                 "required": ["technology", "topic"],
@@ -105,13 +119,17 @@ def get_mcp_manifest() -> dict[str, Any]:
         },
         # PostgreSQL Database Tools
         "execute_query": {
-            "description": "Execute a read-only SQL query against the PostgreSQL database",
+            "description": (
+                "Execute a read-only SQL query against the PostgreSQL database"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "SQL query to execute (read-only operations only)",
+                        "description": (
+                            "SQL query to execute (read-only operations only)"
+                        ),
                     }
                 },
                 "required": ["query"],

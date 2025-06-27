@@ -101,7 +101,9 @@ class DatabaseHealthChecker:
                     logger.error(f"❌ 資料庫連接在 {max_retries} 次嘗試後仍然失敗: {e}")
                     return {
                         "status": "unhealthy",
-                        "message": f"資料庫連接失敗 (已重試 {max_retries} 次): {str(e)}",
+                        "message": (
+                            f"資料庫連接失敗 (已重試 {max_retries} 次): {str(e)}"
+                        ),
                         "error": str(e),
                         "timestamp": datetime.now().isoformat(),
                         "attempts": max_retries,
@@ -308,7 +310,8 @@ class DatabaseHealthChecker:
             # 測試 2: 故障記錄查詢
             try:
                 result = await conn.fetch(
-                    "SELECT fault_id, machine_id, fault_type, severity FROM machine_faults LIMIT 5"
+                    "SELECT fault_id, machine_id, fault_type, severity "
+                    "FROM machine_faults LIMIT 5"
                 )
                 verification_result["tests"]["fault_query"] = {
                     "status": "passed",

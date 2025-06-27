@@ -157,7 +157,7 @@ async def handle_webhook(
             error_type=type(e).__name__,
             exc_info=e,
         )
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/test")
@@ -199,7 +199,10 @@ async def health_check():
             health_status["checks"]["service_factory"] = {
                 "status": "ok" if factory_health.get("healthy", False) else "warning",
                 "services_count": factory_health.get("services_count", 0),
-                "message": f"Service factory operational with {factory_health.get('services_count', 0)} services",
+                "message": (
+                    f"Service factory operational with "
+                    f"{factory_health.get('services_count', 0)} services"
+                ),
             }
         except Exception as e:
             health_status["checks"]["service_factory"] = {

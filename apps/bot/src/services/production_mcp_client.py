@@ -15,11 +15,6 @@ from typing import Any
 
 import structlog
 
-# 添加配置路徑
-config_path = Path(__file__).parent.parent / "config"
-if str(config_path) not in sys.path:
-    sys.path.insert(0, str(config_path))
-
 from src.config.mcp_config import (
     get_mcp_config,
     get_server_config,
@@ -27,6 +22,11 @@ from src.config.mcp_config import (
 )
 
 from .mcp_connection_pool import ConnectionStatus, get_connection_pool
+
+# 添加配置路徑
+config_path = Path(__file__).parent.parent / "config"
+if str(config_path) not in sys.path:
+    sys.path.insert(0, str(config_path))
 
 logger = structlog.get_logger()
 mcp_config = get_mcp_config()
@@ -466,7 +466,8 @@ class ProductionMCPClient:
                 await self.connection_pool.record_failure(server_name, str(e))
 
                 logger.error(
-                    f"❌ 工具調用異常 {server_name}.{tool_name} (嘗試 {attempt + 1})：{e}"
+                    f"❌ 工具調用異常 {server_name}.{tool_name} "
+                    f"(嘗試 {attempt + 1})：{e}"
                 )
                 if attempt < max_retries:
                     await asyncio.sleep(1)  # 等待後重試

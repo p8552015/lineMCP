@@ -934,7 +934,8 @@ class QueryStatisticsService(IStatistics):
                 confidence_count = len(self._confidence_scores[parser_type])
                 if confidence_count > success_count:
                     validation_result["warnings"].append(
-                        f"Parser {parser_type}: 信心度記錄數({confidence_count}) > 成功次數({success_count})"
+                        f"Parser {parser_type}: 信心度記錄數({confidence_count}) > "
+                        f"成功次數({success_count})"
                     )
 
                 # 檢查時間記錄是否有異常值
@@ -946,13 +947,15 @@ class QueryStatisticsService(IStatistics):
                     max_time = max(times)
                     if max_time > avg_time * 10:  # 異常值檢測
                         validation_result["warnings"].append(
-                            f"Parser {parser_type}: 發現異常解析時間 {max_time:.2f}ms (平均: {avg_time:.2f}ms)"
+                            f"Parser {parser_type}: 發現異常解析時間 "
+                            f"{max_time:.2f}ms (平均: {avg_time:.2f}ms)"
                         )
 
             # 檢查歷史記錄的完整性
             if len(self._history) > self._max_history_size:
                 validation_result["errors"].append(
-                    f"歷史記錄超出最大限制: {len(self._history)} > {self._max_history_size}"
+                    f"歷史記錄超出最大限制: {len(self._history)} > "
+                    f"{self._max_history_size}"
                 )
                 validation_result["is_valid"] = False
 

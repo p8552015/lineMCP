@@ -45,7 +45,8 @@ class AIEnhancedParser(IParser):
         初始化 AI 增強解析器
 
         Args:
-            ai_model_service: AI 模型服務介面（暫時使用 Any，待 ADR-005 統一後改為抽象介面）
+            ai_model_service: AI 模型服務介面
+                (暫時使用 Any，待 ADR-005 統一後改為抽象介面)
         """
         self._ai_service = ai_model_service
 
@@ -176,31 +177,24 @@ class AIEnhancedParser(IParser):
         Returns:
             str: 系統提示字串
         """
-        return """你是一個專業的工業製造查詢分析助手。你的任務是將自然語言查詢轉換為結構化的查詢意圖。
-
-支援的查詢類型：
-1. machine_status - 機台狀態查詢
-2. fault_analysis - 故障分析查詢
-3. production_stats - 生產統計查詢
-4. all_machines - 所有機台概覽
-5. department_status - 部門狀態查詢
-6. specific_machine - 特定機台查詢
-
-請分析用戶的自然語言輸入，返回 JSON 格式：
-{
-  "query_type": "查詢類型",
-  "confidence": 0.8,
-  "target_entities": ["識別的實體"],
-  "parameters": {"提取的參數"},
-  "explanation": "查詢意圖說明"
-}
-
-注意：
-- confidence 值在 0-1 之間
-- target_entities 包含機台 ID、部門名稱等
-- parameters 包含時間範圍、篩選條件等
-- 如果無法識別，返回 query_type: "unknown"
-"""
+        return (
+            "你是一個專業的工業製造查詢分析助手。"
+            "你的任務是將自然語言查詢轉換為結構化的查詢意圖。\n\n"
+            "支援的查詢類型：\n"
+            "1. machine_status - 機台狀態查詢\n"
+            "2. fault_analysis - 故障分析查詢\n"
+            "3. production_stats - 生產統計查詢\n"
+            "4. all_machines - 所有機台概覽\n"
+            "5. department_status - 部門狀態查詢\n"
+            "6. specific_machine - 特定機台查詢\n\n"
+            "請分析用戶的自然語言輸入，返回 JSON 格式：\n"
+            "{\n"
+            '  "query_type": "查詢類型",\n'
+            '  "entities": ["提取的實體"],\n'
+            '  "parameters": {"參數": "值"},\n'
+            '  "confidence": 0.9\n'
+            "}"
+        )
 
     def _prepare_ai_context(
         self, text: str, context: dict[str, Any] | None

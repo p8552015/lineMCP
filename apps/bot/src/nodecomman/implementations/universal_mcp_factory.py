@@ -145,19 +145,16 @@ class UniversalMCPServerFactory(IMCPServerFactory):
                 raise RuntimeError(f"{config.runtime_type.value} 運行時環境不可用")
 
             # 驗證命令
-            if not await runtime_manager.validate_command(config.command, config.args):
-                # 如果是 Node.js 且命令無效，嘗試安裝依賴
-                if (
-                    config.runtime_type == RuntimeType.NODEJS
-                    and config.command == "npx"
-                ):
-                    package_name = self._extract_package_name(config.args)
-                    if package_name:
-                        logger.info(f"📦 嘗試安裝 Node.js 套件: {package_name}")
-                        if not await runtime_manager.install_dependencies(
-                            [package_name]
-                        ):
-                            logger.warning("⚠️ 套件安裝失敗，但將繼續嘗試執行")
+            if (
+                not await runtime_manager.validate_command(config.command, config.args)
+                and config.runtime_type == RuntimeType.NODEJS
+                and config.command == "npx"
+            ):
+                package_name = self._extract_package_name(config.args)
+                if package_name:
+                    logger.info(f"📦 嘗試安裝 Node.js 套件: {package_name}")
+                    if not await runtime_manager.install_dependencies([package_name]):
+                        logger.warning("⚠️ 套件安裝失敗，但將繼續嘗試執行")
 
             # 創建進程
             process = await runtime_manager.create_process(

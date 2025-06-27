@@ -204,7 +204,8 @@ class EnhancedAIModelService(AIModelService):
                 if attempt < self.retry_config.max_retries:
                     delay = self._calculate_retry_delay(attempt)
                     logger.warning(
-                        f"⏳ 模型調用失敗 (嘗試 {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
+                        f"⏳ 模型調用失敗 "
+                        f"(嘗試 {attempt + 1}/{self.retry_config.max_retries + 1}): {e}"
                     )
                     logger.info(f"⏰ 等待 {delay:.1f} 秒後重試...")
                     await asyncio.sleep(delay)

@@ -134,7 +134,7 @@ class SQLQueryBuilder(IQueryBuilder):
                 parameters=parameters,
                 error=str(e),
             )
-            raise RuntimeError(f"SQL 查詢建構失敗: {str(e)}")
+            raise RuntimeError(f"SQL 查詢建構失敗: {str(e)}") from e
 
     def validate_parameters(
         self, query_type: QueryType, parameters: dict[str, Any]
@@ -410,9 +410,9 @@ class SQLQueryBuilder(IQueryBuilder):
             return " ".join(cleaned_lines)
 
         except KeyError as e:
-            raise ValueError(f"模板中的參數 {e} 未提供")
+            raise ValueError(f"模板中的參數 {e} 未提供") from e
         except Exception as e:
-            raise RuntimeError(f"查詢建構失敗: {str(e)}")
+            raise RuntimeError(f"查詢建構失敗: {str(e)}") from e
 
     def _optimize_query(self, sql_query: str) -> str:
         """

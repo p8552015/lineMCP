@@ -32,8 +32,6 @@ try:
     from ..nodecomman.implementations.universal_mcp_factory import (
         UniversalMCPServerFactory,
     )
-    from ..nodecomman.interfaces.runtime_interfaces import RuntimeType
-    from ..nodecomman.interfaces.server_interfaces import MCPServerConfig, MCPServerType
 
     NODECOMMAN_AVAILABLE = True
 except ImportError as e:
@@ -156,14 +154,16 @@ class EnhancedMCPClient:
             )
 
             process = server.process
-            if process and await self._lifecycle_manager.register_process(
-                server_name, process, lifecycle_config, config
+            if (
+                process
+                and await self._lifecycle_manager.register_process(
+                    server_name, process, lifecycle_config, config
+                )
+                and await self._lifecycle_manager.start_process(server_name)
             ):
-                # 啟動服務器
-                if await self._lifecycle_manager.start_process(server_name):
-                    self._managed_servers[server_name] = server
-                    logger.info(f"✅ nodecomman 服務器 {server_name} 連接成功")
-                    return True
+                self._managed_servers[server_name] = server
+                logger.info(f"✅ nodecomman 服務器 {server_name} 連接成功")
+                return True
 
             logger.error(f"❌ nodecomman 服務器 {server_name} 連接失敗")
             return False

@@ -197,7 +197,10 @@ class MessageFormatter:
             message += "🚨 最常見故障：\n"
             message += f"   類型：{most_common['fault_type']}\n"
             message += f"   嚴重性：{most_common['severity']}\n"
-            message += f"   次數：{most_common['count']} 次 ({most_common['percentage']:.1f}%)\n\n"
+            message += (
+                f"   次數：{most_common['count']} 次 "
+                f"({most_common['percentage']:.1f}%)\n\n"
+            )
 
         # 故障類型分布（顯示前5個）
         if fault_types:
@@ -251,7 +254,10 @@ class MessageFormatter:
             dept_icon = self.department_icons.get(dept_name, "🏭")
 
             message += f"{dept_icon} {dept_name}\n"
-            message += f"   {status_icon} 稼動率 {util_pct:.1%} | {machine_count} 台 | {good_parts:,} 件\n"
+            message += (
+                f"   {status_icon} 稼動率 {util_pct:.1%} | "
+                f"{machine_count} 台 | {good_parts:,} 件\n"
+            )
 
         return TextMessage(text=message)
 

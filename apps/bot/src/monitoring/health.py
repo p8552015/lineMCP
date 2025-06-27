@@ -258,8 +258,12 @@ async def get_health_checker() -> HealthChecker:
     return HealthChecker(service_factory)
 
 
+# 模組級單例變數防止 B008 錯誤
+_health_checker_dependency = Depends(get_health_checker)
+
+
 @router.get("/", response_model=HealthStatus)
-async def health_check(checker: HealthChecker = Depends(get_health_checker)):
+async def health_check(checker: HealthChecker = _health_checker_dependency):
     """
     完整健康檢查端點
 
@@ -281,7 +285,7 @@ async def health_check(checker: HealthChecker = Depends(get_health_checker)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/ping")
@@ -294,7 +298,7 @@ async def ping():
 
 
 @router.get("/ready")
-async def readiness_check(checker: HealthChecker = Depends(get_health_checker)):
+async def readiness_check(checker: HealthChecker = _health_checker_dependency):
     """
     就緒檢查端點
     檢查服務是否準備好處理請求
@@ -329,7 +333,7 @@ async def readiness_check(checker: HealthChecker = Depends(get_health_checker)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+        raise HTTPException(status_code=500, detail={"error": str(e)}) from e
 
 
 @router.get("/live")

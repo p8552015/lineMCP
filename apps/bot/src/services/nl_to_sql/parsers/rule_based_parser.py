@@ -281,7 +281,9 @@ class RuleBasedParser(IParser):
         """
         explanations = {
             QueryType.ALL_MACHINES: "查詢所有機台的狀態概覽",
-            QueryType.FAULT_ANALYSIS: f"分析近 {parameters.get('days', 30)} 天的故障記錄",
+            QueryType.FAULT_ANALYSIS: (
+                f"分析近 {parameters.get('days', 30)} 天的故障記錄"
+            ),
             QueryType.PRODUCTION_STATS: "生產統計報告（按部門）",
             QueryType.MACHINE_STATUS: "查詢機台運行狀態",
         }
@@ -394,7 +396,8 @@ class RuleBasedParser(IParser):
 
             if invalid_patterns:
                 validation_result["errors"].append(
-                    f"查詢類型 {query_type_name} 包含無效的正規表達式: {invalid_patterns}"
+                    f"查詢類型 {query_type_name} 包含無效的正規表達式: "
+                    f"{invalid_patterns}"
                 )
                 validation_result["is_valid"] = False
 

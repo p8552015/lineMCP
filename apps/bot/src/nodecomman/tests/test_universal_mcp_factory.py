@@ -14,10 +14,6 @@ import asyncio
 import sys
 from pathlib import Path
 
-# 添加專案根目錄到 Python 路徑
-project_root = Path(__file__).parent.parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 import structlog
 
 from src.nodecomman.implementations.universal_mcp_factory import (
@@ -25,6 +21,10 @@ from src.nodecomman.implementations.universal_mcp_factory import (
 )
 from src.nodecomman.interfaces.runtime_interfaces import RuntimeType
 from src.nodecomman.interfaces.server_interfaces import MCPServerConfig, MCPServerType
+
+# 添加專案根目錄到 Python 路徑
+project_root = Path(__file__).parent.parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # 設置日誌
 logger = structlog.get_logger()
@@ -266,7 +266,8 @@ class UniversalMCPFactoryTester:
                 server_info = await self.factory.get_server_info(test_server_name)
                 if server_info:
                     print(
-                        f"  📊 服務器資訊: {server_info.config.name} - {server_info.status}"
+                        f"  📊 服務器資訊: {server_info.config.name} - "
+                        f"{server_info.status}"
                     )
 
             print("✅ 服務器生命週期管理測試完成")
@@ -295,7 +296,8 @@ class UniversalMCPFactoryTester:
 
             if postgres_config:
                 print(
-                    f"  📝 PostgreSQL MCP 配置: {postgres_config.command} {' '.join(postgres_config.args)}"
+                    f"  📝 PostgreSQL MCP 配置: {postgres_config.command} "
+                    f"{' '.join(postgres_config.args)}"
                 )
 
                 # 驗證配置（這應該不會再出現 "服務器腳本不存在：-y" 錯誤）

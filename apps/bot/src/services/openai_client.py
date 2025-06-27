@@ -58,7 +58,10 @@ class OpenAIClient:
                 },
                 {
                     "role": "user",
-                    "content": f"Call the {tool_name} tool with parameters: {json.dumps(parameters)}",
+                    "content": (
+                        f"Call the {tool_name} tool with parameters: "
+                        f"{json.dumps(parameters)}"
+                    ),
                 },
             ]
 
@@ -117,10 +120,14 @@ class OpenAIClient:
                     "role": "system",
                     "content": (
                         "You are an assistant for a factory monitoring system. "
-                        "Help users query machine status, trends, and get maintenance suggestions. "
-                        "Use the MCP tools when appropriate. Respond in Traditional Chinese. "
-                        "For queries about multiple machines or complex analysis, you may call "
-                        "multiple tools. Format your response appropriately for the user."
+                        "Help users query machine status, trends, and get maintenance "
+                        "suggestions. "
+                        "Use the MCP tools when appropriate. "
+                        "Respond in Traditional Chinese. "
+                        "For queries about multiple machines or complex analysis, "
+                        "you may call "
+                        "multiple tools. Format your response appropriately "
+                        "for the user."
                     ),
                 },
                 {
