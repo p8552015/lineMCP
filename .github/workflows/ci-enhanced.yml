@@ -371,7 +371,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
-        sarif-file: 'trivy-bot-results.sarif'
+        sarif_file: 'trivy-bot-results.sarif'
     
     - name: Build MCP Servers Docker images
       working-directory: apps/servers

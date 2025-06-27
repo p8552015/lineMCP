@@ -219,7 +219,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif-file: semgrep.sarif
+          sarif_file: semgrep.sarif
 
   container-security:
     name: Container Security Scan
@@ -250,7 +250,7 @@ jobs:
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif-file: 'trivy-results.sarif'
+          sarif_file: 'trivy-results.sarif'
       
       - name: Run Grype vulnerability scanner
         run: |
