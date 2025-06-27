@@ -36,6 +36,7 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.8.3"
   PERFORMANCE_THRESHOLD_P95: "2000"  # 95th percentile response time (ms)
   PERFORMANCE_THRESHOLD_P99: "5000"  # 99th percentile response time (ms)
   ERROR_RATE_THRESHOLD: "1.0"       # Maximum error rate percentage
