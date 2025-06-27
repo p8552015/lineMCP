@@ -44,7 +44,7 @@ class BotError(Exception):
         }
 
 
-class ValidationException(BotError):
+class ValidationError(BotError):
     """輸入驗證異常"""
 
     def __init__(self, field: str, value: Any, reason: str):
@@ -60,7 +60,7 @@ class ValidationException(BotError):
         )
 
 
-class CommandParsingException(BotError):
+class CommandParsingError(BotError):
     """指令解析異常"""
 
     def __init__(self, command: str, reason: str):
@@ -74,7 +74,7 @@ class CommandParsingException(BotError):
         )
 
 
-class DatabaseQueryException(BotError):
+class DatabaseQueryError(BotError):
     """資料庫查詢異常"""
 
     def __init__(self, query: str, reason: str, query_type: str | None = None):
@@ -92,7 +92,7 @@ class DatabaseQueryException(BotError):
         )
 
 
-class MCPConnectionException(BotError):
+class MCPConnectionError(BotError):
     """MCP 連接異常"""
 
     def __init__(self, server: str, operation: str, reason: str):
@@ -106,7 +106,7 @@ class MCPConnectionException(BotError):
         )
 
 
-class AIServiceException(BotError):
+class AIServiceError(BotError):
     """AI 服務異常"""
 
     def __init__(self, service: str, operation: str, reason: str):
@@ -120,7 +120,7 @@ class AIServiceException(BotError):
         )
 
 
-class AuthenticationException(BotError):
+class AuthenticationError(BotError):
     """認證異常"""
 
     def __init__(self, reason: str):
@@ -134,7 +134,7 @@ class AuthenticationException(BotError):
         )
 
 
-class RateLimitException(BotError):
+class RateLimitError(BotError):
     """速率限制異常"""
 
     def __init__(self, limit: int, window: str, current_count: int):
@@ -148,7 +148,7 @@ class RateLimitException(BotError):
         )
 
 
-class ConfigurationException(BotError):
+class ConfigurationError(BotError):
     """配置異常"""
 
     def __init__(self, config_name: str, reason: str):
@@ -162,7 +162,7 @@ class ConfigurationException(BotError):
         )
 
 
-class BusinessLogicException(BotError):
+class BusinessLogicError(BotError):
     """業務邏輯異常"""
 
     def __init__(self, operation: str, reason: str, user_message: str | None = None):
@@ -176,7 +176,7 @@ class BusinessLogicException(BotError):
         )
 
 
-class ExternalServiceException(BotError):
+class ExternalServiceError(BotError):
     """外部服務異常"""
 
     def __init__(
@@ -207,30 +207,28 @@ class ExternalServiceException(BotError):
 
 
 # 便捷的異常工廠函數
-def create_validation_error(field: str, value: Any, reason: str) -> ValidationException:
+def create_validation_error(field: str, value: Any, reason: str) -> ValidationError:
     """創建驗證錯誤"""
-    return ValidationException(field, value, reason)
+    return ValidationError(field, value, reason)
 
 
-def create_command_error(command: str, reason: str) -> CommandParsingException:
+def create_command_error(command: str, reason: str) -> CommandParsingError:
     """創建指令解析錯誤"""
-    return CommandParsingException(command, reason)
+    return CommandParsingError(command, reason)
 
 
 def create_db_error(
     query: str, reason: str, query_type: str | None = None
-) -> DatabaseQueryException:
+) -> DatabaseQueryError:
     """創建資料庫錯誤"""
-    return DatabaseQueryException(query, reason, query_type)
+    return DatabaseQueryError(query, reason, query_type)
 
 
-def create_mcp_error(
-    server: str, operation: str, reason: str
-) -> MCPConnectionException:
+def create_mcp_error(server: str, operation: str, reason: str) -> MCPConnectionError:
     """創建 MCP 連接錯誤"""
-    return MCPConnectionException(server, operation, reason)
+    return MCPConnectionError(server, operation, reason)
 
 
-def create_ai_error(service: str, operation: str, reason: str) -> AIServiceException:
+def create_ai_error(service: str, operation: str, reason: str) -> AIServiceError:
     """創建 AI 服務錯誤"""
-    return AIServiceException(service, operation, reason)
+    return AIServiceError(service, operation, reason)

@@ -135,7 +135,8 @@ class CircularDependencyDetector:
                 self._dependency_graph[from_service].add(to_service)
                 self._dependency_edges.append(edge)
                 logger.debug(
-                    f"添加依賴: {from_service} -> {to_service} ({dependency_type.value})"
+                    f"添加依賴: {from_service} -> {to_service} "
+                    f"({dependency_type.value})"
                 )
             else:
                 logger.warning(f"檢測到循環依賴: {from_service} -> {to_service}")
@@ -178,7 +179,8 @@ class CircularDependencyDetector:
             if self._resolution_stack and self._resolution_stack[-1] == service_name:
                 self._resolution_stack.pop()
                 logger.debug(
-                    f"完成解析服務: {service_name}, 剩餘深度: {len(self._resolution_stack)}"
+                    f"完成解析服務: {service_name}, "
+                    f"剩餘深度: {len(self._resolution_stack)}"
                 )
 
     def _detect_cycles_in_graph(

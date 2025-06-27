@@ -348,7 +348,8 @@ class EnhancedMCPConfig:
             # 比較命令和參數
             if current.get("command") != nodecomman.get("command"):
                 analysis.optimization_suggestions.append(
-                    f"建議更新命令: {current.get('command')} → {nodecomman.get('command')}"
+                    f"建議更新命令: {current.get('command')} → "
+                    f"{nodecomman.get('command')}"
                 )
 
             if current.get("args") != nodecomman.get("args"):

@@ -442,10 +442,10 @@ def get_mcp_config() -> MCPConfigManager:
     if _mcp_config_manager is None:
         # 延遲導入避免循環導入
         try:
-            import os
             from pathlib import Path
 
-            # from pydantic_settings import BaseSettings, SettingsConfigDict  # noqa: F401
+            # from pydantic_settings import BaseSettings, SettingsConfigDict
+            # noqa: F401
 
             # 直接在這裡定義基本設定
             project_root = str(Path(__file__).parent.parent.parent.parent.parent)

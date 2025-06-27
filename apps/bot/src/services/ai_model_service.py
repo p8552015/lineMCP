@@ -267,19 +267,19 @@ class AIModelService:
             column_names = [col.get("name", "") for col in columns]
             schema_info += f"- {table_name}: {', '.join(column_names)}\\n"
 
-        return f"""你是一個專業的資料庫查詢助手。請分析使用者的中文自然語言查詢，理解其意圖並提供結構化回應。
-
-資料庫結構：
-{schema_info}
-
-請以JSON格式回應：
-{{
-    "enhanced_query": "增強後的查詢描述，包含具體的表格和欄位資訊",
-    "query_type": "查詢類型 (machine_status|fault_analysis|production_stats|all_machines|department_status)",
-    "target_entities": ["相關的機台ID、部門名稱等"],
-    "confidence": 0.9,
-    "explanation": "解析說明"
-}}"""
+        return (
+            f"你是一個專業的資料庫查詢助手。請分析使用者的中文自然語言查詢，"
+            f"理解其意圖並提供結構化回應。\n\n"
+            f"資料庫結構：\n{schema_info}\n"
+            f"請以JSON格式回應：\n"
+            f"{{\n"
+            f'    "enhanced_query": "增強後的查詢描述，包含具體的表格和欄位資訊",\n'
+            f'    "query_type": "查詢類型 (machine_status|fault_analysis|production_stats|all_machines|department_status)",\n'
+            f'    "target_entities": ["相關的機台ID、部門名稱等"],\n'
+            f'    "confidence": 0.9,\n'
+            f'    "explanation": "解析說明"\n'
+            f"}}"
+        )
 
     def _build_user_prompt(self, user_query: str) -> str:
         """構建使用者提示詞"""

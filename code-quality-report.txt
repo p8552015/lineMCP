@@ -1,0 +1,7 @@
+38	E501  	line-too-long
+15	B904  	raise-without-from-inside-except
+ 9	E402  	module-import-not-at-top-of-file
+ 4	SIM102	collapsible-if
+ 4	F401  	unused-import
+ 2	B008  	function-call-in-default-argument
+ 1	E722  	bare-except

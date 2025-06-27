@@ -60,7 +60,8 @@ class CommandExecutor:
             message_text: 訊息文字
 
         Returns:
-            tuple[str, list[str]] | None: (指令名稱, 參數列表) 或 None (如果不是有效指令)
+            tuple[str, list[str]] | None: (指令名稱, 參數列表) 或 None
+                (如果不是有效指令)
         """
         message = message_text.strip()
 

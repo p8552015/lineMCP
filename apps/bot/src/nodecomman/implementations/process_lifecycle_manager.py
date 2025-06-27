@@ -308,7 +308,8 @@ class ProcessLifecycleManager:
                 managed_process.metrics.restart_count += 1
                 managed_process.metrics.last_restart_time = time.time()
                 logger.info(
-                    f"✅ 進程 {process_id} 重啟成功 (第{managed_process.metrics.restart_count}次)"
+                    f"✅ 進程 {process_id} 重啟成功 "
+                    f"(第{managed_process.metrics.restart_count}次)"
                 )
                 return True
             else:
@@ -468,7 +469,9 @@ class ProcessLifecycleManager:
                 "config": {
                     "restart_policy": managed_process.config.restart_policy.value,
                     "max_restarts": managed_process.config.max_restart_attempts,
-                    "health_check_interval": managed_process.config.health_check_interval,
+                    "health_check_interval": (
+                        managed_process.config.health_check_interval
+                    ),
                 },
             }
 

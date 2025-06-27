@@ -215,7 +215,8 @@ class UniversalMCPServerFactory(IMCPServerFactory):
                 server_info.started_at = __import__("time").time()
 
                 logger.info(
-                    f"✅ MCP 服務器 {server_name} 啟動成功 (PID: {server_info.process_id})"
+                    f"✅ MCP 服務器 {server_name} 啟動成功 "
+                    f"(PID: {server_info.process_id})"
                 )
                 return True
             else:

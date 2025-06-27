@@ -134,7 +134,9 @@
       "Bash(npm install:*)",
       "Bash(markdownlint:*)",
       "Bash(yamllint:*)",
-      "Bash(./scripts/actions-version-manager.sh:*)"
+      "Bash(./scripts/actions-version-manager.sh:*)",
+      "Bash(pre-commit:*)",
+      "Bash(./scripts/fix-code-quality.sh:*)"
     ],
     "deny": []
   }

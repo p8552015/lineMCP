@@ -61,7 +61,10 @@ class TablesCommandHandler(CommandHandler):
         mcp_client = await self.context.get_mcp_client()
 
         # PostgreSQL 查詢所有資料表
-        query = "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
+        query = (
+            "SELECT table_name as name FROM information_schema.tables "
+            "WHERE table_schema = 'public' ORDER BY table_name"
+        )
         result = await mcp_client.call_tool("postgres", "query", {"sql": query})
 
         parser = MCPResponseParser()

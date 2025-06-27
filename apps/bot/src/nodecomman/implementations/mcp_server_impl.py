@@ -141,7 +141,8 @@ class MCPServerImpl(IMCPServer):
             if await self.start():
                 self._restart_count += 1
                 logger.info(
-                    f"✅ MCP 服務器 {self._config.name} 重啟成功 (第{self._restart_count}次)"
+                    f"✅ MCP 服務器 {self._config.name} 重啟成功 "
+                    f"(第{self._restart_count}次)"
                 )
                 return True
             else:

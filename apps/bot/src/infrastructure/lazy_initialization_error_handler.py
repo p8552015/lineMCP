@@ -155,7 +155,8 @@ class LazyInitializationErrorHandler:
                 self.errors.append(error)
 
                 logger.warning(
-                    f"❌ {self.config.service_name} 初始化失敗 (嘗試 {attempt + 1}/{self.config.max_retry_attempts})",
+                    f"❌ {self.config.service_name} 初始化失敗 "
+                    f"(嘗試 {attempt + 1}/{self.config.max_retry_attempts})",
                     error=str(e),
                 )
 
@@ -306,7 +307,8 @@ class LazyInitializationErrorHandler:
             self._recovery_attempts = 1
 
         logger.info(
-            f"🔧 嘗試自動恢復 {self.config.service_name} (第{self._recovery_attempts}次)"
+            f"🔧 嘗試自動恢復 {self.config.service_name} "
+            f"(第{self._recovery_attempts}次)"
         )
         self.state = InitializationState.RECOVERING
 
