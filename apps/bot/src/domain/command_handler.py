@@ -4,6 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from linebot.v3.messaging import Message
 
@@ -88,14 +89,14 @@ class CommandContext:
 
     def __init__(
         self,
-        mcp_client_factory,
-        ai_model_service,
-        nl_service,
-        db_service,
-        formatter,
-        service_factory=None,
-        openai_client=None,
-    ):
+        mcp_client_factory: Any,
+        ai_model_service: Any,
+        nl_service: Any,
+        db_service: Any,
+        formatter: Any,
+        service_factory: Any = None,
+        openai_client: Any = None,
+    ) -> None:
         """
         初始化指令上下文
 
@@ -116,7 +117,7 @@ class CommandContext:
         self.service_factory = service_factory
         self.openai_client = openai_client
 
-    async def get_mcp_client(self):
+    async def get_mcp_client(self) -> Any:
         """獲取 MCP 客戶端"""
         return await self.mcp_client_factory()
 
@@ -127,11 +128,11 @@ class CommandRegistry:
     管理所有可用的指令處理器
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._handlers: dict[str, CommandHandler] = {}
         self._aliases: dict[str, str] = {}
 
-    def register(self, handler: CommandHandler):
+    def register(self, handler: CommandHandler) -> None:
         """
         註冊指令處理器
 
@@ -212,7 +213,7 @@ class CommandRegistry:
 
 
 # 全域指令註冊表實例
-_command_registry: CommandRegistry = None
+_command_registry: CommandRegistry | None = None
 
 
 def get_command_registry() -> CommandRegistry:

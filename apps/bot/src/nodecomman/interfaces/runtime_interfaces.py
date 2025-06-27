@@ -392,4 +392,4 @@ class IProcessLifecycleManager(ABC):
         """
         pass
         # AsyncGenerator 需要 yield，這裡是抽象方法的聲明
-        yield  # 讓 Python 知道這是 generator 函數
+        yield ""  # 讓 Python 知道這是 generator 函數，提供預設值

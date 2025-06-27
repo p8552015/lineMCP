@@ -172,7 +172,7 @@ class IParserFactory(ABC):
     """
 
     @abstractmethod
-    def create_parser(self, parser_type: str, **kwargs) -> IParser:
+    def create_parser(self, parser_type: str, **kwargs: Any) -> IParser:
         """
         創建指定類型的解析器
 

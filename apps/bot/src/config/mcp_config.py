@@ -89,7 +89,7 @@ class NLToSQLConfig:
 class MCPConfigManager:
     """MCP 配置管理器 - 統一配置管理"""
 
-    def __init__(self, settings=None):
+    def __init__(self, settings: Any = None) -> None:
         """初始化配置管理器"""
         self.settings = settings
         self._servers: dict[str, MCPServerConfig] = {}
@@ -101,7 +101,7 @@ class MCPConfigManager:
             self._init_default_servers()
             self._init_nl_to_sql_config()
 
-    def _init_default_servers(self):
+    def _init_default_servers(self) -> None:
         """初始化預設服務器配置"""
 
         # PostgreSQL STDIO 服務器 (主要數據庫)
@@ -136,7 +136,7 @@ class MCPConfigManager:
                 retry_delay=1.0,
             )
 
-    def _init_nl_to_sql_config(self):
+    def _init_nl_to_sql_config(self) -> None:
         """初始化 NL-to-SQL 配置"""
         # 嘗試從環境變數覆蓋配置
         env_config = self._load_nl_to_sql_env_config()
@@ -280,13 +280,13 @@ class MCPConfigManager:
 
         return extracted_config
 
-    def _apply_nl_to_sql_env_config(self, env_config: dict[str, Any]):
+    def _apply_nl_to_sql_env_config(self, env_config: dict[str, Any]) -> None:
         """應用環境變數配置到 NL-to-SQL 設定"""
         for key, value in env_config.items():
             if hasattr(self._nl_to_sql_config, key):
                 setattr(self._nl_to_sql_config, key, value)
 
-    def _apply_nl_to_sql_yaml_config(self, yaml_config: dict[str, Any]):
+    def _apply_nl_to_sql_yaml_config(self, yaml_config: dict[str, Any]) -> None:
         """應用 YAML 配置到 NL-to-SQL 設定"""
         for key, value in yaml_config.items():
             if hasattr(self._nl_to_sql_config, key):
@@ -296,7 +296,7 @@ class MCPConfigManager:
         """獲取服務器配置"""
         return self._servers.get(server_name)
 
-    def add_server_config(self, config: MCPServerConfig):
+    def add_server_config(self, config: MCPServerConfig) -> None:
         """添加服務器配置"""
         self._servers[config.name] = config
 
@@ -308,7 +308,7 @@ class MCPConfigManager:
         """獲取客戶端配置"""
         return self._client_config
 
-    def update_client_config(self, **kwargs):
+    def update_client_config(self, **kwargs: Any) -> None:
         """更新客戶端配置"""
         for key, value in kwargs.items():
             if hasattr(self._client_config, key):
@@ -318,7 +318,7 @@ class MCPConfigManager:
         """獲取 NL-to-SQL 配置"""
         return self._nl_to_sql_config
 
-    def update_nl_to_sql_config(self, **kwargs):
+    def update_nl_to_sql_config(self, **kwargs: Any) -> None:
         """更新 NL-to-SQL 配置"""
         for key, value in kwargs.items():
             if hasattr(self._nl_to_sql_config, key):
@@ -451,8 +451,8 @@ def get_mcp_config() -> MCPConfigManager:
             project_root = str(Path(__file__).parent.parent.parent.parent.parent)
 
             # 創建一個簡單的設定物件
-            class SimpleSettings:
-                def __init__(self):
+            class SimpleSettings:  # type: ignore
+                def __init__(self) -> None:
                     self.project_root = project_root
 
             simple_settings = SimpleSettings()
@@ -485,6 +485,6 @@ def get_nl_to_sql_config_dict() -> dict[str, Any]:
     return get_mcp_config().get_nl_to_sql_config_dict()
 
 
-def update_nl_to_sql_config(**kwargs):
+def update_nl_to_sql_config(**kwargs: Any) -> None:
     """更新 NL-to-SQL 配置的便利函數"""
     return get_mcp_config().update_nl_to_sql_config(**kwargs)

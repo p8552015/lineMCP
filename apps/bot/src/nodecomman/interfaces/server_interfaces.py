@@ -114,7 +114,9 @@ class MCPServerInfo:
     def uptime(self) -> float:
         """計算當前運行時間"""
         if self.started_at and self.status == MCPServerStatus.RUNNING:
-            return __import__("time").time() - self.started_at
+            import time
+
+            return time.time() - self.started_at
         return 0.0
 
     @property
