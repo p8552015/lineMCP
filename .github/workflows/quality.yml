@@ -257,26 +257,112 @@ jobs:
     timeout-minutes: 5
     needs: [python-quality, python-complexity, docker-quality, documentation-quality]
     if: always()
+    permissions:
+      contents: read
+      actions: read
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
       - name: Quality Gates Summary
         run: |
-          # DEBUG: Test GITHUB_STEP_SUMMARY variable first
-          echo "Testing GITHUB_STEP_SUMMARY variable..."
-          echo "GITHUB_STEP_SUMMARY=$GITHUB_STEP_SUMMARY"
+          # Ensure GITHUB_STEP_SUMMARY is set
+          if [ -z "$GITHUB_STEP_SUMMARY" ]; then
+            echo "ERROR: GITHUB_STEP_SUMMARY is not set"
+            exit 1
+          fi
           
-          # Test basic write functionality
-          echo "# Quality Summary Test" >> $GITHUB_STEP_SUMMARY
+          echo "Writing to: $GITHUB_STEP_SUMMARY"
+          
+          # Write step summary
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+# Code Quality Report
+
+**Execution Time**: $(date)
+**Branch**: ${{ github.ref_name }}
+**Commit**: ${{ github.sha }}
+**Event**: ${{ github.event_name }}
+
+## Results Summary
+
+EOF
+
+          # Add results using echo commands for variable substitution
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Test write successful: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "### Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Use safer English text to avoid encoding issues
-          echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          # Track statistics
+          total_checks=0
+          passed_checks=0
+          
+          # Python Quality Check
+          total_checks=$((total_checks + 1))
+          if [ "${{ needs.python-quality.result }}" == "success" ]; then
+            echo "✅ **Python Code Quality**: PASSED" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **Python Code Quality**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Python Complexity Check
+          total_checks=$((total_checks + 1))
+          if [ "${{ needs.python-complexity.result }}" == "success" ]; then
+            echo "✅ **Code Complexity**: PASSED" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **Code Complexity**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Docker Quality Check
+          total_checks=$((total_checks + 1))
+          if [ "${{ needs.docker-quality.result }}" == "success" ]; then
+            echo "✅ **Docker Quality**: PASSED" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **Docker Quality**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Documentation Quality Check
+          total_checks=$((total_checks + 1))
+          if [ "${{ needs.documentation-quality.result }}" == "success" ]; then
+            echo "✅ **Documentation Quality**: PASSED" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **Documentation Quality**: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Commit Quality (PR only)
+          echo "⏸️ **Commit Quality**: SKIPPED (PR events only)" >> $GITHUB_STEP_SUMMARY
+          
+          # Calculate pass rate
+          if [ $total_checks -gt 0 ]; then
+            pass_rate=$((passed_checks * 100 / total_checks))
+          else
+            pass_rate=0
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Check Time**: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Checks**: $total_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **Passed**: $passed_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pass Rate**: ${pass_rate}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $pass_rate -eq 100 ]; then
+            echo "🎉 **Status**: All quality checks passed!" >> $GITHUB_STEP_SUMMARY
+          elif [ $pass_rate -ge 80 ]; then
+            echo "⚠️ **Status**: Most checks passed, some need attention" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🚨 **Status**: Multiple checks failed, requires immediate fix" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Review failed check logs for details" >> $GITHUB_STEP_SUMMARY
+          echo "- Run local checks: \`cd apps/bot && poetry run black src/\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Check documentation: \`markdownlint *.md\`" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
