@@ -133,7 +133,8 @@
       "Bash(git rm:*)",
       "Bash(npm install:*)",
       "Bash(markdownlint:*)",
-      "Bash(yamllint:*)"
+      "Bash(yamllint:*)",
+      "Bash(./scripts/actions-version-manager.sh:*)"
     ],
     "deny": []
   }

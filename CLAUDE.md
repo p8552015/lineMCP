@@ -123,6 +123,13 @@ docker exec line_mcp_postgres psql -U admin -d mydb     # 連接資料庫
 ./github-actions-detector.sh --workflow ci      # 檢測特定 workflow
 ./github-actions-detector.sh --report           # 僅生成報告
 ./github-actions-detector.sh --help             # 顯示幫助
+
+# GitHub Actions 版本管理 🆕
+./scripts/actions-version-manager.sh --scan --report        # 掃描並生成版本報告
+./scripts/actions-version-manager.sh --security-scan        # 執行安全檢查
+./scripts/actions-version-manager.sh --check-updates        # 檢查可用更新
+./scripts/actions-version-manager.sh --update actions/checkout  # 更新特定 Action
+./scripts/actions-version-manager.sh --backup               # 備份 workflows
 ```
 
 ## 核心架構設計

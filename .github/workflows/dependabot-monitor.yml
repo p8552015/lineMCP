@@ -1,0 +1,328 @@
+name: 🤖 Dependabot PR 監控與自動化
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  pull_request_review:
+    types: [submitted]
+
+# 僅在 Dependabot PR 上執行
+jobs:
+  dependabot-monitor:
+    name: 🔍 Dependabot PR 分析與自動化
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: read
+      actions: read
+    
+    steps:
+      - name: 🛒 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: 🔍 分析 Dependabot PR 類型
+        id: analyze-pr
+        run: |
+          echo "🔍 分析 Dependabot PR 內容..."
+          
+          # 獲取 PR 詳細資訊
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          echo "PR Title: $PR_TITLE"
+          
+          # 判斷更新類型
+          if echo "$PR_TITLE" | grep -i "github-actions"; then
+            UPDATE_TYPE="github-actions"
+            echo "update_type=github-actions" >> $GITHUB_OUTPUT
+          elif echo "$PR_TITLE" | grep -i "pip\|python"; then
+            UPDATE_TYPE="python"
+            echo "update_type=python" >> $GITHUB_OUTPUT
+          elif echo "$PR_TITLE" | grep -i "npm\|node"; then
+            UPDATE_TYPE="nodejs"
+            echo "update_type=nodejs" >> $GITHUB_OUTPUT
+          else
+            UPDATE_TYPE="other"
+            echo "update_type=other" >> $GITHUB_OUTPUT
+          fi
+          
+          # 判斷更新級別
+          if echo "$PR_TITLE" | grep -E "patch|fix"; then
+            UPDATE_LEVEL="patch"
+            echo "update_level=patch" >> $GITHUB_OUTPUT
+          elif echo "$PR_TITLE" | grep -E "minor|feat"; then
+            UPDATE_LEVEL="minor"
+            echo "update_level=minor" >> $GITHUB_OUTPUT
+          elif echo "$PR_TITLE" | grep -E "major|breaking"; then
+            UPDATE_LEVEL="major"
+            echo "update_level=major" >> $GITHUB_OUTPUT
+          else
+            UPDATE_LEVEL="unknown"
+            echo "update_level=unknown" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "🎯 檢測到 $UPDATE_TYPE 的 $UPDATE_LEVEL 級別更新"
+      
+      - name: 🔒 GitHub Actions 安全檢查
+        if: steps.analyze-pr.outputs.update_type == 'github-actions'
+        run: |
+          echo "🔍 執行 GitHub Actions 安全檢查..."
+          
+          # 檢查修改的檔案
+          git diff --name-only HEAD~1 HEAD | grep -E "\.yml$|\.yaml$" | head -10
+          
+          # 檢查是否包含不安全的版本標籤
+          if git diff HEAD~1 HEAD | grep -E "@main|@master|@latest"; then
+            echo "⚠️ 檢測到不安全的版本標籤！"
+            echo "unsafe_versions=true" >> $GITHUB_ENV
+          else
+            echo "✅ 版本標籤安全檢查通過"
+            echo "unsafe_versions=false" >> $GITHUB_ENV
+          fi
+          
+          # 檢查是否為已知安全 Actions
+          KNOWN_SAFE_ACTIONS=(
+            "actions/checkout"
+            "actions/setup-python"
+            "actions/setup-node"
+            "actions/cache"
+            "actions/upload-artifact"
+            "github/codeql-action"
+            "snok/install-poetry"
+          )
+          
+          SAFE_ACTIONS_FOUND=false
+          for action in "${KNOWN_SAFE_ACTIONS[@]}"; do
+            if git diff HEAD~1 HEAD | grep -q "$action"; then
+              echo "✅ 檢測到已知安全的 Action: $action"
+              SAFE_ACTIONS_FOUND=true
+              break
+            fi
+          done
+          
+          echo "safe_actions_found=$SAFE_ACTIONS_FOUND" >> $GITHUB_ENV
+      
+      - name: 🐍 Python 依賴安全檢查
+        if: steps.analyze-pr.outputs.update_type == 'python'
+        run: |
+          echo "🔍 執行 Python 依賴安全檢查..."
+          
+          # 檢查是否有 poetry.lock 變更
+          if git diff --name-only HEAD~1 HEAD | grep -q "poetry.lock"; then
+            echo "📦 檢測到 Poetry 依賴變更"
+            
+            # 檢查是否為安全更新
+            if git diff HEAD~1 HEAD apps/bot/poetry.lock | grep -i -E "security|cve|vulnerability"; then
+              echo "🔒 檢測到安全相關更新"
+              echo "security_update=true" >> $GITHUB_ENV
+            else
+              echo "📈 一般依賴更新"
+              echo "security_update=false" >> $GITHUB_ENV
+            fi
+          fi
+      
+      - name: 🎯 設定自動合併條件
+        id: auto-merge-check
+        run: |
+          echo "🤖 評估自動合併條件..."
+          
+          AUTO_MERGE=false
+          REASON=""
+          
+          # 條件 1: patch 級別更新且為安全 Actions
+          if [[ "${{ steps.analyze-pr.outputs.update_level }}" == "patch" ]] && \
+             [[ "${{ steps.analyze-pr.outputs.update_type }}" == "github-actions" ]] && \
+             [[ "${{ env.safe_actions_found }}" == "true" ]] && \
+             [[ "${{ env.unsafe_versions }}" == "false" ]]; then
+            AUTO_MERGE=true
+            REASON="安全 GitHub Actions patch 更新"
+          fi
+          
+          # 條件 2: Python 安全更新
+          if [[ "${{ steps.analyze-pr.outputs.update_type }}" == "python" ]] && \
+             [[ "${{ env.security_update }}" == "true" ]] && \
+             [[ "${{ steps.analyze-pr.outputs.update_level }}" != "major" ]]; then
+            AUTO_MERGE=true
+            REASON="Python 安全依賴更新"
+          fi
+          
+          echo "auto_merge=$AUTO_MERGE" >> $GITHUB_OUTPUT
+          echo "reason=$REASON" >> $GITHUB_OUTPUT
+          
+          if [[ "$AUTO_MERGE" == "true" ]]; then
+            echo "✅ 滿足自動合併條件: $REASON"
+          else
+            echo "⏸️ 不滿足自動合併條件，需要人工審查"
+          fi
+      
+      - name: 📋 添加 PR 標籤與評論
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            const updateType = '${{ steps.analyze-pr.outputs.update_type }}';
+            const updateLevel = '${{ steps.analyze-pr.outputs.update_level }}';
+            const autoMerge = '${{ steps.auto-merge-check.outputs.auto_merge }}';
+            const reason = '${{ steps.auto-merge-check.outputs.reason }}';
+            
+            // 添加標籤
+            const labels = ['dependabot', `update-${updateType}`, `level-${updateLevel}`];
+            
+            if (autoMerge === 'true') {
+              labels.push('auto-merge-candidate');
+            } else {
+              labels.push('needs-review');
+            }
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+            
+            // 添加評論
+            let comment = `## 🤖 Dependabot PR 自動分析報告\n\n`;
+            comment += `**更新類型**: ${updateType}\n`;
+            comment += `**更新級別**: ${updateLevel}\n`;
+            comment += `**自動合併**: ${autoMerge === 'true' ? '✅ 符合條件' : '❌ 需要審查'}\n`;
+            
+            if (autoMerge === 'true') {
+              comment += `**原因**: ${reason}\n\n`;
+              comment += `🚀 此 PR 符合自動合併條件，將在 CI 檢查通過後自動合併。\n`;
+            } else {
+              comment += `\n⚠️ 此 PR 需要人工審查，原因:\n`;
+              if (updateLevel === 'major') comment += `- 主版本更新可能包含破壞性變更\n`;
+              if (updateType === 'other') comment += `- 未知更新類型需要仔細檢查\n`;
+              if ('${{ env.unsafe_versions }}' === 'true') comment += `- 檢測到不安全的版本標籤\n`;
+            }
+            
+            comment += `\n### 📋 檢查清單\n`;
+            comment += `- [ ] 檢查變更內容是否符合預期\n`;
+            comment += `- [ ] 確認沒有破壞性變更\n`;
+            comment += `- [ ] 驗證 CI 檢查全部通過\n`;
+            comment += `- [ ] 測試關鍵功能正常運行\n`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: ⏱️ 等待 CI 檢查完成
+        if: steps.auto-merge-check.outputs.auto_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            
+            // 等待其他檢查完成
+            let allChecksComplete = false;
+            let attempts = 0;
+            const maxAttempts = 30; // 最多等待 15 分鐘
+            
+            while (!allChecksComplete && attempts < maxAttempts) {
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.payload.pull_request.head.sha
+              });
+              
+              const pendingChecks = checks.check_runs.filter(check => 
+                check.status === 'in_progress' || check.status === 'queued'
+              );
+              
+              if (pendingChecks.length === 0) {
+                allChecksComplete = true;
+                console.log('✅ 所有檢查已完成');
+              } else {
+                console.log(`⏳ 等待 ${pendingChecks.length} 個檢查完成...`);
+                await new Promise(resolve => setTimeout(resolve, 30000)); // 等待 30 秒
+                attempts++;
+              }
+            }
+            
+            if (!allChecksComplete) {
+              console.log('⚠️ 檢查等待超時，將跳過自動合併');
+              process.exit(1);
+            }
+      
+      - name: 🔄 執行自動合併
+        if: steps.auto-merge-check.outputs.auto_merge == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { context } = require('@actions/github');
+            
+            try {
+              // 檢查 PR 狀態
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              
+              if (pr.mergeable_state !== 'clean') {
+                console.log(`❌ PR 狀態不允許合併: ${pr.mergeable_state}`);
+                return;
+              }
+              
+              // 執行合併
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                commit_title: `🤖 自動合併 Dependabot PR: ${pr.title}`,
+                commit_message: `自動合併原因: ${{ steps.auto-merge-check.outputs.reason }}\n\n🤖 Generated with Dependabot Monitor`,
+                merge_method: 'squash'
+              });
+              
+              console.log('✅ 自動合併完成');
+              
+              // 添加合併確認評論
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `✅ **自動合併完成**\n\n此 PR 已通過所有安全檢查並自動合併。\n\n原因: ${{ steps.auto-merge-check.outputs.reason }}`
+              });
+              
+            } catch (error) {
+              console.log(`❌ 自動合併失敗: ${error.message}`);
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `❌ **自動合併失敗**\n\n錯誤訊息: ${error.message}\n\n請手動檢查並合併此 PR。`
+              });
+            }
+
+  dependabot-summary:
+    name: 📊 Dependabot 監控總結
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    needs: dependabot-monitor
+    
+    steps:
+      - name: 📊 生成監控報告
+        run: |
+          echo "## 🤖 Dependabot 監控執行完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR #${{ github.event.number }}**: ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**執行時間**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 處理結果" >> $GITHUB_STEP_SUMMARY
+          echo "- 已完成自動化安全檢查" >> $GITHUB_STEP_SUMMARY
+          echo "- 已添加適當的標籤分類" >> $GITHUB_STEP_SUMMARY
+          echo "- 已評估自動合併條件" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "詳細資訊請查看 PR 評論。" >> $GITHUB_STEP_SUMMARY
