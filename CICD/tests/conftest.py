@@ -10,12 +10,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-# 添加 src 到 Python path
-src_path = Path(__file__).parent.parent / "apps" / "bot" / "src"
+# 添加 src 到 Python path - 修正為專案根目錄/apps/bot/src
+src_path = Path(__file__).parent.parent.parent / "apps" / "bot" / "src"
 sys.path.insert(0, str(src_path))
 
-# 載入測試環境變數
-env_test_file = Path(__file__).parent.parent / "apps" / "bot" / ".env.test"
+# 載入測試環境變數 - 修正為專案根目錄/apps/bot/.env.test
+env_test_file = Path(__file__).parent.parent.parent / "apps" / "bot" / ".env.test"
 if env_test_file.exists():
     from dotenv import load_dotenv
 
