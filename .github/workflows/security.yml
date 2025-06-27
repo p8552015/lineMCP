@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0  # 完整歷史記錄掃描
       
       - name: 🔍 TruffleHog 機密掃描
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.89.2
         with:
           path: ./
           base: main

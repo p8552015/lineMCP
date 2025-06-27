@@ -145,7 +145,7 @@ jobs:
             APP_GID=1000
 
       - name: 🔍 Trivy 漏洞掃描
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: test-image:${{ matrix.target }}
           format: 'sarif'
@@ -161,7 +161,7 @@ jobs:
           category: 'trivy-${{ matrix.target }}'
 
       - name: 🔍 Trivy 表格格式報告
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: test-image:${{ matrix.target }}
           format: 'table'

@@ -47,5 +47,17 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+      - "security"
     commit-message:
       prefix: "ci"
+      include: "scope"
+    # 自動合併低風險更新
+    allow:
+      - dependency-type: "direct"
+        update-type: "version-update:semver-patch"
+      - dependency-type: "direct"
+        update-type: "version-update:semver-minor"
+    # 忽略特定 Actions (如有需要)
+    ignore:
+      - dependency-name: "actions/*"
+        update-types: ["version-update:semver-major"]
