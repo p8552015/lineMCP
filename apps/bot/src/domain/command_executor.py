@@ -12,6 +12,7 @@ from src.domain.command_handler import (
     get_command_registry,
 )
 from src.domain.exceptions import create_command_error, create_validation_error
+
 # 移除對 models.commands 的依賴，改用內建解析邏輯
 
 logger = structlog.get_logger()
@@ -49,7 +50,9 @@ class CommandExecutor:
             f"指令執行器初始化完成，註冊了 {len(self.registry.list_commands())} 個指令"
         )
 
-    def parse_and_validate_command(self, message_text: str) -> tuple[str, list[str]] | None:
+    def parse_and_validate_command(
+        self, message_text: str
+    ) -> tuple[str, list[str]] | None:
         """
         解析並驗證指令，只依賴註冊表中的指令
 
@@ -136,9 +139,7 @@ class CommandExecutor:
 
         command_name, args = parsed_result
 
-        logger.info(
-            "執行指令", user_id=user_id, command=command_name, args=args
-        )
+        logger.info("執行指令", user_id=user_id, command=command_name, args=args)
 
         try:
             # 獲取指令處理器

@@ -5,18 +5,16 @@
 """
 
 import asyncio
-import json
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any
 
-import httpx
 import structlog
 
 from src.config import get_settings
-from .ai_model_service import AIModelService, ModelProvider, ModelConfig
+
+from .ai_model_service import AIModelService, ModelConfig, ModelProvider
 
 logger = structlog.get_logger()
 settings = get_settings()
@@ -48,11 +46,11 @@ class RateLimiter:
 
         # 檢查每分鐘限制
         minute_calls = [t for t in calls if now - t < 60]
-        if len(minute_calls) >= getattr(config, 'rate_limit_per_minute', 30):
+        if len(minute_calls) >= getattr(config, "rate_limit_per_minute", 30):
             return False
 
         # 檢查每小時限制
-        return not len(calls) >= getattr(config, 'rate_limit_per_hour', 1000)
+        return not len(calls) >= getattr(config, "rate_limit_per_hour", 1000)
 
     def record_call(self, model_name: str):
         """記錄 API 調用"""
@@ -65,7 +63,7 @@ class RateLimiter:
 
         # 檢查分鐘限制
         minute_calls = [t for t in calls if now - t < 60]
-        rate_limit = getattr(config, 'rate_limit_per_minute', 30)
+        rate_limit = getattr(config, "rate_limit_per_minute", 30)
         if len(minute_calls) >= rate_limit:
             # 等到最早的調用過期
             return 60 - (now - minute_calls[0]) + 1
@@ -79,7 +77,7 @@ class EnhancedAIModelService(AIModelService):
     def __init__(self):
         # 調用父類初始化
         super().__init__()
-        
+
         # 增強功能初始化
         self.fallback_models = self._get_fallback_models()
         self.rate_limiter = RateLimiter()
@@ -149,21 +147,21 @@ class EnhancedAIModelService(AIModelService):
                 result = await self._call_model_with_retry(
                     user_query, database_schema, model
                 )
-                
+
                 # 記錄成功
                 self._model_health[model]["failures"] = 0
                 self._model_health[model]["last_success"] = time.time()
-                
+
                 logger.info(f"✅ 模型 {model} 調用成功")
                 return result
-                
+
             except Exception as e:
                 logger.warning(f"❌ 模型 {model} 調用失敗: {e}")
                 self._model_health[model]["failures"] += 1
-                
+
                 # 如果不是最後一個模型，繼續嘗試下一個
                 if model != target_models[-1]:
-                    logger.info(f"🔄 切換到備用模型...")
+                    logger.info("🔄 切換到備用模型...")
                     continue
 
         # 所有模型都失敗了
@@ -175,7 +173,7 @@ class EnhancedAIModelService(AIModelService):
     ) -> tuple[str, float]:
         """帶重試機制的模型調用"""
         config = self.models[model_name]
-        
+
         for attempt in range(self.retry_config.max_retries + 1):
             try:
                 # 速率限制檢查
@@ -249,19 +247,23 @@ class EnhancedAIModelService(AIModelService):
         models = []
         for name, config in self.models.items():
             health = self._model_health[name]
-            models.append({
-                "name": name,
-                "provider": config.provider.value,
-                "max_tokens": config.max_tokens,
-                "cost_per_1k_input": config.cost_per_1k_input,
-                "cost_per_1k_output": config.cost_per_1k_output,
-                "free_tier_limit": config.free_tier_limit,
-                "context_window": config.context_window,
-                "rate_limit_per_minute": getattr(config, 'rate_limit_per_minute', 30),
-                "rate_limit_per_hour": getattr(config, 'rate_limit_per_hour', 1000),
-                "failures": health["failures"],
-                "healthy": health["failures"] < 3,
-                "is_default": name == self.default_model,
-                "is_fallback": name in self.fallback_models,
-            })
+            models.append(
+                {
+                    "name": name,
+                    "provider": config.provider.value,
+                    "max_tokens": config.max_tokens,
+                    "cost_per_1k_input": config.cost_per_1k_input,
+                    "cost_per_1k_output": config.cost_per_1k_output,
+                    "free_tier_limit": config.free_tier_limit,
+                    "context_window": config.context_window,
+                    "rate_limit_per_minute": getattr(
+                        config, "rate_limit_per_minute", 30
+                    ),
+                    "rate_limit_per_hour": getattr(config, "rate_limit_per_hour", 1000),
+                    "failures": health["failures"],
+                    "healthy": health["failures"] < 3,
+                    "is_default": name == self.default_model,
+                    "is_fallback": name in self.fallback_models,
+                }
+            )
         return models

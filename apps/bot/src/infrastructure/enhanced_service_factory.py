@@ -38,24 +38,22 @@ from src.services.unified_mcp_client import get_unified_mcp_client
 
 # 整合 nodecomman 架構
 try:
-    from src.services.enhanced_mcp_client import get_enhanced_mcp_client
     from src.config.enhanced_mcp_config import get_enhanced_mcp_config
+    from src.services.enhanced_mcp_client import get_enhanced_mcp_client
+
     ENHANCED_MCP_AVAILABLE = True
 except ImportError:
     ENHANCED_MCP_AVAILABLE = False
 
 # 循環依賴檢測
-from .circular_dependency_detector import get_circular_dependency_detector
-from .dependency_injection_guard import (
-    DependencyInjectionGuard,
-    dependency_guard,
-    get_dependency_guard,
-)
-
 from .application_services_registry import register_application_services
+from .circular_dependency_detector import get_circular_dependency_detector
 
 # 模組化註冊器
 from .core_services_registry import register_core_services
+from .dependency_injection_guard import (
+    get_dependency_guard,
+)
 from .infrastructure_services_registry import register_infrastructure_services
 from .service_factory_interface import IServiceFactory
 from .service_registry import (
@@ -83,7 +81,7 @@ class EnhancedServiceFactory(IServiceFactory):
         self._registry = registry or get_service_registry()
         self._provider: ServiceProvider | None = None
         self._initialized = False
-        
+
         # 循環依賴檢測器
         self._dependency_detector = get_circular_dependency_detector()
         self._dependency_guard = get_dependency_guard()
@@ -104,7 +102,7 @@ class EnhancedServiceFactory(IServiceFactory):
         register_core_services(self._registry)
         register_application_services(self._registry)
         register_infrastructure_services(self._registry)
-        
+
         # 註冊 nodecomman 增強服務
         self._register_enhanced_mcp_services()
 
@@ -128,22 +126,24 @@ class EnhancedServiceFactory(IServiceFactory):
             self.initialize()
 
         # 使用依賴防護進行安全注入
-        service_name = getattr(service_type, '__name__', str(service_type))
-        
+        service_name = getattr(service_type, "__name__", str(service_type))
+
         try:
             # 檢查是否正在解析此服務（避免循環）
             if not self._dependency_detector.begin_resolution(service_name):
                 logger.warning(f"檢測到循環依賴，跳過服務創建: {service_name}")
                 return None
-            
+
             try:
                 service = self._provider.get_service(service_type)
                 if service:
-                    self._dependency_detector.register_service_type(service_name, service_type)
+                    self._dependency_detector.register_service_type(
+                        service_name, service_type
+                    )
                 return service
             finally:
                 self._dependency_detector.end_resolution(service_name)
-                
+
         except Exception as e:
             logger.warning(f"服務獲取失敗 {service_name}: {e}")
             return self._provider.get_service(service_type)
@@ -203,27 +203,27 @@ class EnhancedServiceFactory(IServiceFactory):
             info["by_tag"][tag] = len(services)
 
         return info
-    
+
     def get_dependency_health_report(self) -> dict[str, Any]:
         """
         獲取依賴健康狀況報告
-        
+
         Returns:
             包含循環依賴檢測、風險分析等的健康報告
         """
         try:
             # 獲取系統健康狀況
             health_status = self._dependency_guard.check_system_health()
-            
+
             # 獲取註冊表資訊
             registry_info = self.get_registry_info()
-            
+
             # 獲取依賴圖摘要
             graph_summary = self._dependency_detector.get_dependency_graph_summary()
-            
+
             # 獲取風險分析
             risk_analysis = self._dependency_detector.analyze_dependency_risks()
-            
+
             report = {
                 "timestamp": time.time(),
                 "overall_status": health_status["status"],
@@ -231,24 +231,30 @@ class EnhancedServiceFactory(IServiceFactory):
                 "factory_info": {
                     "initialized": self._initialized,
                     "provider_available": self._provider is not None,
-                    "registry_services": registry_info["total_services"]
+                    "registry_services": registry_info["total_services"],
                 },
                 "dependency_graph": graph_summary,
                 "risk_analysis": {
-                    "high_risk_services": len(risk_analysis.get("high_risk_services", [])),
+                    "high_risk_services": len(
+                        risk_analysis.get("high_risk_services", [])
+                    ),
                     "total_dependencies": risk_analysis.get("total_dependencies", 0),
-                    "recommendations": risk_analysis.get("recommendations", [])
+                    "recommendations": risk_analysis.get("recommendations", []),
                 },
                 "issues": health_status.get("issues", []),
-                "recommendations": health_status.get("recommendations", [])
+                "recommendations": health_status.get("recommendations", []),
             }
-            
+
             # 添加具體的高風險服務詳情
             if risk_analysis.get("high_risk_services"):
-                report["high_risk_services_detail"] = risk_analysis["high_risk_services"][:5]  # 顯示前5個
-            
+                report["high_risk_services_detail"] = risk_analysis[
+                    "high_risk_services"
+                ][
+                    :5
+                ]  # 顯示前5個
+
             return report
-            
+
         except Exception as e:
             logger.error(f"獲取依賴健康報告失敗: {e}")
             return {
@@ -257,19 +263,19 @@ class EnhancedServiceFactory(IServiceFactory):
                 "error": str(e),
                 "factory_info": {
                     "initialized": self._initialized,
-                    "provider_available": self._provider is not None
-                }
+                    "provider_available": self._provider is not None,
+                },
             }
-    
+
     def _register_enhanced_mcp_services(self):
         """註冊 nodecomman 增強 MCP 服務"""
         if not ENHANCED_MCP_AVAILABLE:
             logger.info("⚠️ nodecomman 增強服務不可用，跳過註冊")
             return
-        
+
         try:
             logger.info("📋 註冊 nodecomman 增強 MCP 服務")
-            
+
             # 註冊增強型 MCP 客戶端
             self._registry.register(
                 service_type=type(get_enhanced_mcp_client()),
@@ -278,11 +284,15 @@ class EnhancedServiceFactory(IServiceFactory):
                 tags=["mcp", "enhanced", "nodecomman"],
                 metadata={
                     "description": "增強型 MCP 客戶端，整合 nodecomman 架構",
-                    "features": ["multi-runtime", "lifecycle-management", "fallback-support"],
-                    "version": "1.0.0"
-                }
+                    "features": [
+                        "multi-runtime",
+                        "lifecycle-management",
+                        "fallback-support",
+                    ],
+                    "version": "1.0.0",
+                },
             )
-            
+
             # 註冊增強型 MCP 配置
             self._registry.register(
                 service_type=type(get_enhanced_mcp_config()),
@@ -291,27 +301,33 @@ class EnhancedServiceFactory(IServiceFactory):
                 tags=["config", "enhanced", "nodecomman"],
                 metadata={
                     "description": "增強型 MCP 配置管理，支援運行時檢測和驗證",
-                    "features": ["runtime-detection", "config-validation", "optimization-suggestions"],
-                    "version": "1.0.0"
-                }
+                    "features": [
+                        "runtime-detection",
+                        "config-validation",
+                        "optimization-suggestions",
+                    ],
+                    "version": "1.0.0",
+                },
             )
-            
+
             logger.info("✅ nodecomman 增強服務註冊完成")
-            
+
         except Exception as e:
             logger.error(f"❌ 註冊 nodecomman 增強服務失敗: {e}")
-    
+
     # 基本 MCP 服務方法（與原有服務工廠兼容）
     def get_mcp_config(self):
         """獲取 MCP 配置管理器"""
         from src.config.mcp_config import get_mcp_config
+
         return get_mcp_config()
-    
+
     def get_mcp_connection_pool(self):
         """獲取 MCP 連接池"""
         from src.services.mcp_connection_pool import get_connection_pool
+
         return get_connection_pool()
-    
+
     def get_enhanced_mcp_client(self):
         """獲取增強型 MCP 客戶端"""
         if ENHANCED_MCP_AVAILABLE:
@@ -320,7 +336,7 @@ class EnhancedServiceFactory(IServiceFactory):
             # 回退到統一 MCP 客戶端
             logger.warning("⚠️ 增強型 MCP 客戶端不可用，使用統一 MCP 客戶端")
             return get_unified_mcp_client()
-    
+
     def get_enhanced_mcp_config(self):
         """獲取增強型 MCP 配置"""
         if ENHANCED_MCP_AVAILABLE:
@@ -329,6 +345,7 @@ class EnhancedServiceFactory(IServiceFactory):
             # 回退到基礎配置
             logger.warning("⚠️ 增強型 MCP 配置不可用，使用基礎配置")
             from src.config.mcp_config import get_mcp_config
+
             return get_mcp_config()
 
     # 保持與原有 ServiceFactory 的兼容性
@@ -424,6 +441,7 @@ class EnhancedServiceFactory(IServiceFactory):
     def get_application_facade(self):
         """獲取應用門面實例"""
         from src.application.application_facade import ApplicationFacade
+
         return ApplicationFacade(self)
 
 

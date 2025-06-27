@@ -111,7 +111,7 @@ cd apps/bot && poetry install
 
 # 查看服務日誌
 tail -f apps/bot/logs/webhook.log
-tail -f apps/bot/logs/sqlite-mcp.log
+tail -f apps/bot/logs/postgres-mcp.log
 
 # Docker 服務管理 🆕
 docker-compose -f docker-compose.postgres.yml up -d     # 啟動 PostgreSQL MCP
@@ -166,7 +166,7 @@ docker exec line_mcp_postgres psql -U admin -d mydb     # 連接資料庫
 ### MCP 相關
 - **生產級 MCP 修復** - 解決 macOS KqueueSelector 掛起問題
 - **統一 MCP 客戶端** - `UnifiedMCPClient` 抽象層
-- **MCP 服務器** - SQLite MCP 在 port 3003
+- **MCP 服務器** - PostgreSQL MCP 通過 Docker 容器運行
 - **PostgreSQL MCP** 🆕 - Docker 化 PostgreSQL MCP 服務器 (postgresql://admin:admin@localhost:5432/mydb)
 - **多運行時支援** 🆕 - 支援 Node.js (npx) 和 Python 運行時
 - **連接池管理** 🆕 - 自動進程健康檢查和錯誤恢復機制
@@ -288,7 +288,7 @@ ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
 - ✅ 系統核心功能驗證通過（26個服務註冊、6個指令處理器）
 
 ### MCP KeyError 修復 (2025-06-23) ✅
-- **問題修復**: 解決 LINE Bot 實際接收訊息時出現的 `'sqlite'` KeyError
+- **問題修復**: 解決 LINE Bot 實際接收訊息時出現的 `'postgres'` KeyError
 - **根本原因**: 連接池狀態與實際進程狀態不同步
 - **修復內容**:
   - 在 `call_tool` 方法中添加進程存在性檢查
@@ -309,9 +309,10 @@ ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
 ## 常見問題處理
 
 ### MCP 連接失敗
-1. 檢查 SQLite MCP 服務器是否運行在 port 3003
+1. 檢查 PostgreSQL MCP Docker 容器是否正常運行：`docker ps`
 2. 執行 `./start-production.sh test` 進行診斷
 3. 確認環境變數 `ASYNCIO_FORCE_SELECT_SELECTOR=1`
+4. 驗證 PostgreSQL 資料庫連接：`docker exec line_mcp_postgres psql -U admin -d mydb`
 
 ### 模組導入錯誤
 1. 確保在 `apps/bot` 目錄下執行
@@ -322,6 +323,75 @@ ApplicationFacade → IServiceFactory ← EnhancedServiceFactory
 1. 驗證 API key 是否正確設置
 2. 檢查 `AI_MODEL_PROVIDER` 環境變數
 3. 確認 Gemini 或 OpenAI 配額是否充足
+
+## PostgreSQL 語法範例 🆕
+
+### 常用查詢語法
+系統已完全遷移到 PostgreSQL，以下是常用的 SQL 語法範例：
+
+#### 查看表格結構
+```sql
+-- 查看所有表格
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public';
+
+-- 查看特定表格的欄位結構
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns 
+WHERE table_name = 'machine_data' 
+AND table_schema = 'public';
+```
+
+#### 基本數據查詢
+```sql
+-- 查詢機台稼動率
+SELECT machine_id, utilization_rate, timestamp
+FROM machine_data 
+WHERE machine_id = 'M001'
+ORDER BY timestamp DESC 
+LIMIT 10;
+
+-- 彙總查詢
+SELECT 
+    machine_id,
+    AVG(utilization_rate) as avg_utilization,
+    COUNT(*) as record_count
+FROM machine_data 
+WHERE timestamp >= NOW() - INTERVAL '1 day'
+GROUP BY machine_id;
+```
+
+#### 系統管理查詢
+```sql
+-- 查看資料庫連接
+SELECT datname, usename, client_addr, state 
+FROM pg_stat_activity 
+WHERE datname = current_database();
+
+-- 查看表格大小
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
+FROM pg_tables 
+WHERE schemaname = 'public'
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+```
+
+### MCP 工具調用語法
+透過 LINE Bot 使用 PostgreSQL MCP 的標準語法：
+
+```bash
+# 基本查詢指令
+/sql SELECT * FROM machine_data LIMIT 5
+
+# 查看表格結構
+/sql SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'machine_data'
+
+# 機台稼動率查詢
+/sql SELECT machine_id, AVG(utilization_rate) as avg_rate FROM machine_data WHERE machine_id = 'M001' GROUP BY machine_id
+```
 
 ## 代碼生命週期管理 🆕
 

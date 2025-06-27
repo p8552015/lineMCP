@@ -14,7 +14,6 @@
 - 可擴展新的配置格式
 """
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +48,12 @@ class ConfigurationService(IConfiguration):
             config_base_path: 配置檔案基礎路徑，預設為模組內的 config 目錄
         """
         # 環境變數優先級：NL_TO_SQL_CONFIG_DIR > 傳入參數 > 預設路徑
-        env_config_dir = os.getenv("NL_TO_SQL_CONFIG_DIR")
+        from src.config import get_settings
+
+        settings = get_settings()
+        env_config_dir = (
+            settings.nl_to_sql_config_dir if settings.nl_to_sql_config_dir else None
+        )
 
         if env_config_dir:
             self._config_base_path = Path(env_config_dir)
@@ -323,32 +327,33 @@ class ConfigurationService(IConfiguration):
         """
         env_config = {}
 
+        # 使用統一的 settings 物件取代直接的環境變數存取
+        from src.config import get_settings
+
+        settings = get_settings()
+
         # NL-to-SQL 功能開關
-        nl_to_sql_enabled = os.getenv("NL_TO_SQL_ENABLED", "true").lower() == "true"
+        nl_to_sql_enabled = settings.nl_to_sql_enabled
         env_config["nl_to_sql_enabled"] = nl_to_sql_enabled
 
         # 組合解析器設定
-        fallback_threshold = float(
-            os.getenv("COMPOSITE_PARSER_FALLBACK_THRESHOLD", "0.5")
-        )
+        fallback_threshold = settings.composite_parser_fallback_threshold
         env_config["composite_parser_fallback_threshold"] = fallback_threshold
 
         # 統計功能開關
-        enable_statistics = (
-            os.getenv("ENABLE_QUERY_STATISTICS", "true").lower() == "true"
-        )
+        enable_statistics = settings.enable_query_statistics
         env_config["enable_query_statistics"] = enable_statistics
 
         # AI 解析器超時設定 (毫秒)
-        ai_timeout = int(os.getenv("AI_PARSER_TIMEOUT", "3000"))
+        ai_timeout = settings.ai_parser_timeout
         env_config["ai_parser_timeout"] = ai_timeout
 
         # 規則解析器快取大小
-        cache_size = int(os.getenv("RULE_PARSER_CACHE_SIZE", "1000"))
+        cache_size = settings.rule_parser_cache_size
         env_config["rule_parser_cache_size"] = cache_size
 
         # 配置熱更新開關
-        hot_reload = os.getenv("ENABLE_CONFIG_HOT_RELOAD", "false").lower() == "true"
+        hot_reload = settings.enable_config_hot_reload
         env_config["enable_config_hot_reload"] = hot_reload
 
         logger.info(

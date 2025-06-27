@@ -465,7 +465,7 @@ install_dependencies() {
         
         # 安裝生產依賴
         echo -e "${CYAN}安裝生產環境依賴...${NC}"
-        poetry install --only=main --sync --no-dev 2>/dev/null || poetry install --no-dev
+        poetry install --only=main 2>/dev/null || poetry install --without=dev
         
         # 可選：安裝開發依賴（包含測試框架）
         if [[ "${INSTALL_DEV_DEPS:-}" == "true" ]]; then
@@ -1106,6 +1106,313 @@ except:
     fi
 }
 
+# 函數：機台稼動率超時修復回退機制測試
+run_fallback_mechanism_test() {
+    echo -e "\n${BLUE}🔄 機台稼動率超時修復回退機制測試...${NC}"
+    
+    cd "$BOT_DIR"
+    export PYTHONPATH="$BOT_DIR/src:$PYTHONPATH"
+    
+    echo -e "${CYAN}🎯 測試 CompositeParser 回退機制和 SuggestionService 智能建議...${NC}"
+    
+    # 執行專門的回退機制測試
+    python3 -c "
+import asyncio
+import sys
+import json
+import time
+from datetime import datetime
+sys.path.insert(0, 'src')
+
+async def run_fallback_tests():
+    try:
+        from src.infrastructure.enhanced_service_factory import EnhancedServiceFactory
+        from src.application.application_facade import ApplicationFacade
+        
+        print('🏗️ 初始化回退機制測試環境...')
+        factory = EnhancedServiceFactory()
+        factory.initialize()
+        
+        facade = ApplicationFacade(factory)
+        await facade.initialize()
+        
+        # 測試結果記錄
+        test_results = {
+            'timestamp': datetime.now().isoformat(),
+            'test_type': 'fallback_mechanism',
+            'tests': [],
+            'summary': {'total': 0, 'passed': 0, 'failed': 0},
+            'performance': {}
+        }
+        
+        # 測試 1: M001機台稼動率 - 回退機制驗證
+        print('\\n📊 測試 1: M001機台稼動率回退機制 (AI失敗→規則解析)')
+        print('=' * 60)
+        
+        start_time = time.time()
+        try:
+            result = await facade.process_message(
+                user_id='test_fallback_m001',
+                message_text='M001機台稼動率',
+                reply_token='test_fallback_token'
+            )
+            
+            elapsed_time = time.time() - start_time
+            
+            if result and 'response' in result:
+                response_text = result['response']
+                
+                # 檢查回退機制是否正常工作
+                success_indicators = [
+                    'M001' in response_text,
+                    '稼動率' in response_text,
+                    elapsed_time < 25.0,  # 新的超時設定：25秒
+                    len(response_text) > 50  # 確保有實質內容
+                ]
+                
+                passed = all(success_indicators)
+                
+                test_results['tests'].append({
+                    'name': 'M001機台稼動率回退機制',
+                    'status': 'PASSED' if passed else 'FAILED',
+                    'response_time_seconds': round(elapsed_time, 2),
+                    'timeout_check': elapsed_time < 25.0,
+                    'contains_m001': 'M001' in response_text,
+                    'contains_utilization': '稼動率' in response_text,
+                    'response_length': len(response_text),
+                    'response_preview': response_text[:100] + '...' if len(response_text) > 100 else response_text
+                })
+                
+                test_results['performance']['m001_response_time'] = elapsed_time
+                
+                if passed:
+                    print('✅ M001機台稼動率回退機制測試通過')
+                    print(f'   ⏱️ 響應時間: {elapsed_time:.2f}秒 (< 25秒)')
+                    print(f'   📝 回應內容: \"{response_text[:80]}...\"')
+                    print(f'   🎯 包含關鍵詞: M001={\"✅\" if \"M001\" in response_text else \"❌\"}, 稼動率={\"✅\" if \"稼動率\" in response_text else \"❌\"}')
+                    test_results['summary']['passed'] += 1
+                else:
+                    print('❌ M001機台稼動率回退機制測試失敗')
+                    print(f'   ⏱️ 響應時間: {elapsed_time:.2f}秒')
+                    print(f'   📝 回應內容: \"{response_text[:80]}...\"')
+                    test_results['summary']['failed'] += 1
+            else:
+                print('❌ M001機台稼動率無回應')
+                test_results['tests'].append({
+                    'name': 'M001機台稼動率回退機制',
+                    'status': 'FAILED',
+                    'error': 'No response received',
+                    'response_time_seconds': elapsed_time
+                })
+                test_results['summary']['failed'] += 1
+                
+        except Exception as e:
+            elapsed_time = time.time() - start_time
+            print(f'❌ M001機台稼動率回退機制測試異常: {e}')
+            test_results['tests'].append({
+                'name': 'M001機台稼動率回退機制',
+                'status': 'ERROR',
+                'error': str(e),
+                'response_time_seconds': elapsed_time
+            })
+            test_results['summary']['failed'] += 1
+        
+        test_results['summary']['total'] += 1
+        
+        # 測試 2: 未知查詢 - SuggestionService 智能建議測試
+        print('\\n💡 測試 2: SuggestionService 智能建議機制')
+        print('=' * 60)
+        
+        start_time = time.time()
+        try:
+            result = await facade.process_message(
+                user_id='test_suggestion',
+                message_text='不明確的機台查詢',
+                reply_token='test_suggestion_token'
+            )
+            
+            elapsed_time = time.time() - start_time
+            
+            if result and 'response' in result:
+                response_text = result['response']
+                
+                # 檢查智能建議是否正常工作
+                suggestion_indicators = [
+                    '建議' in response_text or '推薦' in response_text or '可以' in response_text,
+                    '機台' in response_text,
+                    len(response_text) > 100,  # 建議應該充實
+                    elapsed_time < 10.0  # 建議生成應該很快
+                ]
+                
+                passed = sum(suggestion_indicators) >= 3
+                
+                test_results['tests'].append({
+                    'name': 'SuggestionService 智能建議',
+                    'status': 'PASSED' if passed else 'FAILED',
+                    'response_time_seconds': round(elapsed_time, 2),
+                    'contains_suggestion_keywords': '建議' in response_text or '推薦' in response_text,
+                    'contains_machine_keywords': '機台' in response_text,
+                    'response_length': len(response_text),
+                    'response_preview': response_text[:150] + '...' if len(response_text) > 150 else response_text
+                })
+                
+                test_results['performance']['suggestion_response_time'] = elapsed_time
+                
+                if passed:
+                    print('✅ SuggestionService 智能建議測試通過')
+                    print(f'   ⏱️ 響應時間: {elapsed_time:.2f}秒')
+                    print(f'   💬 建議內容: \"{response_text[:100]}...\"')
+                    print(f'   🎯 智能程度: {\"✅ 高\" if len(response_text) > 200 else \"⚠️ 中等\"}')
+                    test_results['summary']['passed'] += 1
+                else:
+                    print('❌ SuggestionService 智能建議測試失敗')
+                    print(f'   💬 建議內容: \"{response_text[:100]}...\"')
+                    test_results['summary']['failed'] += 1
+            else:
+                print('❌ SuggestionService 無建議回應')
+                test_results['tests'].append({
+                    'name': 'SuggestionService 智能建議',
+                    'status': 'FAILED',
+                    'error': 'No suggestion response',
+                    'response_time_seconds': elapsed_time
+                })
+                test_results['summary']['failed'] += 1
+                
+        except Exception as e:
+            elapsed_time = time.time() - start_time
+            print(f'❌ SuggestionService 智能建議測試異常: {e}')
+            test_results['tests'].append({
+                'name': 'SuggestionService 智能建議',
+                'status': 'ERROR',
+                'error': str(e),
+                'response_time_seconds': elapsed_time
+            })
+            test_results['summary']['failed'] += 1
+        
+        test_results['summary']['total'] += 1
+        
+        # 測試 3: 超時壓力測試 - 25秒內響應驗證
+        print('\\n⏱️ 測試 3: 超時修復驗證 (25秒內響應)')
+        print('=' * 60)
+        
+        timeout_tests = [
+            'M001機台今天的稼動率',
+            '查詢所有CNC機台狀態',
+            '最近的機台故障記錄'
+        ]
+        
+        timeout_passed = 0
+        for i, query in enumerate(timeout_tests, 1):
+            start_time = time.time()
+            try:
+                result = await facade.process_message(
+                    user_id=f'test_timeout_{i}',
+                    message_text=query,
+                    reply_token=f'test_timeout_token_{i}'
+                )
+                
+                elapsed_time = time.time() - start_time
+                within_timeout = elapsed_time < 25.0
+                
+                if within_timeout and result:
+                    timeout_passed += 1
+                    print(f'  ✅ 查詢 {i}: \"{query}\" - {elapsed_time:.2f}秒')
+                else:
+                    print(f'  ❌ 查詢 {i}: \"{query}\" - {elapsed_time:.2f}秒 (超時或無回應)')
+                    
+            except Exception as e:
+                elapsed_time = time.time() - start_time
+                print(f'  ❌ 查詢 {i}: \"{query}\" - 異常: {e}')
+        
+        timeout_test_passed = timeout_passed >= 2  # 至少2/3通過
+        
+        test_results['tests'].append({
+            'name': '超時修復驗證',
+            'status': 'PASSED' if timeout_test_passed else 'FAILED',
+            'passed_queries': timeout_passed,
+            'total_queries': len(timeout_tests),
+            'success_rate': f'{(timeout_passed/len(timeout_tests)*100):.1f}%'
+        })
+        
+        if timeout_test_passed:
+            test_results['summary']['passed'] += 1
+        else:
+            test_results['summary']['failed'] += 1
+        
+        test_results['summary']['total'] += 1
+        
+        # 清理資源
+        await facade.shutdown()
+        
+        # 輸出測試總結
+        print('\\n📊 回退機制測試總結')
+        print('=' * 60)
+        print(f'總測試數: {test_results[\"summary\"][\"total\"]}')
+        print(f'通過: {test_results[\"summary\"][\"passed\"]}')
+        print(f'失敗: {test_results[\"summary\"][\"failed\"]}')
+        print(f'成功率: {(test_results[\"summary\"][\"passed\"] / test_results[\"summary\"][\"total\"] * 100):.1f}%')
+        
+        # 效能統計
+        if 'performance' in test_results and test_results['performance']:
+            print('\\n⚡ 效能統計:')
+            for key, value in test_results['performance'].items():
+                print(f'  {key}: {value:.2f}秒')
+        
+        # 保存測試結果
+        with open('fallback_test_results.json', 'w', encoding='utf-8') as f:
+            json.dump(test_results, f, ensure_ascii=False, indent=2)
+        
+        print(f'\\n📁 回退機制測試結果已保存至: fallback_test_results.json')
+        
+        # 返回是否所有測試通過
+        all_tests_passed = test_results['summary']['failed'] == 0
+        return all_tests_passed
+        
+    except Exception as e:
+        print(f'❌ 回退機制測試框架異常: {e}')
+        import traceback
+        traceback.print_exc()
+        return False
+
+# 運行測試
+result = asyncio.run(run_fallback_tests())
+sys.exit(0 if result else 1)
+" 2>/dev/null
+    
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✅ 回退機制測試完全通過${NC}"
+        echo -e "${CYAN}📊 測試結果詳情：${NC}"
+        echo -e "  📁 測試結果文件：$BOT_DIR/fallback_test_results.json"
+        
+        if [ -f "$BOT_DIR/fallback_test_results.json" ]; then
+            echo -e "${CYAN}📋 回退機制測試結果預覽：${NC}"
+            python3 -c "
+import json
+try:
+    with open('fallback_test_results.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    
+    print(f'  🔄 M001回退機制: {\"✅ 通過\" if any(t.get(\"name\") == \"M001機台稼動率回退機制\" and t.get(\"status\") == \"PASSED\" for t in data[\"tests\"]) else \"❌ 失敗\"}')
+    print(f'  💡 智能建議系統: {\"✅ 通過\" if any(t.get(\"name\") == \"SuggestionService 智能建議\" and t.get(\"status\") == \"PASSED\" for t in data[\"tests\"]) else \"❌ 失敗\"}')
+    print(f'  ⏱️ 超時修復驗證: {\"✅ 通過\" if any(t.get(\"name\") == \"超時修復驗證\" and t.get(\"status\") == \"PASSED\" for t in data[\"tests\"]) else \"❌ 失敗\"}')
+    
+    # 顯示效能統計
+    if 'performance' in data and data['performance']:
+        print('  📈 效能統計:')
+        for key, value in data['performance'].items():
+            print(f'    {key}: {value}秒')
+except:
+    print('  ⚠️ 無法讀取回退機制測試結果文件')
+" 2>/dev/null
+        fi
+        return 0
+    else
+        echo -e "${RED}❌ 回退機制測試失敗${NC}"
+        echo -e "${YELLOW}💡 建議檢查 CompositeParser 和 SuggestionService 配置${NC}"
+        return 1
+    fi
+}
+
 # 函數：啟動服務（生產級）
 start_services() {
     echo -e "\n${BLUE}🚀 啟動生產級 LINE Bot 服務...${NC}"
@@ -1168,6 +1475,7 @@ show_help() {
     echo -e "  ${GREEN}test${NC}           僅運行系統測試"
     echo -e "  ${GREEN}test-full${NC}      運行完整測試套件"
     echo -e "  ${GREEN}test-production${NC} 運行生產查詢測試"
+  echo -e "  ${GREEN}test-fallback${NC}   測試回退機制和智能建議"
     echo -e "  ${GREEN}check-ci${NC}       檢測 GitHub Actions CI/CD 狀態"
     echo -e "  ${GREEN}check-ci-report${NC} 生成 CI/CD 狀態報告"
     echo -e "  ${GREEN}install${NC}        智能安裝依賴"
@@ -1186,6 +1494,7 @@ show_help() {
     echo -e "  $0 quick          # 快速啟動"
     echo -e "  $0 test           # 僅測試"
     echo -e "  $0 test-production # 生產查詢測試"
+  echo -e "  $0 test-fallback   # 回退機制測試"
     echo -e "  $0 check-ci       # 檢測 CI/CD 狀態"
     echo -e "  $0 install-dev    # 安裝開發環境"
     echo -e ""
@@ -1479,6 +1788,12 @@ case "${1:-start}" in
         check_python_env
         install_dependencies
         run_production_query_test
+        ;;
+    "test-fallback")
+        echo -e "${BLUE}🔄 執行回退機制和智能建議測試${NC}"
+        check_python_env
+        install_dependencies
+        run_fallback_mechanism_test
         ;;
     "check-ci")
         echo -e "${BLUE}🤖 執行 GitHub Actions CI/CD 檢測${NC}"

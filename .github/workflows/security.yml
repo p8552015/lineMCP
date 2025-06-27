@@ -1,4 +1,4 @@
-name: Security & Compliance Checks (Simplified)
+name: Security & Compliance Checks (Enhanced)
 
 on:
   push:
@@ -8,39 +8,76 @@ on:
   schedule:
     # 每天凌晨 2 點執行安全掃描
     - cron: '0 2 * * *'
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.8.3"
 
 jobs:
-  basic-security-check:
-    name: Basic Security Check
+  secrets-detection:
+    name: 🔍 機密檢測
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整歷史記錄掃描
       
-      - name: Basic secrets detection
+      - name: 🔍 TruffleHog 機密掃描
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+        continue-on-error: true
+      
+      - name: 🔍 基本機密模式檢查
         run: |
-          echo "🔍 執行基本安全檢查..."
+          echo "🔍 執行基本機密檢查..."
           
-          # 簡單的機密檢查（不使用外部工具）
-          if grep -r -i "password\|secret\|token\|key" apps/bot/src/ --include="*.py" | grep -E "(=|:)\s*['\"][^'\"]{10,}['\"]"; then
-            echo "⚠️ 發現可能的硬編碼機密"
-            echo "請檢查以上項目是否為實際機密"
-          else
+          # 檢查常見機密模式
+          secret_patterns=(
+            "password\s*=\s*['\"][^'\"]{8,}['\"]"
+            "secret\s*=\s*['\"][^'\"]{20,}['\"]"
+            "token\s*=\s*['\"][^'\"]{20,}['\"]"
+            "api_key\s*=\s*['\"][^'\"]{20,}['\"]"
+            "['\"][A-Za-z0-9]{32,}['\"]"
+          )
+          
+          found_secrets=false
+          for pattern in "${secret_patterns[@]}"; do
+            if grep -r -E -i "$pattern" apps/bot/src/ --include="*.py"; then
+              echo "⚠️ 發現可能的硬編碼機密: $pattern"
+              found_secrets=true
+            fi
+          done
+          
+          if [ "$found_secrets" = false ]; then
             echo "✅ 基本機密檢查通過"
+          else
+            echo "❌ 發現潛在機密，請檢查"
+            # 不立即失敗，讓其他檢查繼續
           fi
           
-          # 檢查環境變數使用是否正確
-          echo "📋 檢查環境變數使用..."
-          grep -r "os.environ\|getenv" apps/bot/src/ --include="*.py" | head -5
-          echo "✅ 環境變數檢查完成"
+          # 檢查環境變數使用
+          echo "📋 檢查環境變數使用模式..."
+          env_usage=$(grep -r "os.environ\|getenv" apps/bot/src/ --include="*.py" | wc -l)
+          echo "發現 $env_usage 處環境變數使用"
+          
+          if [ $env_usage -gt 0 ]; then
+            echo "✅ 正確使用環境變數"
+          else
+            echo "⚠️ 未發現環境變數使用"
+          fi
 
-  python-security-check:
-    name: Python Security Check (Basic)
+  code-security-analysis:
+    name: 🐍 代碼安全分析
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
       - name: Checkout code
@@ -52,101 +89,245 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       
       - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.8.0
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      - name: Basic Python security check
+      - name: Install dependencies
         working-directory: apps/bot
         run: |
-          echo "🐍 執行 Python 基本安全檢查..."
-          
-          # 檢查 Poetry 鎖定文件是否存在
-          if [ -f "poetry.lock" ]; then
-            echo "✅ poetry.lock 存在，依賴版本已鎖定"
-          else
-            echo "⚠️ poetry.lock 不存在"
-          fi
-          
-          # 簡單的依賴檢查（不安裝外部工具）
-          poetry export -f requirements.txt --output requirements-check.txt --without-hashes || true
-          
-          if [ -f "requirements-check.txt" ]; then
-            echo "📦 主要依賴套件："
-            head -10 requirements-check.txt
-            echo "✅ 依賴導出成功"
-          fi
-          
-          # 基本的代碼安全模式檢查
-          echo "🔍 檢查常見安全問題..."
-          if grep -r "eval\|exec\|subprocess.call" src/ --include="*.py" | head -3; then
-            echo "⚠️ 發現潛在的代碼執行風險，請檢查"
-          else
-            echo "✅ 未發現明顯的代碼執行風險"
-          fi
+          poetry config installer.parallel true
+          poetry install --no-interaction --with dev
+      
+      - name: 🔍 Bandit 安全掃描
+        working-directory: apps/bot
+        run: |
+          echo "🔍 執行 Bandit 安全掃描..."
+          poetry run bandit -r src/ -f json -o bandit-report.json || true
+          poetry run bandit -r src/ -ll || echo "⚠️ 發現安全問題，請檢查"
+      
+      - name: 📤 Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-security-report
+          path: apps/bot/bandit-report.json
+      
+      - name: 🔍 Safety 依賴漏洞檢查
+        working-directory: apps/bot
+        run: |
+          echo "🔍 執行依賴安全檢查..."
+          poetry run safety check --json --output safety-report.json || echo "⚠️ 發現依賴漏洞"
+          poetry run safety check || echo "⚠️ 依賴安全檢查發現問題"
+      
+      - name: 📤 Upload Safety Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safety-vulnerability-report
+          path: apps/bot/safety-report.json
 
-  basic-compliance:
-    name: Basic Compliance Check
+  codeql-analysis:
+    name: 🧬 CodeQL 分析
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'python' ]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  compliance-check:
+    name: 📋 合規性檢查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Basic compliance verification
+      - name: 🔍 項目結構合規檢查
         run: |
-          echo "📋 執行基本合規檢查..."
+          echo "📋 執行項目結構合規檢查..."
           
-          # 檢查是否有 LICENSE 文件
+          compliance_issues=0
+          
+          # 檢查必要文件
+          echo "📄 檢查必要文件..."
           if [ -f "LICENSE" ] || [ -f "LICENSE.md" ] || [ -f "LICENCE" ]; then
-            echo "✅ 發現 LICENSE 文件"
-            ls -la LICENSE* 2>/dev/null || true
+            echo "✅ LICENSE 文件存在"
           else
-            echo "⚠️ 未發現 LICENSE 文件"
+            echo "⚠️ 缺少 LICENSE 文件"
+            compliance_issues=$((compliance_issues + 1))
           fi
           
-          # 檢查是否有 README
-          if [ -f "README.md" ] || [ -f "README.rst" ]; then
-            echo "✅ 發現 README 文件"
+          if [ -f "README.md" ]; then
+            echo "✅ README.md 存在"
           else
-            echo "⚠️ 未發現 README 文件"
+            echo "⚠️ 缺少 README.md"
+            compliance_issues=$((compliance_issues + 1))
           fi
           
-          # 簡單的代碼結構檢查
-          echo "📂 主要目錄結構："
-          find . -type d -name "src" -o -name "tests" -o -name "docs" | head -5
+          if [ -f ".gitignore" ]; then
+            echo "✅ .gitignore 存在"
+          else
+            echo "⚠️ 缺少 .gitignore"
+          fi
           
-          echo "✅ 基本合規檢查完成"
+          # 檢查敏感文件
+          echo "🔒 檢查敏感文件..."
+          sensitive_files=(".env" "*.key" "*.pem" "id_rsa" "id_dsa")
+          for pattern in "${sensitive_files[@]}"; do
+            if find . -name "$pattern" -not -path "./.git/*" | grep -q .; then
+              echo "❌ 發現敏感文件: $pattern"
+              compliance_issues=$((compliance_issues + 1))
+            fi
+          done
+          
+          # 檢查代碼結構
+          echo "📂 檢查代碼結構..."
+          if [ -d "apps/bot/src" ]; then
+            echo "✅ 源代碼目錄結構正確"
+          else
+            echo "⚠️ 源代碼目錄結構異常"
+          fi
+          
+          if [ -d "apps/bot/tests" ] || [ -d "CICD/tests" ]; then
+            echo "✅ 測試目錄存在"
+          else
+            echo "⚠️ 缺少測試目錄"
+          fi
+          
+          # 檢查配置文件
+          echo "⚙️ 檢查配置文件..."
+          if [ -f "apps/bot/pyproject.toml" ]; then
+            echo "✅ Python 項目配置文件存在"
+          else
+            echo "⚠️ 缺少 pyproject.toml"
+          fi
+          
+          echo "📊 合規檢查總結："
+          echo "發現 $compliance_issues 個合規問題"
+          
+          if [ $compliance_issues -eq 0 ]; then
+            echo "✅ 合規檢查全部通過"
+          elif [ $compliance_issues -le 2 ]; then
+            echo "⚠️ 合規檢查基本通過，有輕微問題"
+          else
+            echo "❌ 合規檢查發現較多問題，需要關注"
+          fi
 
   security-summary:
-    name: Security Summary
+    name: 📊 安全檢查總結
     runs-on: ubuntu-latest
-    needs: [basic-security-check, python-security-check, basic-compliance]
+    needs: [secrets-detection, code-security-analysis, codeql-analysis, compliance-check]
     if: always()
+    timeout-minutes: 5
     
     steps:
-      - name: Generate security summary
+      - name: 📊 生成安全檢查總結
         run: |
-          echo "## 🔒 Security Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔒 安全與合規檢查總結" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**檢查時間**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.basic-security-check.result }}" == "success" ]; then
-            echo "✅ Basic Security Check: PASSED" >> $GITHUB_STEP_SUMMARY
+          # 統計各項檢查結果
+          total_checks=4
+          passed_checks=0
+          
+          # 機密檢測結果
+          if [ "${{ needs.secrets-detection.result }}" == "success" ]; then
+            echo "✅ **機密檢測**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Basic Security Check: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **機密檢測**: 失敗" >> $GITHUB_STEP_SUMMARY
           fi
           
-          if [ "${{ needs.python-security-check.result }}" == "success" ]; then
-            echo "✅ Python Security Check: PASSED" >> $GITHUB_STEP_SUMMARY
+          # 代碼安全分析結果
+          if [ "${{ needs.code-security-analysis.result }}" == "success" ]; then
+            echo "✅ **代碼安全分析**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Python Security Check: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **代碼安全分析**: 失敗" >> $GITHUB_STEP_SUMMARY
           fi
           
-          if [ "${{ needs.basic-compliance.result }}" == "success" ]; then
-            echo "✅ Basic Compliance Check: PASSED" >> $GITHUB_STEP_SUMMARY
+          # CodeQL 分析結果
+          if [ "${{ needs.codeql-analysis.result }}" == "success" ]; then
+            echo "✅ **CodeQL 分析**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Basic Compliance Check: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **CodeQL 分析**: 失敗" >> $GITHUB_STEP_SUMMARY
           fi
+          
+          # 合規性檢查結果
+          if [ "${{ needs.compliance-check.result }}" == "success" ]; then
+            echo "✅ **合規性檢查**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **合規性檢查**: 失敗" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # 計算通過率
+          pass_rate=$((passed_checks * 100 / total_checks))
           
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📝 **Note**: This is a simplified security check focused on core functionality." >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 檢查統計" >> $GITHUB_STEP_SUMMARY
+          echo "- **總檢查項**: $total_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **通過項目**: $passed_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **通過率**: ${pass_rate}%" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 安全建議" >> $GITHUB_STEP_SUMMARY
+          echo "- 定期更新依賴套件" >> $GITHUB_STEP_SUMMARY
+          echo "- 監控 CodeQL 安全警告" >> $GITHUB_STEP_SUMMARY
+          echo "- 檢查機密檢測報告" >> $GITHUB_STEP_SUMMARY
+          echo "- 遵循安全編碼最佳實踐" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📋 **詳細報告請查看各 Job 的 Artifacts 和 Security 標籤**" >> $GITHUB_STEP_SUMMARY
+          
+          # 設定整體狀態
+          if [ $pass_rate -ge 75 ]; then
+            echo "🎉 安全檢查總體通過 (${pass_rate}%)"
+          elif [ $pass_rate -ge 50 ]; then
+            echo "⚠️ 安全檢查部分通過 (${pass_rate}%)，需要改進"
+          else
+            echo "❌ 安全檢查未達標 (${pass_rate}%)，需要立即關注"
+          fi
+
+      - name: 🎯 檢查關鍵失敗項目
+        if: |
+          needs.secrets-detection.result == 'failure' || 
+          needs.codeql-analysis.result == 'failure'
+        run: |
+          echo "⚠️ 關鍵安全檢查失敗"
+          echo "機密檢測: ${{ needs.secrets-detection.result }}"
+          echo "CodeQL 分析: ${{ needs.codeql-analysis.result }}"
+          echo "代碼安全分析: ${{ needs.code-security-analysis.result }}"
+          echo "合規檢查: ${{ needs.compliance-check.result }}"
+          # 不強制失敗，讓用戶決定是否需要修復

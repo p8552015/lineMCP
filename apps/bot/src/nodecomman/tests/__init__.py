@@ -36,6 +36,6 @@ TEST_CONFIG = {
 
 __all__ = [
     "TEST_DATA_DIR",
-    "MOCK_DATA_DIR", 
+    "MOCK_DATA_DIR",
     "TEST_CONFIG",
 ]

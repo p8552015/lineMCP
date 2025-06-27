@@ -77,9 +77,10 @@ class InfoCommandHandler(CommandHandler):
 
     def _is_production(self) -> bool:
         """檢查是否為生產環境"""
-        import os
+        from src.config import get_settings
 
-        return os.getenv("APP_ENV", "development").lower() == "production"
+        settings = get_settings()
+        return settings.app_env.lower() == "production"
 
     def _get_available_features(self) -> list[str]:
         """獲取可用功能列表"""

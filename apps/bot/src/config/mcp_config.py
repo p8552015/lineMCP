@@ -109,7 +109,7 @@ class MCPConfigManager:
             "NODE_ENV": "production",
             "PYTHONUNBUFFERED": "1",
         }
-        
+
         self._servers["postgres"] = MCPServerConfig(
             name="postgres",
             protocol="stdio",
@@ -117,7 +117,7 @@ class MCPConfigManager:
             args=[
                 "-y",
                 "@modelcontextprotocol/server-postgres",
-                "postgresql://admin:admin@localhost:5432/mydb"
+                "postgresql://admin:admin@localhost:5432/mydb",
             ],
             env=postgres_env,
             timeout=30,
@@ -365,7 +365,11 @@ class MCPConfigManager:
                 return False, f"STDIO 服務器 '{server_name}' 缺少 command"
 
             # 檢查命令文件是否存在（對於 npx 命令跳過檢查）
-            if config.command not in ["npx", "node"] and config.args and len(config.args) > 0:
+            if (
+                config.command not in ["npx", "node"]
+                and config.args
+                and len(config.args) > 0
+            ):
                 script_path = config.args[0]
                 if not os.path.exists(script_path):
                     return False, f"服務器腳本不存在：{script_path}"

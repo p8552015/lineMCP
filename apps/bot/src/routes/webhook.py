@@ -115,12 +115,12 @@ async def handle_webhook(
                             event_type=event.get("type", "unknown"), status="skipped"
                         ).inc()
 
-                # 並行處理所有事件，設定 9 秒總超時
+                # 並行處理所有事件，設定 30 秒總超時（與消息處理超時一致）
                 if event_tasks:
                     try:
                         await asyncio.wait_for(
                             asyncio.gather(*event_tasks, return_exceptions=True),
-                            timeout=9.0,
+                            timeout=30.0,
                         )
                         webhook_requests_total.labels(
                             event_type="message", status="success"
@@ -352,7 +352,7 @@ async def handle_text_message_async(event: dict):
 
         # 使用 asyncio.wait_for 設定超時限制，確保不會超過 LINE 的要求
         try:
-            # 設定 8 秒超時（LINE Platform 通常要求 10 秒內回應）
+            # 設定 25 秒超時，足夠處理複雜查詢但避免無限等待
             reply_message = await asyncio.wait_for(
                 message_handler.process_message(
                     user_id=user_id, message_text=message_text, reply_token=reply_token

@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-06-27T00:10:23.278653",
+  "test_type": "fallback_mechanism",
+  "tests": [
+    {
+      "name": "M001機台稼動率回退機制",
+      "status": "FAILED",
+      "error": "No response received",
+      "response_time_seconds": 1.249769926071167
+    },
+    {
+      "name": "SuggestionService 智能建議",
+      "status": "FAILED",
+      "error": "No suggestion response",
+      "response_time_seconds": 25.639163970947266
+    },
+    {
+      "name": "超時修復驗證",
+      "status": "PASSED",
+      "passed_queries": 2,
+      "total_queries": 3,
+      "success_rate": "66.7%"
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 2
+  },
+  "performance": {}
+}

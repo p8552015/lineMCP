@@ -108,7 +108,6 @@ class Settings(BaseSettings):
         return str(current_file.parent.parent.parent.parent)
 
 
-
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

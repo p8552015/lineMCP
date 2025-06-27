@@ -11,8 +11,8 @@ from linebot.v3.messaging import Message, TextMessage
 
 from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import CommandContext
-# 移除對已刪除模組的依賴
 
+# 移除對已刪除模組的依賴
 from .base_service import BaseApplicationService
 
 logger = structlog.get_logger()
@@ -29,7 +29,13 @@ class MessagingApplicationService(BaseApplicationService):
     - 處理用戶會話狀態
     """
 
-    def __init__(self, command_context: CommandContext, nl_service, message_formatter, command_executor: CommandExecutor):
+    def __init__(
+        self,
+        command_context: CommandContext,
+        nl_service,
+        message_formatter,
+        command_executor: CommandExecutor,
+    ):
         """
         初始化訊息處理服務
 
@@ -62,7 +68,9 @@ class MessagingApplicationService(BaseApplicationService):
         """初始化訊息處理服務"""
         # 指令執行器已通過依賴注入提供，無需手動創建
         # 確保指令執行器已初始化
-        if hasattr(self._command_executor, "initialize") and not getattr(self._command_executor, "_initialized", False):
+        if hasattr(self._command_executor, "initialize") and not getattr(
+            self._command_executor, "_initialized", False
+        ):
             self._command_executor.initialize()
 
         self.logger.info("訊息處理服務已初始化")
@@ -150,11 +158,17 @@ class MessagingApplicationService(BaseApplicationService):
         """
         # 使用指令執行器的新解析方法
         if self._command_executor:
-            command_result = self._command_executor.parse_and_validate_command(message_text)
+            command_result = self._command_executor.parse_and_validate_command(
+                message_text
+            )
             return "command" if command_result else "natural_language"
         else:
             # 如果執行器未初始化，簡單檢查是否以 / 開頭
-            return "command" if message_text.strip().startswith("/") else "natural_language"
+            return (
+                "command"
+                if message_text.strip().startswith("/")
+                else "natural_language"
+            )
 
     async def _process_command_message(
         self, user_id: str, message_text: str
@@ -243,7 +257,6 @@ class MessagingApplicationService(BaseApplicationService):
         additional_context: dict[str, Any] | None,
     ) -> None:
         """更新用戶會話資訊"""
-        import time
 
         if user_id not in self._user_sessions:
             self._user_sessions[user_id] = {
@@ -260,7 +273,9 @@ class MessagingApplicationService(BaseApplicationService):
 
         # 更新指令歷史
         if self._command_executor:
-            command_result = self._command_executor.parse_and_validate_command(message_text)
+            command_result = self._command_executor.parse_and_validate_command(
+                message_text
+            )
             if command_result:
                 command_name, args = command_result
                 session["last_command"] = command_name

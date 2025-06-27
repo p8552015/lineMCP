@@ -113,9 +113,7 @@ class QueryApplicationService(BaseApplicationService):
 
             # 使用 MCP 客戶端執行查詢
             mcp_client = await self.mcp_client_factory()
-            raw_result = await mcp_client.call_tool(
-                "postgres", "query", {"sql": query}
-            )
+            raw_result = await mcp_client.call_tool("postgres", "query", {"sql": query})
 
             # 解析結果
             parsed_data = self.response_parser.parse_query_result(raw_result)
@@ -365,9 +363,7 @@ class QueryApplicationService(BaseApplicationService):
                 return {"table_name": table_name, "success": False, "error": str(e)}
         else:
             # 獲取所有資料表列表
-            tables_query = (
-                "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
-            )
+            tables_query = "SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
 
             try:
                 result = await self.execute_sql_query(

@@ -15,92 +15,88 @@ env:
   PYTHON_VERSION: '3.11'
   POETRY_VERSION: '1.8.3'
   NODE_VERSION: '22'
-  PYTEST_TIMEOUT: 300
+  PYTEST_TIMEOUT: 600
   POETRY_CACHE_DIR: ~/.cache/pypoetry
   PIP_NO_CACHE_DIR: false
+  ASYNCIO_FORCE_SELECT_SELECTOR: 1
 
 jobs:
   # 程式碼品質檢查 - 快速並行執行
   code-quality:
     name: '程式碼品質檢查'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     
     steps:
       - name: 檢出代碼
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 快取 Poetry 依賴
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.POETRY_CACHE_DIR }}
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-            poetry-${{ runner.os }}-
-
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 快取 Poetry 依賴
+        uses: actions/cache@v4
+        with:
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            venv-${{ runner.os }}-
 
       - name: 安裝依賴
         working-directory: apps/bot
         run: |
           poetry config installer.parallel true
-          poetry install --no-interaction
+          poetry install --no-interaction --only=main,dev
 
       - name: 執行程式碼品質檢查
         working-directory: apps/bot
         run: |
           echo "🔧 執行程式碼品質檢查"
-          poetry run black --check src/ --diff || echo "Black 檢查完成"
-          poetry run ruff check src/ --output-format=github || echo "Ruff 檢查完成"
-          poetry run mypy src/ --no-error-summary || echo "MyPy 檢查完成"
+          poetry run black --check src/ --diff
+          poetry run ruff check src/ --output-format=github
+          poetry run mypy src/ --no-error-summary
 
   # 單元測試 - 策略矩陣並行執行
   unit-tests:
     name: '單元測試'
     runs-on: ubuntu-latest
     needs: code-quality
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        test-file: [
-          'test_command_pattern.py',
-          'test_error_handling.py', 
-          'test_middleware.py',
-          'test_signature_validator.py',
-          'test_message_handler_simplified.py'
-        ]
+    timeout-minutes: 20
     
     steps:
       - name: 檢出代碼
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 快取 Poetry 依賴
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.POETRY_CACHE_DIR }}
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-            poetry-${{ runner.os }}-
-
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 快取 Poetry 依賴
+        uses: actions/cache@v4
+        with:
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            venv-${{ runner.os }}-
 
       - name: 安裝依賴
         working-directory: apps/bot
@@ -117,12 +113,13 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ASYNCIO_FORCE_SELECT_SELECTOR: 1
         run: |
-          echo "🧪 執行單元測試: ${{ matrix.test-file }}"
-          poetry run pytest CICD/tests/unit/${{ matrix.test-file }} -v \
+          echo "🧪 執行所有單元測試"
+          poetry run pytest CICD/tests/unit/ -v \
             --tb=short \
             --timeout=${{ env.PYTEST_TIMEOUT }} \
             --cov=src \
-            --cov-append
+            --cov-report=xml \
+            --maxfail=5
 
   # 整合測試 - PostgreSQL 數據庫支援
   integration-tests:
@@ -165,23 +162,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 快取 Poetry 依賴
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.POETRY_CACHE_DIR }}
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-            poetry-${{ runner.os }}-
-
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 快取 Poetry 依賴
+        uses: actions/cache@v4
+        with:
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            venv-${{ runner.os }}-
 
       - name: 安裝依賴
         working-directory: apps/bot
@@ -240,23 +239,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 快取 Poetry 依賴
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.POETRY_CACHE_DIR }}
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
-          restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-            poetry-${{ runner.os }}-
-
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: 快取 Poetry 依賴
+        uses: actions/cache@v4
+        with:
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            venv-${{ runner.os }}-
 
       - name: 安裝依賴
         working-directory: apps/bot
@@ -294,7 +295,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -304,18 +305,20 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: 快取 Poetry 依賴
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ${{ env.POETRY_CACHE_DIR }}
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
+          path: apps/bot/.venv
+          key: venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('apps/bot/poetry.lock') }}
           restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-            poetry-${{ runner.os }}-
+            venv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            venv-${{ runner.os }}-
 
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
       - name: 安裝依賴
         working-directory: apps/bot
@@ -358,14 +361,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 設置 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: 安裝 Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
 
       - name: 安裝依賴
         working-directory: apps/bot
@@ -392,7 +397,7 @@ jobs:
             --quiet
 
       - name: 上傳覆蓋率報告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report

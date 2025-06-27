@@ -11,13 +11,13 @@
 
 from .dependency_installer import DependencyInstaller, InstallationResult
 from .health_monitor import HealthMonitor, HealthStatus
-from .runtime_detector import RuntimeDetector, DetectionResult
+from .runtime_detector import DetectionResult, RuntimeDetector
 
 __all__ = [
     "DependencyInstaller",
     "InstallationResult",
     "HealthMonitor",
-    "HealthStatus", 
+    "HealthStatus",
     "RuntimeDetector",
     "DetectionResult",
 ]

@@ -113,7 +113,9 @@ class MessageHandlerDI:
                     # 委託給指令執行器處理
                     if not hasattr(self, "_command_executor"):
                         self._initialize_command_executor()
-                    return await self._command_executor.execute_command(user_id, message_text)
+                    return await self._command_executor.execute_command(
+                        user_id, message_text
+                    )
                 else:
                     span.set_attribute("message.type", "natural_language")
                     return await self._handle_natural_language(user_id, message_text)
@@ -127,7 +129,7 @@ class MessageHandlerDI:
                     e, {"user_id": user_id, "message_text": message_text}
                 )
 
-# _handle_command 方法已移除，改為直接使用 CommandExecutor
+    # _handle_command 方法已移除，改為直接使用 CommandExecutor
 
     def _initialize_command_executor(self):
         """初始化指令執行器"""
@@ -153,13 +155,12 @@ class MessageHandlerDI:
     def _initialize_suggestion_service(self):
         """初始化建議服務 - 符合 DIP 原則"""
         from .suggestion_service import SuggestionService
-        
+
         # 🔥 依賴注入：注入 AI 服務和格式化器
         self._suggestion_service = SuggestionService(
-            ai_model_service=self.ai_model_service,
-            message_formatter=self.formatter
+            ai_model_service=self.ai_model_service, message_formatter=self.formatter
         )
-        
+
         logger.info("✅ 建議服務已初始化")
 
     @mcp_error_handler(
@@ -190,9 +191,7 @@ class MessageHandlerDI:
 
             # 使用注入的資料庫服務
             mcp_client = await self._get_mcp_client()
-            result = await mcp_client.call_tool(
-                "postgres", "query", {"sql": sql_query}
-            )
+            result = await mcp_client.call_tool("postgres", "query", {"sql": sql_query})
 
             parser = MCPResponseParser()
             data = parser.parse_query_result(result)
@@ -379,7 +378,7 @@ class MessageHandlerDI:
             return self._handle_greeting()
         else:
             # 🔥 符合 SRP：委託給專門的建議服務
-            if not hasattr(self, '_suggestion_service'):
+            if not hasattr(self, "_suggestion_service"):
                 self._initialize_suggestion_service()
             return await self._suggestion_service.generate_suggestion(message_text)
 
@@ -451,7 +450,7 @@ class MessageHandlerDI:
         message += "   • 生產統計報告\n"
         message += "   • 部門運行狀況\n\n"
         message += "💡 試試問我：「M001機台狀況如何？」"
-        
+
         return TextMessage(text=message)
 
     # 建議生成功能已移至 SuggestionService，符合 SRP 原則

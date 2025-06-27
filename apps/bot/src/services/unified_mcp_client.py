@@ -18,7 +18,7 @@ class UnifiedMCPClient:
     def __init__(self, **kwargs):
         """
         初始化統一客戶端 - 代理模式
-        
+
         Args:
             **kwargs: 額外配置參數（向下兼容）
         """
@@ -27,16 +27,22 @@ class UnifiedMCPClient:
         self._production_client = get_production_mcp_client()
         logger.info("🔄 統一客戶端已簡化為生產級代理")
 
-    async def call_tool(self, server: str, tool: str, params: dict[str, Any], timeout: float | None = None) -> dict[str, Any]:
+    async def call_tool(
+        self,
+        server: str,
+        tool: str,
+        params: dict[str, Any],
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """
         調用 MCP 工具 - 代理到生產級客戶端
-        
+
         Args:
             server: 服務器名稱
-            tool: 工具名稱  
+            tool: 工具名稱
             params: 工具參數
             timeout: 超時時間（秒）
-            
+
         Returns:
             工具執行結果
         """
@@ -45,10 +51,10 @@ class UnifiedMCPClient:
     async def list_tools(self, server: str) -> list[dict[str, Any]]:
         """
         列出可用工具 - 代理到生產級客戶端
-        
+
         Args:
             server: 服務器名稱
-            
+
         Returns:
             工具列表
         """
@@ -57,10 +63,10 @@ class UnifiedMCPClient:
     async def connect_to_server(self, server_name: str) -> bool:
         """
         連接到服務器 - 代理到生產級客戶端
-        
+
         Args:
             server_name: 服務器名稱
-            
+
         Returns:
             連接是否成功
         """
@@ -98,13 +104,13 @@ async def call_mcp_tool(
 ) -> dict[str, Any]:
     """
     調用 MCP 工具的向下兼容函數
-    
+
     Args:
         server: 服務器名稱
         tool: 工具名稱
         params: 工具參數
         timeout: 超時時間（秒）
-        
+
     Returns:
         工具執行結果
     """
@@ -115,10 +121,10 @@ async def call_mcp_tool(
 async def list_mcp_tools(server: str) -> list[dict[str, Any]]:
     """
     列出 MCP 工具的向下兼容函數
-    
+
     Args:
         server: 服務器名稱
-        
+
     Returns:
         工具列表
     """

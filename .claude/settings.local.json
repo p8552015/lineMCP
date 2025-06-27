@@ -120,7 +120,16 @@
       "Bash(gh auth:*)",
       "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\dt\")",
       "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"\\d machine_faults\")",
-      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"SELECT DISTINCT severity FROM machine_faults;\")"
+      "Bash(PGPASSWORD=admin psql -h localhost -U admin -d mydb -c \"SELECT DISTINCT severity FROM machine_faults;\")",
+      "mcp__serena__write_memory",
+      "mcp__serena__execute_shell_command",
+      "Bash(cat:*)",
+      "mcp__ide__executeCode",
+      "Bash(ln:*)",
+      "mcp__serena__create_text_file",
+      "Bash(gh pr create:*)",
+      "Bash(./CICD/scripts/github-actions-status-checker.sh:*)",
+      "Bash(jq:*)"
     ],
     "deny": []
   }

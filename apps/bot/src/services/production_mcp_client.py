@@ -247,8 +247,8 @@ class ProductionMCPClient:
                         notif_json = json.dumps(initialized_notif) + "\n"
                         process.stdin.write(notif_json.encode())
                         await process.stdin.drain()
-                        
-            except (json.JSONDecodeError, asyncio.TimeoutError) as e:
+
+            except (TimeoutError, json.JSONDecodeError) as e:
                 logger.warning(f"⚠️ 初始化響應解析失敗，跳過：{e}")
 
             # 發送工具列表請求
@@ -301,8 +301,11 @@ class ProductionMCPClient:
             return False
 
     async def call_tool(
-        self, server_name: str, tool_name: str, parameters: dict[str, Any],
-        timeout: float | None = None
+        self,
+        server_name: str,
+        tool_name: str,
+        parameters: dict[str, Any],
+        timeout: float | None = None,
     ) -> dict[str, Any]:
         """調用工具 - 增強錯誤處理和重試機制 + 連接池監控"""
         await self._ensure_pool_started()
@@ -587,7 +590,7 @@ class ProductionMCPClient:
     async def close(self):
         """關閉客戶端和所有連接"""
         try:
-            if hasattr(self, 'connection_pool') and self.connection_pool:
+            if hasattr(self, "connection_pool") and self.connection_pool:
                 await self.connection_pool.stop()
             logger.info("✅ 生產級 MCP 客戶端已關閉")
         except Exception as e:

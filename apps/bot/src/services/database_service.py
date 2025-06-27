@@ -52,9 +52,7 @@ class DatabaseService:
             ctx.add_context(query_preview=sql_query[:100])
 
             mcp_client = await self.get_mcp_client()
-            result = await mcp_client.call_tool(
-                "postgres", "query", {"sql": sql_query}
-            )
+            result = await mcp_client.call_tool("postgres", "query", {"sql": sql_query})
 
             return self.parser.parse_query_result(result)
 
@@ -243,9 +241,7 @@ class DatabaseService:
             try:
                 count = row.get("total_faults", 0)
                 # 確保轉換為整數
-                if isinstance(count, str):
-                    count = int(count)
-                elif isinstance(count, float):
+                if isinstance(count, str) or isinstance(count, float):
                     count = int(count)
                 total_faults += count
             except (ValueError, TypeError):
@@ -257,16 +253,14 @@ class DatabaseService:
             try:
                 count = row.get("total_faults", 0)
                 percentage = row.get("percentage", 0)
-                
+
                 # 安全的類型轉換
-                if isinstance(count, str):
+                if isinstance(count, str) or isinstance(count, float):
                     count = int(count)
-                elif isinstance(count, float):
-                    count = int(count)
-                    
+
                 if isinstance(percentage, str):
                     percentage = float(percentage)
-                    
+
                 fault_types.append(
                     {
                         "fault_type": row.get("fault_type", "未知"),
