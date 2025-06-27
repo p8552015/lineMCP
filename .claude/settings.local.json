@@ -129,7 +129,8 @@
       "mcp__serena__create_text_file",
       "Bash(gh pr create:*)",
       "Bash(./CICD/scripts/github-actions-status-checker.sh:*)",
-      "Bash(jq:*)"
+      "Bash(jq:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

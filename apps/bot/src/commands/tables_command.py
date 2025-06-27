@@ -98,14 +98,14 @@ class TablesCommandHandler(CommandHandler):
 
         # 查詢資料表結構
         schema_query = f"""
-            SELECT 
-                column_name as name, 
-                data_type as type, 
+            SELECT
+                column_name as name,
+                data_type as type,
                 is_nullable,
                 column_default as dflt_value,
                 ordinal_position
-            FROM information_schema.columns 
-            WHERE table_name = '{table_name}' 
+            FROM information_schema.columns
+            WHERE table_name = '{table_name}'
             AND table_schema = 'public'
             ORDER BY ordinal_position
         """

@@ -95,7 +95,7 @@ class PostgreSQLCommand:
         """將自然語言轉換為 SQL 查詢"""
         try:
             # 針對 PostgreSQL 調整 NL-to-SQL 配置
-            postgres_context = {
+            {
                 "database_type": "postgresql",
                 "tables": {
                     "employees": ["id", "name", "department", "salary", "hire_date"],

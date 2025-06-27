@@ -166,8 +166,8 @@ class DatabaseHealthChecker:
             # 獲取所有資料表
             existing_tables = await conn.fetch(
                 """
-                SELECT table_name 
-                FROM information_schema.tables 
+                SELECT table_name
+                FROM information_schema.tables
                 WHERE table_schema = 'public'
             """
             )

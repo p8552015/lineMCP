@@ -241,7 +241,7 @@ class DatabaseService:
             try:
                 count = row.get("total_faults", 0)
                 # 確保轉換為整數
-                if isinstance(count, str) or isinstance(count, float):
+                if isinstance(count, str | float):
                     count = int(count)
                 total_faults += count
             except (ValueError, TypeError):
@@ -255,7 +255,7 @@ class DatabaseService:
                 percentage = row.get("percentage", 0)
 
                 # 安全的類型轉換
-                if isinstance(count, str) or isinstance(count, float):
+                if isinstance(count, str | float):
                     count = int(count)
 
                 if isinstance(percentage, str):

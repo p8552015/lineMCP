@@ -220,10 +220,7 @@ class MCPTool:
         """
         # 簡單驗證實現，實際應該使用 jsonschema
         required_fields = self.input_schema.get("required", [])
-        for field in required_fields:
-            if field not in input_data:
-                return False
-        return True
+        return all(field in input_data for field in required_fields)
 
 
 @dataclass

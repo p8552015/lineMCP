@@ -480,7 +480,7 @@ class ProcessLifecycleManager:
         """列出所有管理的進程"""
         try:
             result = {}
-            for process_id in self._managed_processes.keys():
+            for process_id in self._managed_processes:
                 status = await self.get_process_status(process_id)
                 if status:
                     result[process_id] = status
@@ -522,7 +522,7 @@ class ProcessLifecycleManager:
                     logger.warning("⚠️ 部分進程停止超時，將強制終止")
 
                     # 強制停止剩餘進程
-                    for process_id in self._managed_processes.keys():
+                    for process_id in self._managed_processes:
                         await self.stop_process(process_id, force=True)
 
             self._managed_processes.clear()

@@ -330,14 +330,14 @@ class QueryApplicationService(BaseApplicationService):
         if table_name:
             # 獲取特定資料表的詳細資訊
             schema_query = f"""
-                SELECT 
-                    column_name, 
-                    data_type, 
+                SELECT
+                    column_name,
+                    data_type,
                     is_nullable,
                     column_default,
                     ordinal_position
-                FROM information_schema.columns 
-                WHERE table_name = '{table_name}' 
+                FROM information_schema.columns
+                WHERE table_name = '{table_name}'
                 AND table_schema = 'public'
                 ORDER BY ordinal_position
             """

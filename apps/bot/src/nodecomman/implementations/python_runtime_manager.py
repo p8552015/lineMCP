@@ -363,7 +363,6 @@ class PythonRuntimeManager(IRuntimeManager):
             python_version = stdout.decode().strip()
 
             # 獲取 pip 版本
-            pip_version = "不可用"
             if self._pip_executable:
                 try:
                     process = await asyncio.create_subprocess_exec(
@@ -372,7 +371,7 @@ class PythonRuntimeManager(IRuntimeManager):
                         stdout=asyncio.subprocess.PIPE,
                     )
                     stdout, _ = await process.communicate()
-                    pip_version = stdout.decode().strip()
+                    stdout.decode().strip()
                 except Exception:
                     pass
 

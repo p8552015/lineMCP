@@ -187,7 +187,7 @@ jobs:
         run: |
           cd ${{ env.BOT_DIR }}
           echo "🧪 執行基本測試"
-          poetry run pytest CICD/tests/unit/ -v --tb=short || echo "⚠️ 部分測試失敗，但不阻止發布"
+          poetry run pytest tests/unit/ -v --tb=short || echo "⚠️ 部分測試失敗，但不阻止發布"
 
       - name: 📊 Upload Coverage to Codecov
         uses: codecov/codecov-action@v3

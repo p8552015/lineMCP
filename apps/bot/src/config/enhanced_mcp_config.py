@@ -410,7 +410,7 @@ class EnhancedMCPConfig:
     ) -> str:
         """評估系統整體健康狀況"""
         total_issues = 0
-        total_servers = len(servers)
+        len(servers)
 
         # 統計運行時問題
         for env in environments.values():
