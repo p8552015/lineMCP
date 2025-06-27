@@ -132,7 +132,8 @@
       "Bash(jq:*)",
       "Bash(git rm:*)",
       "Bash(npm install:*)",
-      "Bash(markdownlint:*)"
+      "Bash(markdownlint:*)",
+      "Bash(yamllint:*)"
     ],
     "deny": []
   }
