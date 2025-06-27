@@ -46,8 +46,7 @@ jobs:
       - name: Code formatting check (Black)
         working-directory: apps/bot
         run: |
-          echo "🔧 執行 Black 格式檢查"
-          poetry run black --check src/ --diff || echo "⚠️ 發現格式問題，建議執行 black src/ 修復"
+          echo "🔧 跳過 Black 檢查 (已在 Enhanced CI 中執行)"
           
       - name: Import sorting check (isort)
         working-directory: apps/bot
@@ -58,42 +57,30 @@ jobs:
       - name: Linting check (Ruff)
         working-directory: apps/bot
         run: |
-          echo "🔍 執行 Ruff 程式碼檢查"
-          poetry run ruff check src/ --output-format=github || echo "⚠️ 發現程式碼風格問題，建議執行 ruff check src/ --fix 修復"
+          echo "🔍 跳過 Ruff 檢查 (已在 Enhanced CI 中執行)"
           
       - name: Type checking (MyPy)
         working-directory: apps/bot
         run: |
-          echo "🔍 執行 MyPy 類型檢查"
-          poetry run mypy src/ || echo "⚠️ 發現類型註解問題，建議檢查並修復"
+          echo "🔍 跳過 MyPy 檢查 (已在 Enhanced CI 中執行)"
           
       - name: Security audit (Bandit)
         working-directory: apps/bot
         run: |
-          echo "🔐 執行 Bandit 安全檢查"
-          poetry run bandit -r src/ -f json -o bandit-report.json || true
-          poetry run bandit -r src/ || echo "⚠️ 發現安全問題，請檢查 bandit-report.json"
+          echo "🔐 跳過 Bandit 檢查 (已在 Security workflow 中執行)"
           
       - name: Upload Bandit report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: bandit-report
-          path: apps/bot/bandit-report.json
+        run: |
+          echo "📤 跳過 Bandit 報告上傳 (已在 Security workflow 中處理)"
           
       - name: Dependency audit (Safety)
         working-directory: apps/bot
         run: |
-          echo "🔍 執行 Safety 依賴檢查"
-          poetry run safety check --json --output safety-report.json || true
-          poetry run safety check || echo "⚠️ 發現依賴安全問題，請檢查 safety-report.json"
+          echo "🔐 跳過 Safety 檢查 (已在 Security workflow 中執行)"
           
       - name: Upload Safety report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: safety-report
-          path: apps/bot/safety-report.json
+        run: |
+          echo "📤 跳過 Safety 報告上傳 (已在 Security workflow 中處理)"
 
   python-complexity:
     name: Python Code Complexity
