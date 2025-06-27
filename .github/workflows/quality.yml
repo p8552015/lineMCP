@@ -275,17 +275,15 @@ jobs:
           echo "Writing to: $GITHUB_STEP_SUMMARY"
           
           # Write step summary
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
-# Code Quality Report
-
-**Execution Time**: $(date)
-**Branch**: ${{ github.ref_name }}
-**Commit**: ${{ github.sha }}
-**Event**: ${{ github.event_name }}
-
-## Results Summary
-
-EOF
+          echo "# Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Execution Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
           # Add results using echo commands for variable substitution
           echo "" >> $GITHUB_STEP_SUMMARY
