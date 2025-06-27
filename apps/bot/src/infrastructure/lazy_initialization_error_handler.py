@@ -396,9 +396,7 @@ class LazyServiceRegistry:
         logger.info(f"註冊延遲服務: {service_name}")
         return handler
 
-    def get_handler(
-        self, service_name: str
-    ) -> LazyInitializationErrorHandler | None:
+    def get_handler(self, service_name: str) -> LazyInitializationErrorHandler | None:
         """獲取處理器"""
         return self._handlers.get(service_name)
 

@@ -3,7 +3,6 @@
 基於實際的生產環境資料庫結構定義
 """
 
-
 from sqlalchemy import (
     Boolean,
     Column,

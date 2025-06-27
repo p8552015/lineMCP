@@ -113,7 +113,9 @@ class ManagedProcess:
     metrics: ProcessMetrics = field(default_factory=ProcessMetrics)
 
     # 回調函數
-    on_state_change: Callable[["ManagedProcess", LifecycleState, LifecycleState], None] | None = None
+    on_state_change: (
+        Callable[["ManagedProcess", LifecycleState, LifecycleState], None] | None
+    ) = None
     on_health_check_failed: Callable[["ManagedProcess"], None] | None = None
     on_restart: Callable[["ManagedProcess"], None] | None = None
 

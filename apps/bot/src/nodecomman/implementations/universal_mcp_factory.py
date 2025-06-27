@@ -312,9 +312,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
             logger.error(f"❌ 健康檢查失敗: {e}")
             return False
 
-    async def get_predefined_config(
-        self, config_name: str
-    ) -> MCPServerConfig | None:
+    async def get_predefined_config(self, config_name: str) -> MCPServerConfig | None:
         """獲取預定義配置"""
         return self._predefined_configs.get(config_name)
 

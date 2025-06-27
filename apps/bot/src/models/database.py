@@ -3,7 +3,6 @@
 使用 SQLAlchemy 定義所有資料表結構，用於 Alembic 遷移管理
 """
 
-
 from sqlalchemy import (
     Boolean,
     Column,
