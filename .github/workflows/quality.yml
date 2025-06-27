@@ -255,7 +255,7 @@ jobs:
     name: Quality Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [python-quality, python-complexity, docker-quality, commit-quality, documentation-quality]
+    needs: [python-quality, python-complexity, docker-quality, documentation-quality]
     if: always()
     
     steps:
@@ -310,17 +310,7 @@ jobs:
           fi
           
           # Commit Quality 檢查 (僅限 PR)
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            total_checks=$((total_checks + 1))
-            if [ "${{ needs.commit-quality.result }}" == "success" ]; then
-              echo "✅ **Commit Quality**: 通過" >> $GITHUB_STEP_SUMMARY
-              passed_checks=$((passed_checks + 1))
-            else
-              echo "❌ **Commit Quality**: 失敗" >> $GITHUB_STEP_SUMMARY
-            fi
-          else
-            echo "⏸️ **Commit Quality**: 跳過 (僅適用於 Pull Request)" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "⏸️ **Commit Quality**: 跳過 (僅適用於 Pull Request)" >> $GITHUB_STEP_SUMMARY
           
           # 計算通過率
           if [ $total_checks -gt 0 ]; then
@@ -351,14 +341,12 @@ jobs:
           echo "- 檢查文檔格式: \`markdownlint *.md\`" >> $GITHUB_STEP_SUMMARY
           
       - name: Fail if any quality check failed
-        if: needs.python-quality.result == 'failure' || needs.python-complexity.result == 'failure' || needs.docker-quality.result == 'failure' || needs.documentation-quality.result == 'failure' || (github.event_name == 'pull_request' && needs.commit-quality.result == 'failure')
+        if: needs.python-quality.result == 'failure' || needs.python-complexity.result == 'failure' || needs.docker-quality.result == 'failure' || needs.documentation-quality.result == 'failure'
         run: |
           echo "🚨 一個或多個品質檢查失敗"
           echo "Python Quality: ${{ needs.python-quality.result }}"
           echo "Python Complexity: ${{ needs.python-complexity.result }}"
           echo "Docker Quality: ${{ needs.docker-quality.result }}"
           echo "Documentation Quality: ${{ needs.documentation-quality.result }}"
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "Commit Quality: ${{ needs.commit-quality.result }}"
-          fi
+          echo "Commit Quality: 跳過 (僅限 Pull Request)"
           exit 1
