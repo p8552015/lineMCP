@@ -263,29 +263,102 @@ jobs:
         run: |
           echo "## 🎯 Code Quality Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**檢查時間**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**分支**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**提交**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**觸發事件**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
+          # 計算統計資訊
+          total_checks=0
+          passed_checks=0
+          
+          # Python Quality 檢查
+          total_checks=$((total_checks + 1))
           if [ "${{ needs.python-quality.result }}" == "success" ]; then
-            echo "✅ Python Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Python Code Quality**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Python Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Python Code Quality**: 失敗" >> $GITHUB_STEP_SUMMARY
           fi
           
+          # Python Complexity 檢查
+          total_checks=$((total_checks + 1))
           if [ "${{ needs.python-complexity.result }}" == "success" ]; then
-            echo "✅ Code Complexity: PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Code Complexity**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Code Complexity: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Code Complexity**: 失敗" >> $GITHUB_STEP_SUMMARY
           fi
           
-          
+          # Docker Quality 檢查
+          total_checks=$((total_checks + 1))
           if [ "${{ needs.docker-quality.result }}" == "success" ]; then
-            echo "✅ Docker Quality: PASSED" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Docker Quality**: 通過" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
           else
-            echo "❌ Docker Quality: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Docker Quality**: 失敗" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Documentation Quality 檢查
+          total_checks=$((total_checks + 1))
+          if [ "${{ needs.documentation-quality.result }}" == "success" ]; then
+            echo "✅ **Documentation Quality**: 通過 (包含 markdownlint)" >> $GITHUB_STEP_SUMMARY
+            passed_checks=$((passed_checks + 1))
+          else
+            echo "❌ **Documentation Quality**: 失敗" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Commit Quality 檢查 (僅限 PR)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            total_checks=$((total_checks + 1))
+            if [ "${{ needs.commit-quality.result }}" == "success" ]; then
+              echo "✅ **Commit Quality**: 通過" >> $GITHUB_STEP_SUMMARY
+              passed_checks=$((passed_checks + 1))
+            else
+              echo "❌ **Commit Quality**: 失敗" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏸️ **Commit Quality**: 跳過 (僅適用於 Pull Request)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # 計算通過率
+          if [ $total_checks -gt 0 ]; then
+            pass_rate=$((passed_checks * 100 / total_checks))
+          else
+            pass_rate=0
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 **Overall Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 檢查統計" >> $GITHUB_STEP_SUMMARY
+          echo "- **總檢查項**: $total_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **通過項目**: $passed_checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **通過率**: ${pass_rate}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $pass_rate -eq 100 ]; then
+            echo "🎉 **整體狀態**: 所有品質檢查通過！" >> $GITHUB_STEP_SUMMARY
+          elif [ $pass_rate -ge 80 ]; then
+            echo "⚠️ **整體狀態**: 大部分檢查通過，少數需要關注" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🚨 **整體狀態**: 多項檢查失敗，需要立即修復" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔧 改善建議" >> $GITHUB_STEP_SUMMARY
+          echo "- 查看失敗的檢查項目詳細日誌" >> $GITHUB_STEP_SUMMARY
+          echo "- 執行本地品質檢查: \`cd apps/bot && poetry run black src/ && poetry run ruff check src/\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 檢查文檔格式: \`markdownlint *.md\`" >> $GITHUB_STEP_SUMMARY
           
       - name: Fail if any quality check failed
-        if: needs.python-quality.result == 'failure' || needs.python-complexity.result == 'failure' || needs.docker-quality.result == 'failure'
-        run: exit 1
+        if: needs.python-quality.result == 'failure' || needs.python-complexity.result == 'failure' || needs.docker-quality.result == 'failure' || needs.documentation-quality.result == 'failure' || (github.event_name == 'pull_request' && needs.commit-quality.result == 'failure')
+        run: |
+          echo "🚨 一個或多個品質檢查失敗"
+          echo "Python Quality: ${{ needs.python-quality.result }}"
+          echo "Python Complexity: ${{ needs.python-complexity.result }}"
+          echo "Docker Quality: ${{ needs.docker-quality.result }}"
+          echo "Documentation Quality: ${{ needs.documentation-quality.result }}"
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "Commit Quality: ${{ needs.commit-quality.result }}"
+          fi
+          exit 1
