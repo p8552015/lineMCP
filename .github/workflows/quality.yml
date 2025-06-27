@@ -261,8 +261,18 @@ jobs:
     steps:
       - name: Quality Gates Summary
         run: |
+          # DEBUG: Test GITHUB_STEP_SUMMARY variable first
+          echo "Testing GITHUB_STEP_SUMMARY variable..."
+          echo "GITHUB_STEP_SUMMARY=$GITHUB_STEP_SUMMARY"
+          
+          # Test basic write functionality
+          echo "# Quality Summary Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test write successful: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
           # Use safer English text to avoid encoding issues
-          echo "## 🎯 Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Check Time**: $(date)" >> $GITHUB_STEP_SUMMARY
           echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
