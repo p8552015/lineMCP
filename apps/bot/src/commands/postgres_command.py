@@ -28,15 +28,45 @@ class PostgreSQLCommand:
         # PostgreSQL 特定的查詢模板
         self.postgres_queries = {
             "員工數": "SELECT COUNT(*) as total_employees FROM employees",
-            "部門統計": "SELECT department, COUNT(*) as emp_count, AVG(salary) as avg_salary FROM employees GROUP BY department ORDER BY emp_count DESC",
-            "薪資統計": "SELECT department, MIN(salary) as min_salary, MAX(salary) as max_salary, AVG(salary) as avg_salary FROM employees GROUP BY department ORDER BY avg_salary DESC",
-            "機台狀態": "SELECT status, COUNT(*) as count FROM machines GROUP BY status ORDER BY count DESC",
-            "產品庫存": "SELECT category, COUNT(*) as product_count, SUM(stock) as total_stock FROM products GROUP BY category ORDER BY total_stock DESC",
-            "訂單統計": "SELECT status, COUNT(*) as order_count, SUM(total_amount) as total_value FROM orders GROUP BY status ORDER BY total_value DESC",
-            "高薪員工": "SELECT name, department, salary FROM employees WHERE salary > 75000 ORDER BY salary DESC",
-            "缺貨產品": "SELECT name, category, stock FROM products WHERE stock < 20 ORDER BY stock ASC",
-            "運行機台": "SELECT id, name, status, utilization_rate FROM machines WHERE status = '運行中' ORDER BY utilization_rate DESC",
-            "待處理訂單": "SELECT id, customer_name, total_amount, order_date FROM orders WHERE status = 'pending' ORDER BY order_date DESC",
+            "部門統計": (
+                "SELECT department, COUNT(*) as emp_count, AVG(salary) as avg_salary "
+                "FROM employees GROUP BY department ORDER BY emp_count DESC"
+            ),
+            "薪資統計": (
+                "SELECT department, MIN(salary) as min_salary, "
+                "MAX(salary) as max_salary, "
+                "AVG(salary) as avg_salary FROM employees GROUP BY department "
+                "ORDER BY avg_salary DESC"
+            ),
+            "機台狀態": (
+                "SELECT status, COUNT(*) as count FROM machines "
+                "GROUP BY status ORDER BY count DESC"
+            ),
+            "產品庫存": (
+                "SELECT category, COUNT(*) as product_count, SUM(stock) as total_stock "
+                "FROM products GROUP BY category ORDER BY total_stock DESC"
+            ),
+            "訂單統計": (
+                "SELECT status, COUNT(*) as order_count, "
+                "SUM(total_amount) as total_value "
+                "FROM orders GROUP BY status ORDER BY total_value DESC"
+            ),
+            "高薪員工": (
+                "SELECT name, department, salary FROM employees "
+                "WHERE salary > 75000 ORDER BY salary DESC"
+            ),
+            "缺貨產品": (
+                "SELECT name, category, stock FROM products "
+                "WHERE stock < 20 ORDER BY stock ASC"
+            ),
+            "運行機台": (
+                "SELECT id, name, status, utilization_rate FROM machines "
+                "WHERE status = '運行中' ORDER BY utilization_rate DESC"
+            ),
+            "待處理訂單": (
+                "SELECT id, customer_name, total_amount, order_date FROM orders "
+                "WHERE status = 'pending' ORDER BY order_date DESC"
+            ),
         }
 
         logger.info("🐘 PostgreSQL 命令處理器已初始化")
