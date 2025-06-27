@@ -1,22 +1,20 @@
 # 🤖 GitHub Actions CI/CD 狀態報告
 
-**生成時間**: 2025-06-27 14:14:19  
+**生成時間**: 2025-06-27 14:41:09  
 **倉庫**: p8552015/lineMCP  
 **檢測範圍**: 6 個 workflows
 
 ## 📊 總體狀態
 
 **狀態**: 🔴 需要修復  
-**成功率**: 16%  
-**失敗數量**: 5
+**成功率**: 50%  
+**失敗數量**: 3
 
 ### 🚨 失敗的 Workflows
 
 - ❌ **🚀 Release Automation** (Run ID: 15838182516)
-- ❌ **Enhanced CI Pipeline** (Run ID: 15919045869)
-- ❌ **🔒 Docker Security Scan (Enhanced)** (Run ID: 15919045858)
-- ❌ **.github/workflows/performance.yml** (Run ID: 15919045704)
-- ❌ **Code Quality Checks** (Run ID: 15919045853)
+- ❌ **Enhanced CI Pipeline** (Run ID: 15919833712)
+- ❌ **🔒 Docker Security Scan (Enhanced)** (Run ID: 15919919193)
 
 ### 💡 改善建議
 
