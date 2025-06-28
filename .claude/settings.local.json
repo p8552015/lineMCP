@@ -136,7 +136,9 @@
       "Bash(yamllint:*)",
       "Bash(./scripts/actions-version-manager.sh:*)",
       "Bash(pre-commit:*)",
-      "Bash(./scripts/fix-code-quality.sh:*)"
+      "Bash(./scripts/fix-code-quality.sh:*)",
+      "Bash(docker logs:*)",
+      "mcp__serena__insert_after_symbol"
     ],
     "deny": []
   }

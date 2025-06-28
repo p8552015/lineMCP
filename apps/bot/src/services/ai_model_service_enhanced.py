@@ -142,6 +142,11 @@ class EnhancedAIModelService(AIModelService):
 
         # 嘗試每個模型，直到成功
         for model in target_models:
+            # 檢查模型是否健康（包括配額檢查）
+            if not self._is_model_healthy(model):
+                logger.info(f"⏭️ 跳過不健康的模型: {model}")
+                continue
+                
             try:
                 logger.info(f"🔄 嘗試使用模型: {model}")
                 result = await self._call_model_with_retry(
@@ -156,7 +161,20 @@ class EnhancedAIModelService(AIModelService):
                 return result
 
             except Exception as e:
-                logger.warning(f"❌ 模型 {model} 調用失敗: {e}")
+                # 檢查是否為配額錯誤
+                error_message = str(e).lower()
+                is_quota_error = any(keyword in error_message for keyword in [
+                    "quota", "rate limit", "429", "insufficient_quota",
+                    "resource_exhausted", "billing", "payment", "exceeded"
+                ])
+                
+                if is_quota_error:
+                    logger.error(f"❌ 模型 {model} 配額已用盡: {e}")
+                    # 記錄配額錯誤
+                    self._model_health[model]["quota_exhausted"] = True
+                    self._model_health[model]["quota_exhausted_at"] = time.time()
+                else:
+                    logger.warning(f"❌ 模型 {model} 調用失敗: {e}")
                 self._model_health[model]["failures"] += 1
 
                 # 如果不是最後一個模型，繼續嘗試下一個
@@ -268,3 +286,45 @@ class EnhancedAIModelService(AIModelService):
                 }
             )
         return models
+    
+    def _is_model_healthy(self, model_name: str) -> bool:
+        """
+        檢查模型是否健康可用
+        
+        檢查項目：
+        1. 失敗次數是否過多
+        2. 是否已知配額用盡
+        3. 最近是否有成功調用
+        """
+        if model_name not in self._model_health:
+            return True
+            
+        health = self._model_health[model_name]
+        now = time.time()
+        
+        # 檢查是否已知配額用盡
+        if health.get("quota_exhausted", False):
+            # 檢查是否已經過了重置時間（假設每月1號重置）
+            quota_exhausted_at = health.get("quota_exhausted_at", 0)
+            if quota_exhausted_at > 0:
+                # 簡單檢查：如果超過24小時，嘗試重新使用
+                if now - quota_exhausted_at > 86400:  # 24小時
+                    logger.info(f"🔄 嘗試重新啟用可能已重置配額的模型: {model_name}")
+                    health["quota_exhausted"] = False
+                    health["failures"] = 0  # 重置失敗計數
+                    return True
+                else:
+                    logger.warning(f"⚠️ 模型 {model_name} 配額已用盡，跳過")
+                    return False
+        
+        # 檢查連續失敗次數
+        if health["failures"] >= 5:
+            logger.warning(f"⚠️ 模型 {model_name} 連續失敗次數過多: {health['failures']}")
+            return False
+            
+        # 檢查最近是否有成功（1小時內）
+        if now - health["last_success"] > 3600:
+            logger.warning(f"⚠️ 模型 {model_name} 超過1小時未成功調用")
+            # 但仍然給予嘗試機會
+            
+        return True
