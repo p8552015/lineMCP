@@ -140,7 +140,8 @@
       "Bash(docker logs:*)",
       "mcp__serena__insert_after_symbol",
       "Bash(ps:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(./check_api_quota.sh:*)"
     ],
     "deny": []
   }
