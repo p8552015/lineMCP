@@ -71,14 +71,12 @@ class QueryTemplateManager(ITemplateManager):
             TemplateNotFoundError: 模板不存在
         """
         # 修復：使用值比較而非物件比較
-        template_found = any(
-            query_type.value == qt.value for qt in self._templates.keys()
-        )
+        template_found = any(query_type.value == qt.value for qt in self._templates)
         if not template_found:
             logger.error(
                 "❌ 模板不存在，嘗試載入預設模板",
                 query_type=query_type.value,
-                available_types=[qt.value for qt in self._templates.keys()],
+                available_types=[qt.value for qt in self._templates],
             )
 
             # 🔥 關鍵修復：嘗試載入預設模板
@@ -86,7 +84,7 @@ class QueryTemplateManager(ITemplateManager):
 
             # 再次檢查（修復：使用值比較）
             template_found_after_default = any(
-                query_type.value == qt.value for qt in self._templates.keys()
+                query_type.value == qt.value for qt in self._templates
             )
             if not template_found_after_default:
                 raise KeyError(f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗")

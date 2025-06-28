@@ -142,7 +142,10 @@
       "Bash(ps:*)",
       "Bash(kill:*)",
       "Bash(./check_api_quota.sh:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(./scripts/quality-check.sh:*)",
+      "mcp__serena__onboarding",
+      "Bash(ruff check:*)"
     ],
     "deny": []
   }

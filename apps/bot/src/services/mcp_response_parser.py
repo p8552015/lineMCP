@@ -357,9 +357,7 @@ class MCPResponseParser:
                     if candidate.startswith(("{", "[")):
                         try:
                             parsed = json.loads(candidate)
-                            logger.info(
-                                "逐行解析恢復成功", start_line=i, end_line=j - 1
-                            )
+                            logger.info("逐行解析恢復成功", start_line=i, end_line=j - 1)
                             return parsed
                         except json.JSONDecodeError:
                             continue
@@ -529,9 +527,7 @@ class MCPResponseParser:
 
                 else:
                     # 未知格式，嘗試多種解析策略
-                    logger.warning(
-                        "未知回應格式，嘗試多種解析策略", content_preview=content[:100]
-                    )
+                    logger.warning("未知回應格式，嘗試多種解析策略", content_preview=content[:100])
 
                     # 嘗試作為 JSON 解析（即使格式檢測失敗）
                     try:

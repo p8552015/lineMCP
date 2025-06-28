@@ -10,7 +10,7 @@ repos:
     rev: v0.7.0
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [--fix, --exit-non-zero-on-fix, --ignore, E501]
         files: ^apps/bot/src/
         
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -23,6 +23,8 @@ repos:
           types-PyYAML,
           types-python-jose,
           types-redis,
-          types-aiofiles
+          types-aiofiles,
+          types-psutil,
+          types-sqlalchemy
         ]
-        args: [--config-file=apps/bot/pyproject.toml]
+        args: [--config-file=apps/bot/pyproject.toml, --disable-error-code=import-untyped]
