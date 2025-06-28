@@ -190,9 +190,7 @@ def _register_nl_to_sql_services(registry: ServiceRegistry) -> None:
     )
     registry.register_factory(
         IParser,
-        lambda provider: provider.get_required_service(
-            CompositeParser
-        ),  # 預設使用組合解析器
+        lambda provider: provider.get_required_service(CompositeParser),  # 預設使用組合解析器
         scope=ServiceScope.SINGLETON,
     )
 
@@ -215,7 +213,13 @@ def _create_composite_parser(provider: ServiceProvider) -> CompositeParser:
     # 🔥 修復：降低回退門檻，讓更多查詢能被 AI 處理
     composite_parser.set_fallback_threshold(0.3)
 
-    logger.info("組合解析器配置完成（AI 優先）", parser_count=2, fallback_threshold=0.3, ai_weight=2.0, rule_weight=1.0)
+    logger.info(
+        "組合解析器配置完成（AI 優先）",
+        parser_count=2,
+        fallback_threshold=0.3,
+        ai_weight=2.0,
+        rule_weight=1.0,
+    )
 
     return composite_parser
 

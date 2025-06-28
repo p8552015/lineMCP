@@ -435,9 +435,7 @@ class ProcessLifecycleManager:
                 should_restart = managed_process.state != LifecycleState.STOPPING
 
             if should_restart:
-                logger.info(
-                    f"🔄 根據策略 {restart_policy.value} 重啟進程: {process_id}"
-                )
+                logger.info(f"🔄 根據策略 {restart_policy.value} 重啟進程: {process_id}")
                 await self.restart_process(process_id)
             else:
                 logger.warning(f"⚠️ 進程 {process_id} 達到重啟限制或策略不允許重啟")

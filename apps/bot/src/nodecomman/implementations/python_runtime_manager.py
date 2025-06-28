@@ -189,9 +189,7 @@ class PythonProcess(IProcess):
             if not self._process:
                 return False
 
-            logger.info(
-                f"📡 向 Python 進程發送信號: {signal} (PID: {self._process.pid})"
-            )
+            logger.info(f"📡 向 Python 進程發送信號: {signal} (PID: {self._process.pid})")
 
             # 在 Windows 上，信號支援有限
             if platform.system() == "Windows":

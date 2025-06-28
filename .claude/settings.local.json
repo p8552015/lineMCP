@@ -141,7 +141,8 @@
       "mcp__serena__insert_after_symbol",
       "Bash(ps:*)",
       "Bash(kill:*)",
-      "Bash(./check_api_quota.sh:*)"
+      "Bash(./check_api_quota.sh:*)",
+      "Bash(pip show:*)"
     ],
     "deny": []
   }

@@ -48,9 +48,7 @@ class StatusCommandHandler(CommandHandler):
 
         except Exception as e:
             logger.error(f"狀態檢查失敗: {e}", exc_info=True)
-            return TextMessage(
-                text="❌ 狀態檢查過程中發生錯誤\\n\\n" "請聯絡系統管理員檢查服務狀態"
-            )
+            return TextMessage(text="❌ 狀態檢查過程中發生錯誤\\n\\n" "請聯絡系統管理員檢查服務狀態")
 
     async def _perform_status_checks(self) -> dict:
         """執行各項狀態檢查"""

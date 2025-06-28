@@ -72,9 +72,7 @@ class EnhancedMCPClient:
         # 初始化
         self._initialize_components()
 
-        logger.info(
-            f"🚀 增強型 MCP 客戶端初始化完成 (nodecomman: {self.use_nodecomman})"
-        )
+        logger.info(f"🚀 增強型 MCP 客戶端初始化完成 (nodecomman: {self.use_nodecomman})")
 
     def _initialize_components(self):
         """初始化各組件"""

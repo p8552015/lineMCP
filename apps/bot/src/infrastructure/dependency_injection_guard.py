@@ -212,7 +212,6 @@ class DependencyInjectionGuard:
                         "manager",
                     ]
                 ):
-
                     report = self.detector.add_dependency(
                         service_name, dependency_name, DependencyType.CONSTRUCTOR
                     )

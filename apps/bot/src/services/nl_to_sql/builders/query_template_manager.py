@@ -71,7 +71,9 @@ class QueryTemplateManager(ITemplateManager):
             TemplateNotFoundError: 模板不存在
         """
         # 修復：使用值比較而非物件比較
-        template_found = any(query_type.value == qt.value for qt in self._templates.keys())
+        template_found = any(
+            query_type.value == qt.value for qt in self._templates.keys()
+        )
         if not template_found:
             logger.error(
                 "❌ 模板不存在，嘗試載入預設模板",
@@ -83,11 +85,11 @@ class QueryTemplateManager(ITemplateManager):
             self._load_default_templates()
 
             # 再次檢查（修復：使用值比較）
-            template_found_after_default = any(query_type.value == qt.value for qt in self._templates.keys())
+            template_found_after_default = any(
+                query_type.value == qt.value for qt in self._templates.keys()
+            )
             if not template_found_after_default:
-                raise KeyError(
-                    f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗"
-                )
+                raise KeyError(f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗")
 
         # 修復：根據值查找正確的模板
         template = None
@@ -95,7 +97,7 @@ class QueryTemplateManager(ITemplateManager):
             if query_type.value == qt.value:
                 template = tmpl
                 break
-        
+
         if template is None:
             raise KeyError(f"無法找到查詢類型 {query_type.value} 的模板")
 
@@ -490,9 +492,7 @@ class QueryTemplateManager(ITemplateManager):
                             )
                         else:
                             failed_templates.append((type_name, "模板驗證失敗"))
-                            logger.warning(
-                                "⚠️ 無效的模板，跳過載入", query_type=type_name
-                            )
+                            logger.warning("⚠️ 無效的模板，跳過載入", query_type=type_name)
                     else:
                         failed_templates.append((type_name, "模板為空"))
                         logger.warning("⚠️ 空模板，跳過載入", query_type=type_name)
@@ -632,9 +632,7 @@ class QueryTemplateManager(ITemplateManager):
                     logger.error("❌ 預設模板驗證失敗", query_type=query_type.value)
 
             except Exception as e:
-                logger.error(
-                    "❌ 預設模板載入失敗", query_type=query_type.value, error=str(e)
-                )
+                logger.error("❌ 預設模板載入失敗", query_type=query_type.value, error=str(e))
 
         logger.info(
             "📋 預設模板載入完成",
@@ -823,9 +821,7 @@ class QueryTemplateManager(ITemplateManager):
                 validation_results["errors"].append(f"{query_type.value}: {str(e)}")
                 validation_results["invalid_templates"].append(query_type.value)
                 validation_results["is_valid"] = False
-                logger.error(
-                    "模板驗證過程中發生錯誤", query_type=query_type.value, error=str(e)
-                )
+                logger.error("模板驗證過程中發生錯誤", query_type=query_type.value, error=str(e))
 
         # 生成摘要
         validation_results["summary"] = {

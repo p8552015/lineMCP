@@ -108,9 +108,7 @@ class EnhancedMCPConfig:
         if self.enable_nodecomman:
             self._initialize_nodecomman()
 
-        logger.info(
-            f"🔧 增強型 MCP 配置管理器初始化完成 (nodecomman: {self.enable_nodecomman})"
-        )
+        logger.info(f"🔧 增強型 MCP 配置管理器初始化完成 (nodecomman: {self.enable_nodecomman})")
 
     def _initialize_nodecomman(self):
         """初始化 nodecomman 組件"""
@@ -323,12 +321,8 @@ class EnhancedMCPConfig:
                     analysis, nodecomman_config
                 )
             else:
-                analysis.validation_issues.append(
-                    f"nodecomman 中無 {server_name} 預定義配置"
-                )
-                analysis.optimization_suggestions.append(
-                    "考慮為此服務器添加 nodecomman 配置"
-                )
+                analysis.validation_issues.append(f"nodecomman 中無 {server_name} 預定義配置")
+                analysis.optimization_suggestions.append("考慮為此服務器添加 nodecomman 配置")
 
             # 最終有效性檢查
             analysis.is_valid = len(analysis.validation_issues) == 0
@@ -366,9 +360,7 @@ class EnhancedMCPConfig:
             # 檢查是否可以創建
             can_create = await self._mcp_factory.can_create(nodecomman_config)
             if not can_create:
-                analysis.optimization_suggestions.append(
-                    "當前環境無法創建此服務器，請檢查依賴"
-                )
+                analysis.optimization_suggestions.append("當前環境無法創建此服務器，請檢查依賴")
 
         except Exception as e:
             logger.error(f"❌ 生成優化建議失敗: {e}")

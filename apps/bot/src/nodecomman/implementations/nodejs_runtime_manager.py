@@ -414,9 +414,7 @@ class NodeJSRuntimeManager(IRuntimeManager):
                     )
 
                     if not check_result["success"]:
-                        logger.info(
-                            f"📦 套件 {package_name} 未安裝，但可通過 npx 自動安裝"
-                        )
+                        logger.info(f"📦 套件 {package_name} 未安裝，但可通過 npx 自動安裝")
 
             logger.info(f"✅ 命令驗證成功: {command}")
             return True

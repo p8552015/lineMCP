@@ -109,9 +109,7 @@ class ProductionMCPClient:
                 return True
             else:
                 # 連接池狀態不一致，標記為斷開並繼續建立新連接
-                logger.warning(
-                    f"⚠️ 連接池返回 CONNECTED 但無進程，重建連接：{server_name}"
-                )
+                logger.warning(f"⚠️ 連接池返回 CONNECTED 但無進程，重建連接：{server_name}")
                 connection_info.status = ConnectionStatus.DISCONNECTED
                 # 繼續執行下面的連接邏輯
 
@@ -131,9 +129,7 @@ class ProductionMCPClient:
             logger.info(f"🚀 建立 MCP 連接：{server_name} ({server_config.protocol})")
 
             if server_config.protocol != "stdio":
-                logger.error(
-                    f"❌ 目前只支援 STDIO 協議，不支援：{server_config.protocol}"
-                )
+                logger.error(f"❌ 目前只支援 STDIO 協議，不支援：{server_config.protocol}")
                 return False
 
             # 檢查服務器腳本文件（對於 npx 命令跳過檢查）
@@ -318,9 +314,7 @@ class ProductionMCPClient:
         for attempt in range(max_retries + 1):
             try:
                 if attempt > 0:
-                    logger.info(
-                        f"🔄 重試工具調用 (第{attempt}次)：{server_name}.{tool_name}"
-                    )
+                    logger.info(f"🔄 重試工具調用 (第{attempt}次)：{server_name}.{tool_name}")
                 else:
                     logger.info(f"🛠️ 調用工具：{server_name}.{tool_name}")
 
@@ -431,9 +425,7 @@ class ProductionMCPClient:
                             error_info = response["error"]
                             error_msg = error_info.get("message", "未知錯誤")
                             error_code = error_info.get("code", 0)
-                            logger.error(
-                                f"❌ 工具調用錯誤 (code: {error_code})：{error_msg}"
-                            )
+                            logger.error(f"❌ 工具調用錯誤 (code: {error_code})：{error_msg}")
                             # 對於某些錯誤不重試
                             if error_code in [
                                 -32600,
@@ -466,8 +458,7 @@ class ProductionMCPClient:
                 await self.connection_pool.record_failure(server_name, str(e))
 
                 logger.error(
-                    f"❌ 工具調用異常 {server_name}.{tool_name} "
-                    f"(嘗試 {attempt + 1})：{e}"
+                    f"❌ 工具調用異常 {server_name}.{tool_name} " f"(嘗試 {attempt + 1})：{e}"
                 )
                 if attempt < max_retries:
                     await asyncio.sleep(1)  # 等待後重試
@@ -505,9 +496,7 @@ class ProductionMCPClient:
 
                 if "result" in response and "tools" in response["result"]:
                     tools = response["result"]["tools"]
-                    logger.info(
-                        f"📋 列出工具成功：{server_name} -> {len(tools)} 個工具"
-                    )
+                    logger.info(f"📋 列出工具成功：{server_name} -> {len(tools)} 個工具")
                     return {"success": True, "tools": tools}
                 elif "error" in response:
                     return {"success": False, "error": response["error"]["message"]}

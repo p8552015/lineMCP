@@ -125,9 +125,7 @@ class CompositeParser(IParser):
         if not self._parsers:
             return self._create_empty_query("無可用解析器")
 
-        logger.debug(
-            "🎯 開始組合解析（支援回退）", text=text, parser_count=len(self._parsers)
-        )
+        logger.debug("🎯 開始組合解析（支援回退）", text=text, parser_count=len(self._parsers))
 
         # 評估所有解析器的處理能力
         parser_capabilities = await self._evaluate_parser_capabilities(text)
@@ -191,9 +189,7 @@ class CompositeParser(IParser):
 
             except Exception as e:
                 parser_name = getattr(parser, "name", parser.__class__.__name__)
-                logger.warning(
-                    "⚠️ 解析器執行異常，嘗試下一個", parser=parser_name, error=str(e)
-                )
+                logger.warning("⚠️ 解析器執行異常，嘗試下一個", parser=parser_name, error=str(e))
                 continue
 
         # 🔥 所有解析器都失敗時的處理

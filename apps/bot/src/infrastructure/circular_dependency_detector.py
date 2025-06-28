@@ -168,9 +168,7 @@ class CircularDependencyDetector:
                 return False
 
             self._resolution_stack.append(service_name)
-            logger.debug(
-                f"開始解析服務: {service_name}, 堆疊深度: {len(self._resolution_stack)}"
-            )
+            logger.debug(f"開始解析服務: {service_name}, 堆疊深度: {len(self._resolution_stack)}")
             return True
 
     def end_resolution(self, service_name: str) -> None:
@@ -179,8 +177,7 @@ class CircularDependencyDetector:
             if self._resolution_stack and self._resolution_stack[-1] == service_name:
                 self._resolution_stack.pop()
                 logger.debug(
-                    f"完成解析服務: {service_name}, "
-                    f"剩餘深度: {len(self._resolution_stack)}"
+                    f"完成解析服務: {service_name}, " f"剩餘深度: {len(self._resolution_stack)}"
                 )
 
     def _detect_cycles_in_graph(
@@ -261,12 +258,8 @@ class CircularDependencyDetector:
         ]
 
         if factory_services:
-            suggestions.append(
-                f"💡 工廠模式解決：在 {', '.join(factory_services)} 中使用延遲初始化"
-            )
-            suggestions.append(
-                "🔧 實現方式：設置 service_factory=None，在需要時才創建服務"
-            )
+            suggestions.append(f"💡 工廠模式解決：在 {', '.join(factory_services)} 中使用延遲初始化")
+            suggestions.append("🔧 實現方式：設置 service_factory=None，在需要時才創建服務")
 
         # 檢查依賴類型
         constructor_deps = [
@@ -275,9 +268,7 @@ class CircularDependencyDetector:
             if e.dependency_type == DependencyType.CONSTRUCTOR
         ]
         if constructor_deps:
-            suggestions.append(
-                "🏗️ 構造函數依賴問題：考慮將部分依賴改為屬性注入或方法注入"
-            )
+            suggestions.append("🏗️ 構造函數依賴問題：考慮將部分依賴改為屬性注入或方法注入")
 
         # 通用解決方案
         suggestions.extend(

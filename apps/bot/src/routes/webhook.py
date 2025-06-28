@@ -17,9 +17,9 @@ from linebot.v3.messaging import (
 )
 from prometheus_client import Counter
 
-from src.config import get_settings
 from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
 from src.services.message_handler_di import MessageHandlerDI
+from src.settings import get_settings
 from src.utils.signature_validator import SignatureValidator
 
 logger = structlog.get_logger()
@@ -171,33 +171,32 @@ async def test_endpoint():
         }
     )
 
+
 @router.post("/test-llm")
 async def test_llm_guidance(request: Request):
     """測試 LLM 指導功能的端點"""
     try:
         body = await request.json()
         user_input = body.get("text", "機台")
-        
+
         # 獲取服務工廠
         factory = get_enhanced_service_factory()
         message_handler = factory.create_message_handler()
-        
+
         # 模擬處理用戶訊息（使用正確的方法名稱）
         result = await message_handler.process_message(
-            user_id="test_user", 
-            message_text=user_input, 
-            reply_token="test_token"
+            user_id="test_user", message_text=user_input, reply_token="test_token"
         )
-        
+
         return JSONResponse(
             content={
-                "status": "success", 
+                "status": "success",
                 "input": user_input,
-                "response": result.text if hasattr(result, 'text') else str(result),
+                "response": result.text if hasattr(result, "text") else str(result),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
         )
-        
+
     except Exception as e:
         logger.error("測試端點錯誤", error=str(e))
         return JSONResponse(
@@ -206,7 +205,7 @@ async def test_llm_guidance(request: Request):
                 "error": str(e),
                 "timestamp": datetime.now(UTC).isoformat(),
             },
-            status_code=500
+            status_code=500,
         )
 
 

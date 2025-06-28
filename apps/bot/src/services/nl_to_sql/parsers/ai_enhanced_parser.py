@@ -98,10 +98,11 @@ class AIEnhancedParser(IParser):
             # 調用 AI 服務進行增強解析
             # 🔥 修復：將 ai_context 轉換為 database_schema 格式
             database_schema = ai_context.get("database_schema", {})
-            enhanced_result, confidence = (
-                await self._ai_service.enhance_natural_language_query(
-                    text, database_schema
-                )
+            (
+                enhanced_result,
+                confidence,
+            ) = await self._ai_service.enhance_natural_language_query(
+                text, database_schema
             )
 
             # 解析 AI 返回的結果
@@ -346,9 +347,7 @@ class AIEnhancedParser(IParser):
 
         # 🔥 重要：確保有效查詢類型才返回結果
         if query_type == QueryType.UNKNOWN:
-            logger.warning(
-                "⚠️ AI 無法確定查詢類型，使用文字解析", original_text=original_text
-            )
+            logger.warning("⚠️ AI 無法確定查詢類型，使用文字解析", original_text=original_text)
             return self._parse_text_ai_result(original_text, original_text, confidence)
 
         return ParsedQuery(
@@ -463,17 +462,11 @@ class AIEnhancedParser(IParser):
             return QueryType.FAULT_ANALYSIS
 
         # 生產統計關鍵詞
-        if any(
-            keyword in text_lower
-            for keyword in ["統計", "報告", "生產", "產量", "效率"]
-        ):
+        if any(keyword in text_lower for keyword in ["統計", "報告", "生產", "產量", "效率"]):
             return QueryType.PRODUCTION_STATS
 
         # 所有機台關鍵詞
-        if any(
-            keyword in text_lower
-            for keyword in ["所有機台", "全部機台", "整體", "概覽"]
-        ):
+        if any(keyword in text_lower for keyword in ["所有機台", "全部機台", "整體", "概覽"]):
             return QueryType.ALL_MACHINES
 
         # 機台狀態關鍵詞（最後檢查，較通用）

@@ -116,10 +116,11 @@ class SuggestionService:
             logger.debug("🤖 調用 AI 服務生成建議")
 
             database_schema = context.get("database_schema", {}) if context else {}
-            ai_response, confidence = (
-                await self._ai_service.enhance_natural_language_query(
-                    user_prompt, database_schema
-                )
+            (
+                ai_response,
+                confidence,
+            ) = await self._ai_service.enhance_natural_language_query(
+                user_prompt, database_schema
             )
 
             if ai_response and isinstance(ai_response, str) and ai_response.strip():
@@ -153,19 +154,13 @@ class SuggestionService:
         if any(keyword in user_input_lower for keyword in ["機台", "設備", "machine"]):
             suggestion += self._get_machine_query_suggestions()
 
-        elif any(
-            keyword in user_input_lower for keyword in ["故障", "問題", "錯誤", "維修"]
-        ):
+        elif any(keyword in user_input_lower for keyword in ["故障", "問題", "錯誤", "維修"]):
             suggestion += self._get_fault_query_suggestions()
 
-        elif any(
-            keyword in user_input_lower for keyword in ["部門", "加工", "組裝", "品管"]
-        ):
+        elif any(keyword in user_input_lower for keyword in ["部門", "加工", "組裝", "品管"]):
             suggestion += self._get_department_query_suggestions()
 
-        elif any(
-            keyword in user_input_lower for keyword in ["統計", "報告", "生產", "效率"]
-        ):
+        elif any(keyword in user_input_lower for keyword in ["統計", "報告", "生產", "效率"]):
             suggestion += self._get_statistics_query_suggestions()
 
         else:

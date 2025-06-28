@@ -230,8 +230,10 @@ class NaturalLanguageToSQLService:
                 # 嘗試使用查詢建構器生成 SQL
                 try:
                     builder = self._get_query_builder()
-                    sql_query = builder.build_query(parse_result.query_type, parse_result.parameters)
-                    
+                    sql_query = builder.build_query(
+                        parse_result.query_type, parse_result.parameters
+                    )
+
                     # 建構完整的查詢結果
                     result = ParsedQuery(
                         query_type=parse_result.query_type,
@@ -240,26 +242,28 @@ class NaturalLanguageToSQLService:
                         confidence=parse_result.confidence,
                         explanation=parse_result.explanation,
                     )
-                    
+
                     logger.info(
                         "✅ SQL 查詢建構成功",
                         query_type=parse_result.query_type.value,
                         sql_length=len(sql_query),
                         confidence=parse_result.confidence,
                     )
-                    
+
                 except Exception as e:
                     logger.error(
                         "❌ SQL 建構失敗，提供用戶指導",
                         query_type=parse_result.query_type.value,
                         error=str(e),
                     )
-                    
+
                     # 生成用戶指導作為回退
                     user_guidance = await self._generate_user_guidance(
-                        parse_result.query_type, parse_result.parameters, normalized_text
+                        parse_result.query_type,
+                        parse_result.parameters,
+                        normalized_text,
                     )
-                    
+
                     result = ParsedQuery(
                         query_type=QueryType.UNKNOWN,
                         sql_query="",

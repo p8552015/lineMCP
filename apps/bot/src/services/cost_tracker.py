@@ -4,7 +4,7 @@ from typing import Any
 import structlog
 from prometheus_client import Counter, Gauge
 
-from src.config import get_settings
+from src.settings import get_settings
 from src.utils.redis_client import get_counter, increment_counter
 
 logger = structlog.get_logger()

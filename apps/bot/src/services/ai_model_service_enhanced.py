@@ -12,7 +12,7 @@ from typing import Any
 
 import structlog
 
-from src.config import get_settings
+from src.settings import get_settings
 
 from .ai_model_service import AIModelService, ModelConfig, ModelProvider
 
@@ -89,9 +89,7 @@ class EnhancedAIModelService(AIModelService):
         )
 
         logger.info(f"✅ 增強版AI模型服務初始化完成，支援 {len(self.models)} 個模型")
-        logger.info(
-            f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}"
-        )
+        logger.info(f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}")
 
     def _get_fallback_models(self) -> list[str]:
         """獲取備用模型列表（優化備用模型順序）"""
@@ -146,7 +144,7 @@ class EnhancedAIModelService(AIModelService):
             if not self._is_model_healthy(model):
                 logger.info(f"⏭️ 跳過不健康的模型: {model}")
                 continue
-                
+
             try:
                 logger.info(f"🔄 嘗試使用模型: {model}")
                 result = await self._call_model_with_retry(
@@ -163,11 +161,20 @@ class EnhancedAIModelService(AIModelService):
             except Exception as e:
                 # 檢查是否為配額錯誤
                 error_message = str(e).lower()
-                is_quota_error = any(keyword in error_message for keyword in [
-                    "quota", "rate limit", "429", "insufficient_quota",
-                    "resource_exhausted", "billing", "payment", "exceeded"
-                ])
-                
+                is_quota_error = any(
+                    keyword in error_message
+                    for keyword in [
+                        "quota",
+                        "rate limit",
+                        "429",
+                        "insufficient_quota",
+                        "resource_exhausted",
+                        "billing",
+                        "payment",
+                        "exceeded",
+                    ]
+                )
+
                 if is_quota_error:
                     logger.error(f"❌ 模型 {model} 配額已用盡: {e}")
                     # 記錄配額錯誤
@@ -286,11 +293,11 @@ class EnhancedAIModelService(AIModelService):
                 }
             )
         return models
-    
+
     def _is_model_healthy(self, model_name: str) -> bool:
         """
         檢查模型是否健康可用
-        
+
         檢查項目：
         1. 失敗次數是否過多
         2. 是否已知配額用盡
@@ -298,10 +305,10 @@ class EnhancedAIModelService(AIModelService):
         """
         if model_name not in self._model_health:
             return True
-            
+
         health = self._model_health[model_name]
         now = time.time()
-        
+
         # 檢查是否已知配額用盡
         if health.get("quota_exhausted", False):
             # 檢查是否已經過了重置時間（假設每月1號重置）
@@ -316,15 +323,15 @@ class EnhancedAIModelService(AIModelService):
                 else:
                     logger.warning(f"⚠️ 模型 {model_name} 配額已用盡，跳過")
                     return False
-        
+
         # 檢查連續失敗次數
         if health["failures"] >= 5:
             logger.warning(f"⚠️ 模型 {model_name} 連續失敗次數過多: {health['failures']}")
             return False
-            
+
         # 檢查最近是否有成功（1小時內）
         if now - health["last_success"] > 3600:
             logger.warning(f"⚠️ 模型 {model_name} 超過1小時未成功調用")
             # 但仍然給予嘗試機會
-            
+
         return True

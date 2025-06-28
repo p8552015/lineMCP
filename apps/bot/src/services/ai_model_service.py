@@ -12,7 +12,7 @@ from typing import Any
 import httpx
 import structlog
 
-from src.config import get_settings
+from src.settings import get_settings
 
 logger = structlog.get_logger()
 settings = get_settings()

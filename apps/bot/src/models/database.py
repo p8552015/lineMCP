@@ -46,9 +46,7 @@ class MachineFault(Base):
     )
     fault_type = Column(String(100), nullable=False, comment="故障類型")
     severity = Column(String(20), nullable=False, comment="嚴重程度")
-    fault_date = Column(
-        DateTime, default=func.now(), nullable=False, comment="故障發生時間"
-    )
+    fault_date = Column(DateTime, default=func.now(), nullable=False, comment="故障發生時間")
     description = Column(Text, comment="故障描述")
     resolved = Column(Boolean, default=False, comment="是否已解決")
     resolution_date = Column(DateTime, comment="解決時間")
@@ -66,9 +64,7 @@ class MachineUtilization(Base):
     )
     utilization_rate = Column(Numeric(5, 2), nullable=False, comment="使用率")
     temperature = Column(Numeric(5, 2), comment="溫度")
-    recorded_at = Column(
-        DateTime, default=func.now(), nullable=False, comment="記錄時間"
-    )
+    recorded_at = Column(DateTime, default=func.now(), nullable=False, comment="記錄時間")
     shift = Column(String(20), comment="班別")
     operator = Column(String(100), comment="操作員")
 

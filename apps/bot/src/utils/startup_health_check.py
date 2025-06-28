@@ -84,9 +84,7 @@ class StartupHealthChecker:
         # 記錄功能狀態
         functionality_info = health_report.get("functionality", {})
         if functionality_info.get("status") != "healthy":
-            logger.warning(
-                f"⚠️ 功能檢查: {functionality_info.get('message', '未知問題')}"
-            )
+            logger.warning(f"⚠️ 功能檢查: {functionality_info.get('message', '未知問題')}")
 
         # 記錄錯誤
         if "error" in health_report:
@@ -180,9 +178,7 @@ async def verify_database_schema() -> None:
                     return  # 允許應用程式啟動，但發出警告
 
         except Exception as e:
-            logger.error(
-                f"❌ 健康檢查過程中發生錯誤 (嘗試 {attempt + 1}/{max_retries}): {e}"
-            )
+            logger.error(f"❌ 健康檢查過程中發生錯誤 (嘗試 {attempt + 1}/{max_retries}): {e}")
             if attempt < max_retries - 1:
                 logger.info(f"🔄 {retry_delay} 秒後重試...")
                 await asyncio.sleep(retry_delay)

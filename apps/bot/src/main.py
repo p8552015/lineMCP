@@ -7,9 +7,9 @@ from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_client import make_asgi_app
 
-from src.config import get_settings
 from src.middleware import setup_middleware
 from src.routes import webhook
+from src.settings import get_settings
 from src.utils.observability import setup_observability
 from src.utils.redis_client import get_redis_client
 from src.utils.startup_health_check import verify_database_schema

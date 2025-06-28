@@ -48,7 +48,7 @@ class ConfigurationService(IConfiguration):
             config_base_path: 配置檔案基礎路徑，預設為模組內的 config 目錄
         """
         # 環境變數優先級：NL_TO_SQL_CONFIG_DIR > 傳入參數 > 預設路徑
-        from src.config import get_settings
+        from src.settings import get_settings
 
         settings = get_settings()
         env_config_dir = (
@@ -329,7 +329,7 @@ class ConfigurationService(IConfiguration):
         env_config = {}
 
         # 使用統一的 settings 物件取代直接的環境變數存取
-        from src.config import get_settings
+        from src.settings import get_settings
 
         settings = get_settings()
 

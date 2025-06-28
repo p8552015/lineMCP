@@ -2,7 +2,7 @@ from functools import lru_cache
 
 import redis.asyncio as redis
 
-from src.config import get_settings
+from src.settings import get_settings
 
 settings = get_settings()
 

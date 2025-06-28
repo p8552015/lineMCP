@@ -71,9 +71,7 @@ class TablesCommandHandler(CommandHandler):
         tables = parser.parse_query_result(result)
 
         if not tables:
-            return TextMessage(
-                text="📋 資料庫查詢結果\\n\\n" "🔍 目前資料庫中沒有資料表"
-            )
+            return TextMessage(text="📋 資料庫查詢結果\\n\\n" "🔍 目前資料庫中沒有資料表")
 
         # 格式化資料表列表
         response_lines = ["📋 資料庫資料表列表：", "━━━━━━━━━━━━━━━━━━━━", ""]
@@ -121,8 +119,7 @@ class TablesCommandHandler(CommandHandler):
 
         if not schema_data:
             return TextMessage(
-                text=f"❌ 找不到資料表：{table_name}\\n\\n"
-                "💡 使用 /tables 查看所有可用的資料表"
+                text=f"❌ 找不到資料表：{table_name}\\n\\n" "💡 使用 /tables 查看所有可用的資料表"
             )
 
         # 查詢資料表行數
@@ -158,8 +155,6 @@ class TablesCommandHandler(CommandHandler):
 
             response_lines.append(f"   • {name}: {field_desc}")
 
-        response_lines.extend(
-            ["", f"💡 查看資料：/sql SELECT * FROM {table_name} LIMIT 5"]
-        )
+        response_lines.extend(["", f"💡 查看資料：/sql SELECT * FROM {table_name} LIMIT 5"])
 
         return TextMessage(text="\\n".join(response_lines))

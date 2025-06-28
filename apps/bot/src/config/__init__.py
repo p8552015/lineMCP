@@ -20,7 +20,7 @@ def get_settings():
     from pathlib import Path
 
     # 動態導入避免循環依賴
-    config_path = Path(__file__).parent.parent / "config.py"
+    config_path = Path(__file__).parent.parent / "settings.py"
     spec = importlib.util.spec_from_file_location("main_config", config_path)
     config_module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(config_module)

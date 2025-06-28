@@ -42,9 +42,7 @@ class InfoCommandHandler(CommandHandler):
 
         except Exception as e:
             logger.error(f"獲取系統資訊失敗: {e}", exc_info=True)
-            return TextMessage(
-                text="❌ 獲取系統資訊時發生錯誤\\n\\n" "請稍後再試或聯絡系統管理員"
-            )
+            return TextMessage(text="❌ 獲取系統資訊時發生錯誤\\n\\n" "請稍後再試或聯絡系統管理員")
 
     async def _collect_system_info(self) -> dict:
         """收集系統資訊"""
@@ -77,7 +75,7 @@ class InfoCommandHandler(CommandHandler):
 
     def _is_production(self) -> bool:
         """檢查是否為生產環境"""
-        from src.config import get_settings
+        from src.settings import get_settings
 
         settings = get_settings()
         return settings.app_env.lower() == "production"

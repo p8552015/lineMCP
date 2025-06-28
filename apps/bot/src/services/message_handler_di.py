@@ -87,9 +87,7 @@ class MessageHandlerDI:
         try:
             # 如果已經在 event loop 中，直接處理
             asyncio.get_running_loop()
-            return TextMessage(
-                text=f"收到您的訊息：{message_text}\\n正在處理中，請稍後..."
-            )
+            return TextMessage(text=f"收到您的訊息：{message_text}\\n正在處理中，請稍後...")
         except RuntimeError:
             # 沒有運行的 event loop，可以創建新的
             return asyncio.run(self.process_message(user_id, message_text, reply_token))
@@ -163,23 +161,17 @@ class MessageHandlerDI:
 
         logger.info("✅ 建議服務已初始化")
 
-    @mcp_error_handler(
-        "SQL查詢失敗", timeout_seconds=30, include_technical_details=True
-    )
+    @mcp_error_handler("SQL查詢失敗", timeout_seconds=30, include_technical_details=True)
     async def _handle_sql_command(self, user_id: str, args: list[str]) -> Message:
         """處理SQL查詢指令"""
         if not args:
-            return TextMessage(
-                text="請提供SQL查詢語句，例如：/sql SELECT * FROM machines LIMIT 5"
-            )
+            return TextMessage(text="請提供SQL查詢語句，例如：/sql SELECT * FROM machines LIMIT 5")
 
         sql_query = " ".join(args).strip()
 
         # 🔥 緊急修復：檢查空查詢
         if not sql_query:
-            logger.error(
-                "❌ 緊急阻止：MessageHandler SQL 查詢為空", user_id=user_id, args=args
-            )
+            logger.error("❌ 緊急阻止：MessageHandler SQL 查詢為空", user_id=user_id, args=args)
             return TextMessage(
                 text="❌ SQL 查詢不能為空\\n\\n"
                 "📝 用法：/sql <SQL查詢語句>\\n"
@@ -205,9 +197,7 @@ class MessageHandlerDI:
                     response += f"\\n... 共 {len(data)} 行結果，僅顯示前10行"
                 return TextMessage(text=response)
             else:
-                return TextMessage(
-                    text=f"查詢執行成功，但沒有返回數據：\\n```\\n{sql_query}\\n```"
-                )
+                return TextMessage(text=f"查詢執行成功，但沒有返回數據：\\n```\\n{sql_query}\\n```")
 
     @mcp_error_handler("獲取表格列表失敗")
     async def _handle_tables_command(self, user_id: str, args: list[str]) -> Message:
@@ -309,9 +299,7 @@ class MessageHandlerDI:
             # 成本資訊
             input_cost = model["cost_per_1k_input"]
             output_cost = model["cost_per_1k_output"]
-            message += (
-                f"   💰 成本: ${input_cost:.3f}/${output_cost:.3f} per 1K tokens\\n"
-            )
+            message += f"   💰 成本: ${input_cost:.3f}/${output_cost:.3f} per 1K tokens\\n"
 
             # 免費額度
             if free_limit:
@@ -326,8 +314,7 @@ class MessageHandlerDI:
         ai_enabled = self.nl_service.enable_ai_enhancement
         message += f"\\n🧠 AI增強解析: {'✅ 啟用' if ai_enabled else '❌ 禁用'}\\n"
         message += (
-            f"🔄 規則回退: "
-            f"{'✅ 啟用' if self.nl_service.fallback_to_rules else '❌ 禁用'}\n"
+            f"🔄 規則回退: " f"{'✅ 啟用' if self.nl_service.fallback_to_rules else '❌ 禁用'}\n"
         )
 
         # 使用建議
@@ -378,19 +365,22 @@ class MessageHandlerDI:
             # 4. 格式化並返回結果
             return self.formatter.format_query_result(result)
 
-    async def _handle_unknown_query(self, message_text: str, parsed_query=None) -> Message:
+    async def _handle_unknown_query(
+        self, message_text: str, parsed_query=None
+    ) -> Message:
         """處理無法識別的查詢 - 優先使用 LLM 指導"""
-        
+
         # 🤖 優先檢查是否有 LLM 生成的用戶指導
-        if (parsed_query and 
-            parsed_query.parameters and 
-            "user_guidance" in parsed_query.parameters):
-            
+        if (
+            parsed_query
+            and parsed_query.parameters
+            and "user_guidance" in parsed_query.parameters
+        ):
             guidance = parsed_query.parameters["user_guidance"]
             logger.info("✅ 使用 LLM 生成的用戶指導回覆")
-            
+
             return TextMessage(text=guidance)
-        
+
         # 傳統處理方式
         if self._is_greeting(message_text):
             return self._handle_greeting()

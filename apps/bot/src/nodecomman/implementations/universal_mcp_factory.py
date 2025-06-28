@@ -131,9 +131,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
     async def create_server(self, config: MCPServerConfig) -> IMCPServer:
         """創建 MCP 服務器"""
         try:
-            logger.info(
-                f"🚀 創建 MCP 服務器: {config.name} ({config.runtime_type.value})"
-            )
+            logger.info(f"🚀 創建 MCP 服務器: {config.name} ({config.runtime_type.value})")
 
             # 檢查運行時環境是否可用
             runtime_manager = self._runtime_managers.get(config.runtime_type)
@@ -212,8 +210,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
                 server_info.started_at = __import__("time").time()
 
                 logger.info(
-                    f"✅ MCP 服務器 {server_name} 啟動成功 "
-                    f"(PID: {server_info.process_id})"
+                    f"✅ MCP 服務器 {server_name} 啟動成功 " f"(PID: {server_info.process_id})"
                 )
                 return True
             else:

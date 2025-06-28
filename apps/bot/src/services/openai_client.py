@@ -11,9 +11,9 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from src.config import get_settings
 from src.models.mcp_manifest import get_mcp_manifest
 from src.services.cost_tracker import CostTracker
+from src.settings import get_settings
 from src.utils.observability import get_tracer
 
 logger = structlog.get_logger()

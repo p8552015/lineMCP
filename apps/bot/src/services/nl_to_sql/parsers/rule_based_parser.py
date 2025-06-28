@@ -122,9 +122,7 @@ class RuleBasedParser(IParser):
                         return self._create_typed_query(query_type, text, confidence)
 
             except ValueError as e:
-                logger.warning(
-                    "⚠️ 無效的查詢類型", query_type=query_type_name, error=str(e)
-                )
+                logger.warning("⚠️ 無效的查詢類型", query_type=query_type_name, error=str(e))
                 continue
 
         # 3. 未識別的查詢
@@ -289,9 +287,7 @@ class RuleBasedParser(IParser):
         """
         explanations = {
             QueryType.ALL_MACHINES: "查詢所有機台的狀態概覽",
-            QueryType.FAULT_ANALYSIS: (
-                f"分析近 {parameters.get('days', 30)} 天的故障記錄"
-            ),
+            QueryType.FAULT_ANALYSIS: (f"分析近 {parameters.get('days', 30)} 天的故障記錄"),
             QueryType.PRODUCTION_STATS: "生產統計報告（按部門）",
             QueryType.MACHINE_STATUS: "查詢機台運行狀態",
         }
@@ -333,9 +329,7 @@ class RuleBasedParser(IParser):
         try:
             self._config.reload_config()
             self._query_patterns = self._config.get_query_patterns()
-            logger.info(
-                "🔄 查詢模式重新載入完成", patterns_count=len(self._query_patterns)
-            )
+            logger.info("🔄 查詢模式重新載入完成", patterns_count=len(self._query_patterns))
         except Exception as e:
             logger.error("❌ 查詢模式重新載入失敗", error=str(e))
             raise
@@ -386,17 +380,13 @@ class RuleBasedParser(IParser):
 
             # 檢查模式配置結構
             if not isinstance(pattern_config, dict):
-                validation_result["errors"].append(
-                    f"查詢類型 {query_type_name} 的配置格式錯誤"
-                )
+                validation_result["errors"].append(f"查詢類型 {query_type_name} 的配置格式錯誤")
                 validation_result["is_valid"] = False
                 continue
 
             patterns = pattern_config.get("patterns", [])
             if not patterns:
-                validation_result["warnings"].append(
-                    f"查詢類型 {query_type_name} 沒有定義模式"
-                )
+                validation_result["warnings"].append(f"查詢類型 {query_type_name} 沒有定義模式")
 
             # 驗證正規表達式
             invalid_patterns = []
@@ -408,8 +398,7 @@ class RuleBasedParser(IParser):
 
             if invalid_patterns:
                 validation_result["errors"].append(
-                    f"查詢類型 {query_type_name} 包含無效的正規表達式: "
-                    f"{invalid_patterns}"
+                    f"查詢類型 {query_type_name} 包含無效的正規表達式: " f"{invalid_patterns}"
                 )
                 validation_result["is_valid"] = False
 

@@ -7,7 +7,7 @@ repos:
         files: ^apps/bot/src/
         
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.270
+    rev: v0.7.0
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -18,5 +18,11 @@ repos:
     hooks:
       - id: mypy
         files: ^apps/bot/src/
-        additional_dependencies: [types-all]
+        additional_dependencies: [
+          types-requests,
+          types-PyYAML,
+          types-python-jose,
+          types-redis,
+          types-aiofiles
+        ]
         args: [--config-file=apps/bot/pyproject.toml]

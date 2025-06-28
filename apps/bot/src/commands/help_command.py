@@ -75,8 +75,7 @@ class HelpCommandHandler(CommandHandler):
 
         except KeyError:
             return TextMessage(
-                text=f"❌ 找不到指令：{command_name}\n\n"
-                "💡 使用 /help 查看所有可用指令"
+                text=f"❌ 找不到指令：{command_name}\n\n" "💡 使用 /help 查看所有可用指令"
             )
 
     def _get_all_commands_help(self) -> TextMessage:
@@ -134,20 +133,22 @@ class HelpCommandHandler(CommandHandler):
             ),
             "tables": (
                 "• 不帶參數：列出所有資料表\n"
-                "• 帶資料表名稱：顯示資料表結構\n"
+                "• 帶資料表名稱：顯示資料表結構\n" 
                 "• 示例：/tables machines"
             ),
             "status": (
-                "• 顯示系統運行狀態\n"
-                "• 包含資料庫連接、服務狀態等資訊\n"
+                "• 顯示系統運行狀態\n" 
+                "• 包含資料庫連接、服務狀態等資訊\n" 
                 "• 可用於系統健康檢查"
             ),
             "info": (
-                "• 顯示系統配置和版本資訊\n" "• 包含支援的功能列表\n" "• 用於系統診斷"
+                "• 顯示系統配置和版本資訊\n" 
+                "• 包含支援的功能列表\n" 
+                "• 用於系統診斷"
             ),
             "models": (
-                "• 列出所有可用的 AI 模型\n"
-                "• 顯示模型狀態和配置\n"
+                "• 列出所有可用的 AI 模型\n" 
+                "• 顯示模型狀態和配置\n" 
                 "• 用於檢查 AI 服務可用性"
             ),
         }

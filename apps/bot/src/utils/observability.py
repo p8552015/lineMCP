@@ -9,7 +9,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
-from src.config import get_settings
+from src.settings import get_settings
 
 settings = get_settings()
 logger = structlog.get_logger()
@@ -112,9 +112,7 @@ def _setup_telemetry_exporter(tracer_provider: TracerProvider) -> str | None:
                     return "otlp_auto"
 
                 except Exception as e:
-                    logger.debug(
-                        "自動檢測的端點設置失敗", endpoint=endpoint, error=str(e)
-                    )
+                    logger.debug("自動檢測的端點設置失敗", endpoint=endpoint, error=str(e))
 
     # 降級策略：使用控制台導出器（僅在開發環境且啟用時）
     if settings.app_env == "development" and settings.otel_fallback_to_console:
@@ -236,9 +234,7 @@ def get_telemetry_health() -> dict:
             health_status["active_processors"] = processor_count
 
             if processor_count == 0:
-                health_status["recommendations"].append(
-                    "沒有活動的追蹤處理器，考慮設置適當的導出器"
-                )
+                health_status["recommendations"].append("沒有活動的追蹤處理器，考慮設置適當的導出器")
 
     except Exception as e:
         health_status["error"] = str(e)

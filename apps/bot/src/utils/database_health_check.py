@@ -25,9 +25,7 @@ class DatabaseHealthChecker:
         )
 
         # 使用純 asyncpg，不需要 SQLAlchemy engine
-        logger.info(
-            f"DatabaseHealthChecker 初始化完成，使用資料庫: {self.database_url}"
-        )
+        logger.info(f"DatabaseHealthChecker 初始化完成，使用資料庫: {self.database_url}")
 
         self.required_tables = {
             "machines": {
@@ -92,18 +90,14 @@ class DatabaseHealthChecker:
                 }
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logger.warning(
-                        f"⚠️ 資料庫連接失敗 (嘗試 {attempt + 1}/{max_retries}): {e}"
-                    )
+                    logger.warning(f"⚠️ 資料庫連接失敗 (嘗試 {attempt + 1}/{max_retries}): {e}")
                     logger.info(f"🔄 {retry_delay} 秒後重試...")
                     await asyncio.sleep(retry_delay)
                 else:
                     logger.error(f"❌ 資料庫連接在 {max_retries} 次嘗試後仍然失敗: {e}")
                     return {
                         "status": "unhealthy",
-                        "message": (
-                            f"資料庫連接失敗 (已重試 {max_retries} 次): {str(e)}"
-                        ),
+                        "message": (f"資料庫連接失敗 (已重試 {max_retries} 次): {str(e)}"),
                         "error": str(e),
                         "timestamp": datetime.now().isoformat(),
                         "attempts": max_retries,
@@ -142,7 +136,6 @@ class DatabaseHealthChecker:
                 and tables_result["status"] in ["healthy", "warning"]
                 and functionality_result["status"] in ["healthy", "warning"]
             ):
-
                 if (
                     tables_result["status"] == "warning"
                     or functionality_result["status"] == "warning"
