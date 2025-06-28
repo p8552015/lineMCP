@@ -5,7 +5,6 @@ MessageHandler 依賴注入版本
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable
 
 import structlog
 from linebot.v3.messaging import Message, TextMessage
@@ -13,14 +12,9 @@ from linebot.v3.messaging import Message, TextMessage
 # 移除對已刪除模組的依賴，不再使用 Command 和 parse_command
 from src.utils.observability import get_tracer
 
-from .ai_model_service import AIModelService
-from .database_service import DatabaseService
 from .error_handlers import ErrorContext, log_performance, mcp_error_handler
 from .mcp_response_parser import MCPResponseParser
-from .message_formatter import MessageFormatter
 from .nl_to_sql.models.query_models import QueryType
-from .nl_to_sql_service import NaturalLanguageToSQLService
-from .openai_client import OpenAIClient
 
 logger = structlog.get_logger()
 tracer = get_tracer(__name__)
@@ -34,38 +28,51 @@ class MessageHandlerDI:
     - 清晰的依賴關係宣告
     """
 
-    def __init__(
-        self,
-        mcp_client_factory: Callable[[], Awaitable],
-        ai_model_service: AIModelService,
-        nl_service: NaturalLanguageToSQLService,
-        db_service: DatabaseService,
-        formatter: MessageFormatter,
-        openai_client: OpenAIClient | None = None,
-    ):
-        """
-        初始化訊息處理器
+    def __init__(self, service_factory):
+        """初始化訊息處理器，注入所有依賴服務"""
+        self.service_factory = service_factory
+        # 延遲初始化依賴服務
+        self._initialized = False
 
-        Args:
-            mcp_client_factory: MCP 客戶端工廠函數
-            ai_model_service: AI 模型服務
-            nl_service: 自然語言處理服務
-            db_service: 資料庫服務
-            formatter: 訊息格式化器
-            openai_client: OpenAI 客戶端（可選）
-        """
-        self.mcp_client_factory = mcp_client_factory
-        self.ai_model_service = ai_model_service
-        self.nl_service = nl_service
-        self.db_service = db_service
-        self.formatter = formatter
-        self.openai_client = openai_client
+    def _is_query_relevant(self, user_input: str, parsed_query) -> bool:
+        """檢查解析結果是否與用戶輸入相關"""
+        user_input_lower = user_input.lower()
 
-        # 內部狀態
-        self._mcp_client = None
+        # 機台相關查詢需要包含機台相關關鍵詞
+        if (
+            hasattr(parsed_query, "query_type")
+            and parsed_query.query_type
+            and hasattr(parsed_query.query_type, "value")
+        ):
+            query_type_str = parsed_query.query_type.value.lower()
+            if "machine" in query_type_str or "status" in query_type_str:
+                machine_keywords = [
+                    "機台",
+                    "設備",
+                    "機器",
+                    "m001",
+                    "m002",
+                    "m003",
+                    "m004",
+                    "m005",
+                ]
+                return any(keyword in user_input_lower for keyword in machine_keywords)
 
-        # TaskMaster 整合暫時禁用
-        self.taskmaster = None
+        return True  # 其他查詢類型暫時通過
+
+    def _initialize_services(self):
+        """延遲初始化所有依賴服務"""
+        if self._initialized:
+            return
+
+        # 從服務工廠獲取所有必要的服務
+        self.ai_model_service = self.service_factory.get_ai_model_service()
+        self.nl_service = self.service_factory.get_nl_to_sql_service()
+        self.db_service = self.service_factory.get_database_service()
+        self.formatter = self.service_factory.get_message_formatter()
+
+        self._initialized = True
+        logger.info("✅ 所有依賴服務已初始化")
 
         logger.info("✅ 依賴注入版訊息處理器初始化完成")
 
@@ -336,6 +343,9 @@ class MessageHandlerDI:
         處理自然語言查詢
         核心功能：將自然語言轉換為SQL並執行
         """
+        # 確保服務已初始化
+        self._initialize_services()
+
         with ErrorContext("natural_language_query") as ctx:
             ctx.add_context(query_text=message_text[:100])
 
@@ -357,7 +367,8 @@ class MessageHandlerDI:
             # 2. 檢查解析結果
             if (
                 parsed_query.query_type == QueryType.UNKNOWN
-                or parsed_query.confidence < 0.3
+                or parsed_query.confidence < 0.5  # 提高門檻從 0.3 到 0.5
+                or not self._is_query_relevant(message_text, parsed_query)  # 新增相關性檢查
             ):
                 return await self._handle_unknown_query(message_text, parsed_query)
 
