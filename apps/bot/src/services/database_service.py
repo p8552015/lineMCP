@@ -353,7 +353,9 @@ class DatabaseService:
         try:
             # 🔥 緊急修復：檢查參數
             if not machine_id or not machine_id.strip():
-                logger.warning("❌ machine_id 為空，無法查詢故障次數", machine_id=repr(machine_id))
+                logger.warning(
+                    "❌ machine_id 為空，無法查詢故障次數", machine_id=repr(machine_id)
+                )
                 return 0
 
             fault_query = f"""

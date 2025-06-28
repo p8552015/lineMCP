@@ -165,7 +165,9 @@ class MessageHandlerDI:
     async def _handle_sql_command(self, user_id: str, args: list[str]) -> Message:
         """處理SQL查詢指令"""
         if not args:
-            return TextMessage(text="請提供SQL查詢語句，例如：/sql SELECT * FROM machines LIMIT 5")
+            return TextMessage(text=(
+                "請提供SQL查詢語句，例如：/sql SELECT * FROM machines LIMIT 5")
+            )
 
         sql_query = " ".join(args).strip()
 

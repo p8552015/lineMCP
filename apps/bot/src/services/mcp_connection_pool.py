@@ -307,7 +307,9 @@ class MCPConnectionPool:
 
         except Exception as e:
             connection.status = ConnectionStatus.FAILED
-            logger.error("❌ 連接池標記失敗", server=connection.server_name, error=str(e))
+            logger.error(
+                "❌ 連接池標記失敗", server=connection.server_name, error=str(e)
+            )
             return False
 
     async def _close_all_connections(self):

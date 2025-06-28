@@ -74,8 +74,8 @@ class HelpCommandHandler(CommandHandler):
             return TextMessage(text="\n".join(response_lines))
 
         except KeyError:
-            return TextMessage(
-                text=f"❌ 找不到指令：{command_name}\n\n" "💡 使用 /help 查看所有可用指令"
+            return TextMessage(text=(
+                f"❌ 找不到指令：{command_name}\n\n" "💡 使用 /help 查看所有可用指令")
             )
 
     def _get_all_commands_help(self) -> TextMessage:
@@ -132,7 +132,7 @@ class HelpCommandHandler(CommandHandler):
                 "• 示例：/sql SELECT * FROM machines WHERE status='running'"
             ),
             "tables": (
-                "• 不帶參數：列出所有資料表\n"
+                "• 不帶參數：列出所有資料表\n" 
                 "• 帶資料表名稱：顯示資料表結構\n" 
                 "• 示例：/tables machines"
             ),

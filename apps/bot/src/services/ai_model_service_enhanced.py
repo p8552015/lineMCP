@@ -89,7 +89,9 @@ class EnhancedAIModelService(AIModelService):
         )
 
         logger.info(f"✅ 增強版AI模型服務初始化完成，支援 {len(self.models)} 個模型")
-        logger.info(f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}")
+        logger.info(
+            f"🔄 預設模型: {self.default_model}, 備用模型: {self.fallback_models}"
+        )
 
     def _get_fallback_models(self) -> list[str]:
         """獲取備用模型列表（優化備用模型順序）"""
@@ -326,7 +328,9 @@ class EnhancedAIModelService(AIModelService):
 
         # 檢查連續失敗次數
         if health["failures"] >= 5:
-            logger.warning(f"⚠️ 模型 {model_name} 連續失敗次數過多: {health['failures']}")
+            logger.warning(
+                f"⚠️ 模型 {model_name} 連續失敗次數過多: {health['failures']}"
+            )
             return False
 
         # 檢查最近是否有成功（1小時內）

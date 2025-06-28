@@ -266,7 +266,9 @@ class MessageFormatter:
         machine_count = data.get("machine_count", 0)
 
         if machine_count == 0:
-            return TextMessage(text=f"❌ {data.get('message', f'{department} 沒有機台資料')}")
+            return TextMessage(text=(
+                f"❌ {data.get('message', f'{department} 沒有機台資料')}")
+            )
 
         dept_icon = self.department_icons.get(department, "🏭")
 

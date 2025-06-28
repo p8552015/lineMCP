@@ -50,6 +50,9 @@ requests-mock = "^1.11.0"
 pytest-timeout = "^2.4.0"
 python-dotenv = "^1.0.0"
 types-pyyaml = "^6.0.12.20250516"
+types-psutil = "*"
+types-redis = "*"
+types-requests = "*"
 
 [build-system]
 requires = ["poetry-core"]
@@ -62,7 +65,13 @@ target-version = ['py311']
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+fix = true
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "PT", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
 
 [tool.isort]
 profile = "black"
