@@ -138,7 +138,9 @@
       "Bash(pre-commit:*)",
       "Bash(./scripts/fix-code-quality.sh:*)",
       "Bash(docker logs:*)",
-      "mcp__serena__insert_after_symbol"
+      "mcp__serena__insert_after_symbol",
+      "Bash(ps:*)",
+      "Bash(kill:*)"
     ],
     "deny": []
   }

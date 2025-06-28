@@ -233,7 +233,7 @@ class NaturalLanguageToSQLService:
                 user_guidance = await self._generate_user_guidance(
                     parse_result.query_type, parse_result.parameters, normalized_text
                 )
-                
+
                 logger.warning(
                     "⚠️ 檢測到空 SQL 查詢，提供用戶指導",
                     query_type=parse_result.query_type.value,
@@ -244,7 +244,7 @@ class NaturalLanguageToSQLService:
 
                 # 🤖 新策略：使用 LLM 生成用戶指導，不再強制修復
                 logger.info("🎯 改用 LLM 指導策略，提供用戶建議而非強制修復")
-                
+
                 # 返回包含 LLM 指導的結果
                 result = ParsedQuery(
                     query_type=QueryType.UNKNOWN,
@@ -253,12 +253,12 @@ class NaturalLanguageToSQLService:
                         "user_guidance": user_guidance,
                         "original_query_type": parse_result.query_type.value,
                         "original_parameters": parse_result.parameters,
-                        "guidance_type": "llm_generated"
+                        "guidance_type": "llm_generated",
                     },
                     confidence=0.0,
                     explanation=f"需要更多資訊：{user_guidance}",
                 )
-                
+
                 logger.info(
                     "✅ LLM 用戶指導已生成",
                     original_query_type=parse_result.query_type.value,
@@ -398,12 +398,12 @@ class NaturalLanguageToSQLService:
     ) -> str:
         """
         🤖 使用 LLM 生成智能用戶指導
-        
+
         Args:
             query_type: 解析出的查詢類型
             parameters: 解析參數
             user_input: 用戶原始輸入
-            
+
         Returns:
             str: 智能用戶指導訊息
         """
@@ -432,19 +432,28 @@ class NaturalLanguageToSQLService:
             # 調用 AI 模型
             ai_response = await self.ai_model_service.enhance_natural_language_query(
                 user_query=prompt,
-                database_schema={}  # 簡化的 schema，因為這裡主要是指導用途
+                database_schema={},  # 簡化的 schema，因為這裡主要是指導用途
             )
-            
-            # 處理 AI 回應
-            if ai_response and ai_response.strip():
-                logger.info("✅ LLM 成功生成用戶指導", 
-                           input_length=len(user_input),
-                           response_length=len(ai_response))
-                return ai_response.strip()
+
+            # 處理 AI 回應 - 正確處理 tuple 返回值
+            if isinstance(ai_response, tuple):
+                enhanced_query, confidence = ai_response
+                if enhanced_query and enhanced_query.strip():
+                    logger.info(
+                        "✅ LLM 成功生成用戶指導",
+                        input_length=len(user_input),
+                        response_length=len(enhanced_query),
+                        confidence=confidence,
+                    )
+                    return enhanced_query.strip()
+                else:
+                    # AI 返回空內容時的備用指導
+                    return self._get_fallback_guidance(query_type, parameters)
             else:
-                # AI 失敗時的備用指導
+                # 處理意外的返回類型
+                logger.warning("⚠️ AI服務返回意外類型", response_type=type(ai_response))
                 return self._get_fallback_guidance(query_type, parameters)
-                
+
         except Exception as e:
             logger.error("❌ LLM 用戶指導生成失敗", error=str(e))
             # 返回備用指導
@@ -455,11 +464,11 @@ class NaturalLanguageToSQLService:
     ) -> str:
         """
         🛡️ 備用用戶指導（當 LLM 失敗時）
-        
+
         Args:
             query_type: 查詢類型
             parameters: 參數
-            
+
         Returns:
             str: 備用指導訊息
         """
@@ -469,10 +478,10 @@ class NaturalLanguageToSQLService:
                 "missing_info": "可能缺少具體機台編號或部門資訊",
                 "examples": [
                     "M001 機台狀態",
-                    "加工部機台狀態", 
+                    "加工部機台狀態",
                     "所有 CNC 機台狀況",
-                    "M002 到 M005 機台運行情況"
-                ]
+                    "M002 到 M005 機台運行情況",
+                ],
             },
             QueryType.ALL_MACHINES: {
                 "description": "查詢所有機台概覽",
@@ -481,8 +490,8 @@ class NaturalLanguageToSQLService:
                     "所有機台狀態",
                     "整體設備概覽",
                     "工廠機台運行報告",
-                    "今日機台狀況統計"
-                ]
+                    "今日機台狀況統計",
+                ],
             },
             QueryType.DEPARTMENT_STATUS: {
                 "description": "查詢部門機台狀態",
@@ -491,8 +500,8 @@ class NaturalLanguageToSQLService:
                     "加工部機台狀態",
                     "組裝部設備狀況",
                     "品管部機台概覽",
-                    "維修部機台運行情況"
-                ]
+                    "維修部機台運行情況",
+                ],
             },
             QueryType.PRODUCTION_STATS: {
                 "description": "查詢生產統計報告",
@@ -501,8 +510,8 @@ class NaturalLanguageToSQLService:
                     "今日生產統計",
                     "本週產量報告",
                     "加工部生產效率",
-                    "月度生產績效分析"
-                ]
+                    "月度生產績效分析",
+                ],
             },
             QueryType.FAULT_ANALYSIS: {
                 "description": "查詢故障分析報告",
@@ -511,19 +520,22 @@ class NaturalLanguageToSQLService:
                     "近期故障統計",
                     "M001 故障記錄",
                     "本月異常分析",
-                    "加工部故障趨勢"
-                ]
-            }
+                    "加工部故障趨勢",
+                ],
+            },
         }
-        
-        template = guidance_templates.get(query_type, {
-            "description": "系統查詢",
-            "missing_info": "查詢資訊不完整",
-            "examples": ["請提供更具體的查詢條件"]
-        })
-        
+
+        template = guidance_templates.get(
+            query_type,
+            {
+                "description": "系統查詢",
+                "missing_info": "查詢資訊不完整",
+                "examples": ["請提供更具體的查詢條件"],
+            },
+        )
+
         examples_text = "\n".join([f"• {ex}" for ex in template["examples"]])
-        
+
         return f"""🤖 查詢分析建議
 
 📋 您想查詢：{template['description']}
