@@ -203,18 +203,19 @@ def _create_composite_parser(provider: ServiceProvider) -> CompositeParser:
     """創建組合解析器並配置策略"""
     composite_parser = CompositeParser()
 
-    # 添加規則解析器
+    # 🔥 修復：AI 解析器優先，權重更高
+    # 添加 AI 增強解析器（優先）
+    ai_parser = provider.get_required_service(AIEnhancedParser)
+    composite_parser.add_parser(ai_parser, weight=2.0)
+
+    # 添加規則解析器（備用）
     rule_parser = provider.get_required_service(RuleBasedParser)
     composite_parser.add_parser(rule_parser, weight=1.0)
 
-    # 添加 AI 增強解析器
-    ai_parser = provider.get_required_service(AIEnhancedParser)
-    composite_parser.add_parser(ai_parser, weight=1.2)
+    # 🔥 修復：降低回退門檻，讓更多查詢能被 AI 處理
+    composite_parser.set_fallback_threshold(0.3)
 
-    # 設定回退門檻
-    composite_parser.set_fallback_threshold(0.5)
-
-    logger.info("組合解析器配置完成", parser_count=2, fallback_threshold=0.5)
+    logger.info("組合解析器配置完成（AI 優先）", parser_count=2, fallback_threshold=0.3, ai_weight=2.0, rule_weight=1.0)
 
     return composite_parser
 

@@ -225,71 +225,45 @@ class NaturalLanguageToSQLService:
             parser = self._get_parser()
             parse_result = await parser.parse(normalized_text, context)
 
-            # 🛡️ 空 SQL 防護機制 - 檢查並修復空查詢問題
+            # 🛡️ 空 SQL 防護機制 - 檢查並提供智能指導
             if parse_result.query_type != QueryType.UNKNOWN and (
                 not parse_result.sql_query or not parse_result.sql_query.strip()
             ):
+                # 🔥 新增：生成智能用戶提示
+                user_guidance = await self._generate_user_guidance(
+                    parse_result.query_type, parse_result.parameters, normalized_text
+                )
+                
                 logger.warning(
-                    "⚠️ 檢測到空 SQL 查詢，啟動自動修復機制",
+                    "⚠️ 檢測到空 SQL 查詢，提供用戶指導",
                     query_type=parse_result.query_type.value,
                     parameters=parse_result.parameters,
                     original_text=normalized_text[:50],
+                    guidance=user_guidance,
                 )
 
-                try:
-                    # 使用查詢建構器建構 SQL
-                    query_builder = self._get_query_builder()
-                    sql_query = query_builder.build_query(
-                        parse_result.query_type, parse_result.parameters
-                    )
-
-                    # 🛡️ 驗證建構的 SQL
-                    if not sql_query or not sql_query.strip():
-                        raise ValueError("查詢建構器返回空 SQL")
-
-                    # 基本 SQL 安全檢查
-                    if len(sql_query.strip()) < 10:  # 最少應該有基本的 SELECT 語句
-                        raise ValueError(f"生成的 SQL 過短: {sql_query}")
-
-                    # 檢查 SQL 語法基本結構
-                    sql_lower = sql_query.lower().strip()
-                    if not sql_lower.startswith(("select", "with")):
-                        raise ValueError(
-                            f"生成的 SQL 必須以 SELECT 或 WITH 開始: {sql_query[:50]}"
-                        )
-
-                    # 創建包含 SQL 的新結果
-                    result = ParsedQuery(
-                        query_type=parse_result.query_type,
-                        sql_query=sql_query,
-                        parameters=parse_result.parameters,
-                        confidence=max(
-                            parse_result.confidence, 0.8
-                        ),  # 自動建構的查詢信心度較高
-                        explanation=f"自動修復空查詢: {parse_result.explanation}",
-                    )
-
-                    logger.info(
-                        "✅ 空 SQL 自動修復成功",
-                        query_type=result.query_type.value,
-                        sql_length=len(sql_query),
-                        confidence=result.confidence,
-                    )
-
-                except Exception as build_error:
-                    logger.error(
-                        "❌ SQL 建構失敗",
-                        query_type=parse_result.query_type.value,
-                        error=str(build_error),
-                    )
-                    # 返回失敗結果，但保持解析資訊
-                    result = ParsedQuery(
-                        query_type=QueryType.UNKNOWN,
-                        sql_query="",
-                        parameters={},
-                        confidence=0.0,
-                        explanation=f"SQL 建構失敗: {str(build_error)}",
-                    )
+                # 🤖 新策略：使用 LLM 生成用戶指導，不再強制修復
+                logger.info("🎯 改用 LLM 指導策略，提供用戶建議而非強制修復")
+                
+                # 返回包含 LLM 指導的結果
+                result = ParsedQuery(
+                    query_type=QueryType.UNKNOWN,
+                    sql_query="",
+                    parameters={
+                        "user_guidance": user_guidance,
+                        "original_query_type": parse_result.query_type.value,
+                        "original_parameters": parse_result.parameters,
+                        "guidance_type": "llm_generated"
+                    },
+                    confidence=0.0,
+                    explanation=f"需要更多資訊：{user_guidance}",
+                )
+                
+                logger.info(
+                    "✅ LLM 用戶指導已生成",
+                    original_query_type=parse_result.query_type.value,
+                    guidance_length=len(user_guidance),
+                )
             else:
                 result = parse_result
 
@@ -418,6 +392,147 @@ class NaturalLanguageToSQLService:
                 "version": "2.0.0-solid-compatible",
                 "error": str(e),
             }
+
+    async def _generate_user_guidance(
+        self, query_type: QueryType, parameters: dict[str, Any], user_input: str
+    ) -> str:
+        """
+        🤖 使用 LLM 生成智能用戶指導
+        
+        Args:
+            query_type: 解析出的查詢類型
+            parameters: 解析參數
+            user_input: 用戶原始輸入
+            
+        Returns:
+            str: 智能用戶指導訊息
+        """
+        try:
+            # 構建 LLM 提示詞
+            prompt = f"""
+作為智慧製造監控系統的助手，用戶輸入了查詢但缺少關鍵資訊。請分析並提供建議：
+
+用戶輸入：「{user_input}」
+系統識別類型：{query_type.value}
+已解析參數：{parameters}
+
+請提供以下建議：
+1. 分析用戶可能想查詢什麼
+2. 指出缺少的關鍵資訊
+3. 提供具體的查詢範例（3-5個）
+4. 說明如何改進查詢
+
+請以友善、專業的繁體中文回覆，並使用製造業相關術語。
+回覆格式：
+- 分析：[您的分析]
+- 建議：[具體建議]
+- 範例：[查詢範例]
+"""
+
+            # 調用 AI 模型
+            ai_response = await self.ai_model_service.enhance_natural_language_query(
+                user_query=prompt,
+                database_schema={}  # 簡化的 schema，因為這裡主要是指導用途
+            )
+            
+            # 處理 AI 回應
+            if ai_response and ai_response.strip():
+                logger.info("✅ LLM 成功生成用戶指導", 
+                           input_length=len(user_input),
+                           response_length=len(ai_response))
+                return ai_response.strip()
+            else:
+                # AI 失敗時的備用指導
+                return self._get_fallback_guidance(query_type, parameters)
+                
+        except Exception as e:
+            logger.error("❌ LLM 用戶指導生成失敗", error=str(e))
+            # 返回備用指導
+            return self._get_fallback_guidance(query_type, parameters)
+
+    def _get_fallback_guidance(
+        self, query_type: QueryType, parameters: dict[str, Any]
+    ) -> str:
+        """
+        🛡️ 備用用戶指導（當 LLM 失敗時）
+        
+        Args:
+            query_type: 查詢類型
+            parameters: 參數
+            
+        Returns:
+            str: 備用指導訊息
+        """
+        guidance_templates = {
+            QueryType.MACHINE_STATUS: {
+                "description": "查詢機台運行狀態",
+                "missing_info": "可能缺少具體機台編號或部門資訊",
+                "examples": [
+                    "M001 機台狀態",
+                    "加工部機台狀態", 
+                    "所有 CNC 機台狀況",
+                    "M002 到 M005 機台運行情況"
+                ]
+            },
+            QueryType.ALL_MACHINES: {
+                "description": "查詢所有機台概覽",
+                "missing_info": "查詢範圍可能需要更明確",
+                "examples": [
+                    "所有機台狀態",
+                    "整體設備概覽",
+                    "工廠機台運行報告",
+                    "今日機台狀況統計"
+                ]
+            },
+            QueryType.DEPARTMENT_STATUS: {
+                "description": "查詢部門機台狀態",
+                "missing_info": "缺少具體部門名稱",
+                "examples": [
+                    "加工部機台狀態",
+                    "組裝部設備狀況",
+                    "品管部機台概覽",
+                    "維修部機台運行情況"
+                ]
+            },
+            QueryType.PRODUCTION_STATS: {
+                "description": "查詢生產統計報告",
+                "missing_info": "可能缺少時間範圍或統計指標",
+                "examples": [
+                    "今日生產統計",
+                    "本週產量報告",
+                    "加工部生產效率",
+                    "月度生產績效分析"
+                ]
+            },
+            QueryType.FAULT_ANALYSIS: {
+                "description": "查詢故障分析報告",
+                "missing_info": "可能缺少時間範圍或機台範圍",
+                "examples": [
+                    "近期故障統計",
+                    "M001 故障記錄",
+                    "本月異常分析",
+                    "加工部故障趨勢"
+                ]
+            }
+        }
+        
+        template = guidance_templates.get(query_type, {
+            "description": "系統查詢",
+            "missing_info": "查詢資訊不完整",
+            "examples": ["請提供更具體的查詢條件"]
+        })
+        
+        examples_text = "\n".join([f"• {ex}" for ex in template["examples"]])
+        
+        return f"""🤖 查詢分析建議
+
+📋 您想查詢：{template['description']}
+⚠️ 可能問題：{template['missing_info']}
+
+💡 建議查詢範例：
+{examples_text}
+
+🔧 提示：請提供更具體的機台編號、部門名稱或時間範圍，讓我能更準確地為您查詢資料。"""
 
 
 # 向後兼容的匯出

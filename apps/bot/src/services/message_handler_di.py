@@ -370,7 +370,7 @@ class MessageHandlerDI:
                 parsed_query.query_type == QueryType.UNKNOWN
                 or parsed_query.confidence < 0.3
             ):
-                return await self._handle_unknown_query(message_text)
+                return await self._handle_unknown_query(message_text, parsed_query)
 
             # 3. 執行資料庫查詢
             result = await self.db_service.execute_parsed_query(parsed_query)
@@ -378,8 +378,20 @@ class MessageHandlerDI:
             # 4. 格式化並返回結果
             return self.formatter.format_query_result(result)
 
-    async def _handle_unknown_query(self, message_text: str) -> Message:
-        """處理無法識別的查詢 - 委託給建議服務"""
+    async def _handle_unknown_query(self, message_text: str, parsed_query=None) -> Message:
+        """處理無法識別的查詢 - 優先使用 LLM 指導"""
+        
+        # 🤖 優先檢查是否有 LLM 生成的用戶指導
+        if (parsed_query and 
+            parsed_query.parameters and 
+            "user_guidance" in parsed_query.parameters):
+            
+            guidance = parsed_query.parameters["user_guidance"]
+            logger.info("✅ 使用 LLM 生成的用戶指導回覆")
+            
+            return TextMessage(text=guidance)
+        
+        # 傳統處理方式
         if self._is_greeting(message_text):
             return self._handle_greeting()
         else:
