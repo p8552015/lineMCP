@@ -78,6 +78,24 @@ department_status:
     - "品管部概覽"
     - "維修部狀態"
 
+specific_machine:
+  patterns:
+    - "[Mm]\\d{3,4}.*機台"
+    - "[Mm]\\d{3,4}.*狀態"
+    - "[Mm]\\d{3,4}.*狀況"
+    - "[Mm]\\d{3,4}.*運行"
+    - "[Mm]\\d{3,4}.*運轉"
+    - "[Mm]\\d{3,4}.*情況"
+    - "[Mm]\\d{3,4}.*概況"
+    - "機台.*[Mm]\\d{3,4}"
+  confidence: 0.9
+  description: "查詢特定機台的詳細狀態和效能資料"
+  examples:
+    - "M001 機台狀態"
+    - "M005 機台運行情況"
+    - "M123 運轉狀況"
+    - "機台 M001 概況"
+
 machine_status:
   patterns:
     - "機台.*狀態"

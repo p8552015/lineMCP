@@ -225,45 +225,54 @@ class NaturalLanguageToSQLService:
             parser = self._get_parser()
             parse_result = await parser.parse(normalized_text, context)
 
-            # 🛡️ 空 SQL 防護機制 - 檢查並提供智能指導
-            if parse_result.query_type != QueryType.UNKNOWN and (
-                not parse_result.sql_query or not parse_result.sql_query.strip()
-            ):
-                # 🔥 新增：生成智能用戶提示
-                user_guidance = await self._generate_user_guidance(
-                    parse_result.query_type, parse_result.parameters, normalized_text
-                )
-
-                logger.warning(
-                    "⚠️ 檢測到空 SQL 查詢，提供用戶指導",
-                    query_type=parse_result.query_type.value,
-                    parameters=parse_result.parameters,
-                    original_text=normalized_text[:50],
-                    guidance=user_guidance,
-                )
-
-                # 🤖 新策略：使用 LLM 生成用戶指導，不再強制修復
-                logger.info("🎯 改用 LLM 指導策略，提供用戶建議而非強制修復")
-
-                # 返回包含 LLM 指導的結果
-                result = ParsedQuery(
-                    query_type=QueryType.UNKNOWN,
-                    sql_query="",
-                    parameters={
-                        "user_guidance": user_guidance,
-                        "original_query_type": parse_result.query_type.value,
-                        "original_parameters": parse_result.parameters,
-                        "guidance_type": "llm_generated",
-                    },
-                    confidence=0.0,
-                    explanation=f"需要更多資訊：{user_guidance}",
-                )
-
-                logger.info(
-                    "✅ LLM 用戶指導已生成",
-                    original_query_type=parse_result.query_type.value,
-                    guidance_length=len(user_guidance),
-                )
+            # 🔥 修復：如果解析成功但無 SQL，則使用查詢建構器生成 SQL
+            if parse_result.query_type != QueryType.UNKNOWN:
+                # 嘗試使用查詢建構器生成 SQL
+                try:
+                    builder = self._get_query_builder()
+                    sql_query = builder.build_query(parse_result.query_type, parse_result.parameters)
+                    
+                    # 建構完整的查詢結果
+                    result = ParsedQuery(
+                        query_type=parse_result.query_type,
+                        sql_query=sql_query,
+                        parameters=parse_result.parameters,
+                        confidence=parse_result.confidence,
+                        explanation=parse_result.explanation,
+                    )
+                    
+                    logger.info(
+                        "✅ SQL 查詢建構成功",
+                        query_type=parse_result.query_type.value,
+                        sql_length=len(sql_query),
+                        confidence=parse_result.confidence,
+                    )
+                    
+                except Exception as e:
+                    logger.error(
+                        "❌ SQL 建構失敗，提供用戶指導",
+                        query_type=parse_result.query_type.value,
+                        error=str(e),
+                    )
+                    
+                    # 生成用戶指導作為回退
+                    user_guidance = await self._generate_user_guidance(
+                        parse_result.query_type, parse_result.parameters, normalized_text
+                    )
+                    
+                    result = ParsedQuery(
+                        query_type=QueryType.UNKNOWN,
+                        sql_query="",
+                        parameters={
+                            "user_guidance": user_guidance,
+                            "original_query_type": parse_result.query_type.value,
+                            "original_parameters": parse_result.parameters,
+                            "guidance_type": "sql_build_failed",
+                            "error": str(e),
+                        },
+                        confidence=0.0,
+                        explanation=f"SQL 建構失敗：{user_guidance}",
+                    )
             else:
                 result = parse_result
 

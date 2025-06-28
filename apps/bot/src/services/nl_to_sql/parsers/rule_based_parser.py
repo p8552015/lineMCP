@@ -245,7 +245,15 @@ class RuleBasedParser(IParser):
         parameters = {}
         normalized_text = text.lower()
 
-        if query_type == QueryType.FAULT_ANALYSIS:
+        if query_type == QueryType.SPECIFIC_MACHINE:
+            # 提取機台 ID 參數
+            machine_match = self._machine_id_pattern.search(normalized_text)
+            if machine_match:
+                digits = machine_match.group(1)
+                machine_id = f"M{digits.zfill(3)}" if len(digits) <= 3 else f"M{digits}"
+                parameters["machine_id"] = machine_id
+
+        elif query_type == QueryType.FAULT_ANALYSIS:
             # 提取時間範圍參數
             days = 30  # 預設 30 天
             if re.search(r"7天|一週|一个星期", normalized_text, re.IGNORECASE):
@@ -287,6 +295,10 @@ class RuleBasedParser(IParser):
             QueryType.PRODUCTION_STATS: "生產統計報告（按部門）",
             QueryType.MACHINE_STATUS: "查詢機台運行狀態",
         }
+
+        if query_type == QueryType.SPECIFIC_MACHINE:
+            machine_id = parameters.get("machine_id", "未指定機台")
+            return f"查詢機台 {machine_id} 的詳細狀態和效能資料"
 
         if query_type == QueryType.DEPARTMENT_STATUS:
             department = parameters.get("department", "未指定部門")

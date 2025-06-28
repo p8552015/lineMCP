@@ -70,23 +70,34 @@ class QueryTemplateManager(ITemplateManager):
         Raises:
             TemplateNotFoundError: 模板不存在
         """
-        if query_type not in self._templates:
+        # 修復：使用值比較而非物件比較
+        template_found = any(query_type.value == qt.value for qt in self._templates.keys())
+        if not template_found:
             logger.error(
                 "❌ 模板不存在，嘗試載入預設模板",
                 query_type=query_type.value,
-                available_types=[qt.value for qt in self._templates],
+                available_types=[qt.value for qt in self._templates.keys()],
             )
 
             # 🔥 關鍵修復：嘗試載入預設模板
             self._load_default_templates()
 
-            # 再次檢查
-            if query_type not in self._templates:
+            # 再次檢查（修復：使用值比較）
+            template_found_after_default = any(query_type.value == qt.value for qt in self._templates.keys())
+            if not template_found_after_default:
                 raise KeyError(
                     f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗"
                 )
 
-        template = self._templates[query_type]
+        # 修復：根據值查找正確的模板
+        template = None
+        for qt, tmpl in self._templates.items():
+            if query_type.value == qt.value:
+                template = tmpl
+                break
+        
+        if template is None:
+            raise KeyError(f"無法找到查詢類型 {query_type.value} 的模板")
 
         # 🔥 關鍵修復：雙重檢查模板內容
         if not template or not template.strip():
@@ -94,7 +105,12 @@ class QueryTemplateManager(ITemplateManager):
 
             # 嘗試重新載入
             self._load_default_templates()
-            template = self._templates.get(query_type, "")
+            # 修復：使用值比較重新查找模板
+            template = ""
+            for qt, tmpl in self._templates.items():
+                if query_type.value == qt.value:
+                    template = tmpl
+                    break
 
             if not template or not template.strip():
                 raise ValueError(f"查詢類型 {query_type.value} 的模板為空或無效")
