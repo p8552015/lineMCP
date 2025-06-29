@@ -93,16 +93,14 @@ class AIEnhancedParser(IParser):
 
         try:
             # 準備 AI 查詢上下文
-            ai_context = self._prepare_ai_context(text, context)
+            _ = self._prepare_ai_context(text, context)
 
-            # 調用 AI 服務進行增強解析
-            # 🔥 修復：將 ai_context 轉換為 database_schema 格式
-            database_schema = ai_context.get("database_schema", {})
+            # 🔥 關鍵修復：使用自定義系統提示詞而不是預設提示詞
             (
                 enhanced_result,
                 confidence,
-            ) = await self._ai_service.enhance_natural_language_query(
-                text, database_schema
+            ) = await self._ai_service.query_with_custom_prompt(
+                text, self._system_prompt
             )
 
             # 解析 AI 返回的結果
@@ -173,7 +171,7 @@ class AIEnhancedParser(IParser):
 
     def _build_system_prompt(self) -> str:
         """
-        建構 AI 系統提示
+        建構 AI 系統提示 - 強化空查詢檢測
 
         Returns:
             str: 系統提示字串
@@ -182,19 +180,30 @@ class AIEnhancedParser(IParser):
             "你是一個專業的工業製造查詢分析助手。"
             "你的任務是將自然語言查詢轉換為結構化的查詢意圖。\n\n"
             "支援的查詢類型：\n"
-            "1. machine_status - 機台狀態查詢\n"
-            "2. fault_analysis - 故障分析查詢\n"
-            "3. production_stats - 生產統計查詢\n"
+            "1. machine_status - 機台狀態查詢（稼動率、運行狀態、效率）\n"
+            "2. fault_analysis - 故障分析查詢（故障記錄、維修歷史）\n"
+            "3. production_stats - 生產統計查詢（產量、統計報告）\n"
             "4. all_machines - 所有機台概覽\n"
             "5. department_status - 部門狀態查詢\n"
             "6. specific_machine - 特定機台查詢\n\n"
+            "⚠️ 重要：以下情況請返回低信心度（< 0.5）或 unknown 類型：\n"
+            "- 查詢涉及「不良率」、「合格率」、「品質指標」、「檢驗」等品質相關指標\n"
+            "- 查詢要求複雜的時間範圍計算（如「今天」、「本週」的具體數據）\n"
+            "- 查詢涉及多個條件組合且無法明確歸類\n"
+            "- 查詢語義模糊或包含系統不支援的功能\n\n"
+            "**重要：必須嚴格按照 JSON 格式回覆，不要添加任何解釋文字**\n"
+            "**只返回 JSON，不要任何其他文字**\n\n"
             "請分析用戶的自然語言輸入，返回 JSON 格式：\n"
             "{\n"
             '  "query_type": "查詢類型",\n'
-            '  "entities": ["提取的實體"],\n'
-            '  "parameters": {"參數": "值"},\n'
+            '  "entities": \\["提取的實體"\\],\n'
+            '  "parameters": \\{"參數": "值"\\},\n'
             '  "confidence": 0.9\n'
-            "}"
+            "}\n\n"
+            "範例：\n"
+            "輸入：「CNC車床今天不良率」\n"
+            '輸出：\\{"query_type": "unknown", "entities": \\["CNC車床", "不良率"\\], "parameters": \\{\\}, "confidence": 0.3\\}\n'
+            "原因：涉及不良率（品質指標），系統不支援此類查詢"
         )
 
     def _prepare_ai_context(
@@ -329,8 +338,17 @@ class AIEnhancedParser(IParser):
         parameters = ai_data.get("parameters", {})
         target_entities = ai_data.get("target_entities", [])
 
-        # 🔥 關鍵修復：智能查詢類型推斷
-        if query_type == QueryType.UNKNOWN:
+        # 🔥 關鍵修復：尊重 AI 的 UNKNOWN 判斷（特別是低信心度的）
+        # 如果 AI 明確返回 UNKNOWN 且信心度較低，說明是有意識的"不支援"判斷
+        if query_type == QueryType.UNKNOWN and confidence <= 0.5:
+            logger.info(
+                "✅ 尊重 AI 的 UNKNOWN 判斷（低信心度）",
+                original_text=original_text,
+                ai_confidence=confidence,
+            )
+            # 直接返回 UNKNOWN，不進行進一步推斷
+        elif query_type == QueryType.UNKNOWN:
+            # 只有當信心度較高時才嘗試推斷
             query_type = self._infer_query_type_from_content(
                 original_text, target_entities, parameters
             )
@@ -345,10 +363,20 @@ class AIEnhancedParser(IParser):
         # 生成說明
         explanation = ai_data.get("explanation", f"AI 解析: {query_type.value}")
 
-        # 🔥 重要：確保有效查詢類型才返回結果
+        # 🔥 重要：當 AI 明確返回 UNKNOWN 時，直接返回而不是回退到文字解析
         if query_type == QueryType.UNKNOWN:
-            logger.warning("⚠️ AI 無法確定查詢類型，使用文字解析", original_text=original_text)
-            return self._parse_text_ai_result(original_text, original_text, confidence)
+            logger.info(
+                "✅ AI 明確返回 UNKNOWN，直接返回結果",
+                original_text=original_text,
+                confidence=confidence,
+            )
+            return ParsedQuery(
+                query_type=QueryType.UNKNOWN,
+                sql_query="",
+                parameters=parameters,
+                confidence=confidence,
+                explanation=f"AI 明確識別為不支援的查詢：{explanation}",
+            )
 
         return ParsedQuery(
             query_type=query_type,

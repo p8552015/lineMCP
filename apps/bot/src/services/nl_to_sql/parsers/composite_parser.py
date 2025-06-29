@@ -347,14 +347,21 @@ class CompositeParser(IParser):
 
         for parser in self._parsers:
             try:
-                confidence = parser.can_handle(text)
-                capabilities.append((parser, confidence))
-
+                base_confidence = parser.can_handle(text)
                 parser_name = getattr(parser, "name", parser.__class__.__name__)
+
+                # 🔥 關鍵修復：考慮權重來調整信心度
+                weight = self._strategy_weights.get(parser_name, 1.0)
+                weighted_confidence = min(1.0, base_confidence * weight)
+
+                capabilities.append((parser, weighted_confidence))
+
                 logger.debug(
-                    "📊 解析器能力評估",
+                    "📊 解析器能力評估（含權重）",
                     parser=parser_name,
-                    confidence=confidence,
+                    base_confidence=base_confidence,
+                    weight=weight,
+                    weighted_confidence=weighted_confidence,
                 )
 
             except Exception as e:
@@ -455,9 +462,12 @@ class CompositeParser(IParser):
         if not result:
             return False
 
-        # 檢查查詢類型
+        # 🔥 修復：允許高信心度的 UNKNOWN 結果
+        # 這對於正確識別不支援的查詢很重要（如品質指標查詢）
         if result.query_type == QueryType.UNKNOWN:
-            return False
+            # 如果 AI 解析器有信心地認為這是未知查詢，應該接受這個結果
+            # 這樣可以正確觸發 LLM 指導機制
+            return result.confidence >= 0.3  # 較低的閾值，允許明確的"不支援"判斷
 
         # 檢查信心度
         if result.confidence <= 0.0:

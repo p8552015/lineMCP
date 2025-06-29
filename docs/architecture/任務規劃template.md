@@ -11,7 +11,7 @@
 
 ### 必須遵守的文件存放規則
 將產出的自定義任務名稱.md文件存放於 /Users/yen/Desktop/lineMCP/task/任務規劃書 這個路徑下的資料夾
-將計劃中的每個任務測試結果存放於 /Users/yen/Desktop/lineMCP/CICD/tests/reports 這個路徑下的資料夾
+將計劃中的每個任務測試結果存放於 /Users/yen/Desktop/lineMCP/task/任務測試報告 這個路徑下的資料夾
 將計劃中的執行完的完整報告存放於 /Users/yen/Desktop/lineMCP/task/最終報告 這個路徑下的資料夾
 
 ### 核心流程

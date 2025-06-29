@@ -243,11 +243,7 @@ def _create_command_executor(provider: ServiceProvider) -> CommandExecutor:
 
 def _create_message_handler(provider: ServiceProvider) -> MessageHandlerDI:
     """創建訊息處理器"""
-    return MessageHandlerDI(
-        mcp_client_factory=get_unified_mcp_client,
-        ai_model_service=provider.get_required_service(AIModelService),
-        nl_service=provider.get_required_service(NaturalLanguageToSQLService),
-        db_service=provider.get_required_service(DatabaseService),
-        formatter=provider.get_required_service(MessageFormatter),
-        openai_client=provider.get_service(OpenAIClient),
-    )
+    from src.infrastructure.enhanced_service_factory import get_enhanced_service_factory
+
+    factory = get_enhanced_service_factory()
+    return MessageHandlerDI(service_factory=factory)

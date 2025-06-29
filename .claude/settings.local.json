@@ -145,7 +145,10 @@
       "Bash(pip show:*)",
       "Bash(./scripts/quality-check.sh:*)",
       "mcp__serena__onboarding",
-      "Bash(ruff check:*)"
+      "Bash(ruff check:*)",
+      "Bash(./quick-test-vocabulary.sh:*)",
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__insert_at_line"
     ],
     "deny": []
   }

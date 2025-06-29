@@ -27,4 +27,4 @@ repos:
           types-psutil,
           types-sqlalchemy
         ]
-        args: [--config-file=apps/bot/pyproject.toml, --disable-error-code=import-untyped]
+        args: [--config-file=apps/bot/pyproject.toml]

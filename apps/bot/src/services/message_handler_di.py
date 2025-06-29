@@ -35,30 +35,127 @@ class MessageHandlerDI:
         self._initialized = False
 
     def _is_query_relevant(self, user_input: str, parsed_query) -> bool:
-        """檢查解析結果是否與用戶輸入相關"""
+        """
+        檢查解析結果是否與用戶輸入相關
+        增強空查詢檢測：確保解析結果真正匹配用戶意圖
+        """
         user_input_lower = user_input.lower()
 
-        # 機台相關查詢需要包含機台相關關鍵詞
+        # 🔥 核心修復：對於 UNKNOWN 類型查詢，跳過 SQL 檢查
+        if parsed_query.query_type == QueryType.UNKNOWN:
+            logger.info("✅ UNKNOWN 查詢跳過 SQL 檢查", user_input=user_input[:50])
+            # UNKNOWN 查詢本來就不應該有 SQL，這是正常的
+        else:
+            # 對其他類型的查詢檢查 SQL 有效性
+            if hasattr(parsed_query, "sql_query") and parsed_query.sql_query:
+                sql_query = parsed_query.sql_query.strip()
+                if not sql_query:
+                    logger.warning("❌ 查詢相關性檢查：SQL 查詢為空", user_input=user_input[:50])
+                    return False
+            else:
+                logger.warning("❌ 查詢相關性檢查：無 SQL 查詢", user_input=user_input[:50])
+                return False
+
+        # 🔥 增強關鍵字匹配檢查
         if (
             hasattr(parsed_query, "query_type")
             and parsed_query.query_type
             and hasattr(parsed_query.query_type, "value")
         ):
             query_type_str = parsed_query.query_type.value.lower()
+
+            # 機台相關查詢的關鍵字檢查
             if "machine" in query_type_str or "status" in query_type_str:
                 machine_keywords = [
                     "機台",
                     "設備",
                     "機器",
+                    "車床",
+                    "銑床",
+                    "包裝機",
+                    "焊接機",
+                    "切割機",
+                    "組裝線",
                     "m001",
                     "m002",
                     "m003",
                     "m004",
                     "m005",
+                    "cnc",
+                    "加工",
+                    "生產",
+                    "製造",
                 ]
-                return any(keyword in user_input_lower for keyword in machine_keywords)
+                has_machine_keyword = any(
+                    keyword in user_input_lower for keyword in machine_keywords
+                )
 
-        return True  # 其他查詢類型暫時通過
+                if not has_machine_keyword:
+                    logger.warning(
+                        "❌ 查詢相關性檢查：機台查詢缺少機台關鍵字",
+                        user_input=user_input[:50],
+                        query_type=query_type_str,
+                    )
+                    return False
+
+            # 部門相關查詢的關鍵字檢查
+            if "department" in query_type_str:
+                department_keywords = ["部門", "生產", "加工", "品質", "工廠", "車間"]
+                has_department_keyword = any(
+                    keyword in user_input_lower for keyword in department_keywords
+                )
+
+                if not has_department_keyword:
+                    logger.warning(
+                        "❌ 查詢相關性檢查：部門查詢缺少部門關鍵字",
+                        user_input=user_input[:50],
+                        query_type=query_type_str,
+                    )
+                    return False
+
+            # 指標相關查詢的關鍵字檢查
+            if any(
+                metric in query_type_str
+                for metric in ["utilization", "efficiency", "oee", "defect"]
+            ):
+                metric_keywords = [
+                    "稼動率",
+                    "效率",
+                    "oee",
+                    "不良率",
+                    "產量",
+                    "故障",
+                    "停機",
+                    "維護",
+                    "統計",
+                    "指標",
+                ]
+                has_metric_keyword = any(
+                    keyword in user_input_lower for keyword in metric_keywords
+                )
+
+                if not has_metric_keyword:
+                    logger.warning(
+                        "❌ 查詢相關性檢查：指標查詢缺少指標關鍵字",
+                        user_input=user_input[:50],
+                        query_type=query_type_str,
+                    )
+                    return False
+
+        # 🔥 參數完整性檢查
+        if hasattr(parsed_query, "parameters") and parsed_query.parameters:
+            # 確保關鍵參數不為空
+            for key, value in parsed_query.parameters.items():
+                if key in ["machine_id", "department", "metric_type"] and not value:
+                    logger.warning(
+                        "❌ 查詢相關性檢查：關鍵參數為空",
+                        user_input=user_input[:50],
+                        empty_parameter=key,
+                    )
+                    return False
+
+        logger.info("✅ 查詢相關性檢查通過", user_input=user_input[:50])
+        return True
 
     def _initialize_services(self):
         """延遲初始化所有依賴服務"""
@@ -67,13 +164,23 @@ class MessageHandlerDI:
 
         # 從服務工廠獲取所有必要的服務
         self.ai_model_service = self.service_factory.get_ai_model_service()
-        self.nl_service = self.service_factory.get_nl_to_sql_service()
+        self.nl_service = self.service_factory.get_nl_service()
         self.db_service = self.service_factory.get_database_service()
         self.formatter = self.service_factory.get_message_formatter()
 
-        self._initialized = True
-        logger.info("✅ 所有依賴服務已初始化")
+        # 初始化 MCP 相關屬性
+        self.mcp_client_factory = self.service_factory.get_mcp_client_factory
+        self._mcp_client = None
 
+        # 初始化 OpenAI 客戶端（如果需要）
+        try:
+            from src.services.openai_client import OpenAIClient
+
+            self.openai_client = self.service_factory.get_service(OpenAIClient)
+        except Exception:
+            self.openai_client = None
+
+        self._initialized = True
         logger.info("✅ 依賴注入版訊息處理器初始化完成")
 
     async def _get_mcp_client(self):
@@ -364,12 +471,51 @@ class MessageHandlerDI:
                 explanation=parsed_query.explanation,
             )
 
-            # 2. 檢查解析結果
+            # 2. 🔥 強化空查詢檢測 - 多層驗證機制
+            # 檢查解析類型
+            is_unknown_type = parsed_query.query_type == QueryType.UNKNOWN
+
+            # 檢查信心度
+            is_low_confidence = parsed_query.confidence < 0.6  # 提高門檻從 0.5 到 0.6
+
+            # 檢查 SQL 查詢是否有效
+            has_valid_sql = (
+                hasattr(parsed_query, "sql_query")
+                and parsed_query.sql_query
+                and parsed_query.sql_query.strip()
+            )
+
+            # 檢查查詢相關性
+            is_relevant = self._is_query_relevant(message_text, parsed_query)
+
+            # 記錄檢測狀態
+            logger.info(
+                "🔍 空查詢檢測狀態",
+                user_input=message_text[:50],
+                query_type=parsed_query.query_type.value,
+                confidence=parsed_query.confidence,
+                is_unknown_type=is_unknown_type,
+                is_low_confidence=is_low_confidence,
+                has_valid_sql=has_valid_sql,
+                is_relevant=is_relevant,
+            )
+
+            # 任何一項檢測失敗都視為需要 LLM 指導
             if (
-                parsed_query.query_type == QueryType.UNKNOWN
-                or parsed_query.confidence < 0.5  # 提高門檻從 0.3 到 0.5
-                or not self._is_query_relevant(message_text, parsed_query)  # 新增相關性檢查
+                is_unknown_type
+                or is_low_confidence
+                or not has_valid_sql
+                or not is_relevant
             ):
+                if is_unknown_type:
+                    logger.warning("❌ 空查詢檢測：查詢類型為 UNKNOWN")
+                elif is_low_confidence:
+                    logger.warning(f"❌ 空查詢檢測：信心度過低 ({parsed_query.confidence})")
+                elif not has_valid_sql:
+                    logger.warning("❌ 空查詢檢測：SQL 查詢無效或為空")
+                elif not is_relevant:
+                    logger.warning("❌ 空查詢檢測：查詢與用戶輸入不相關")
+
                 return await self._handle_unknown_query(message_text, parsed_query)
 
             # 3. 執行資料庫查詢
@@ -381,27 +527,90 @@ class MessageHandlerDI:
     async def _handle_unknown_query(
         self, message_text: str, parsed_query=None
     ) -> Message:
-        """處理無法識別的查詢 - 優先使用 LLM 指導"""
+        """
+        處理無法識別的查詢 - 優先使用 LLM 指導
+        🔥 強化版：確保所有空查詢都能獲得智能建議
+        """
+        logger.info("🤖 進入 LLM 指導模式", user_input=message_text[:50])
 
-        # 🤖 優先檢查是否有 LLM 生成的用戶指導
+        # 🤖 第一優先：檢查是否有 LLM 生成的用戶指導
         if (
             parsed_query
             and parsed_query.parameters
             and "user_guidance" in parsed_query.parameters
         ):
             guidance = parsed_query.parameters["user_guidance"]
-            logger.info("✅ 使用 LLM 生成的用戶指導回覆")
-
+            logger.info("✅ 使用已生成的 LLM 指導回覆")
             return TextMessage(text=guidance)
 
-        # 傳統處理方式
+        # 🤖 第二優先：針對查詢類型生成智能指導（包含 UNKNOWN）
+        if parsed_query:
+            try:
+                logger.info(
+                    "🔄 為查詢類型生成 LLM 指導",
+                    query_type=parsed_query.query_type.value,
+                    confidence=parsed_query.confidence,
+                )
+
+                # 確保服務已初始化
+                self._initialize_services()
+
+                # 🔥 修復：對於 UNKNOWN 查詢，使用通用的品質指標回應模式
+                if parsed_query.query_type == QueryType.UNKNOWN:
+                    # 對 UNKNOWN 查詢使用特殊處理，模擬為品質指標查詢
+                    guidance = await self.nl_service._generate_user_guidance(
+                        QueryType.PRODUCTION_STATS,  # 使用生產統計類型作為模板
+                        {
+                            "quality_metric": "unsupported",
+                            "original_query": message_text,
+                        },
+                        message_text,
+                    )
+                else:
+                    # 生成針對性的 LLM 指導
+                    guidance = await self.nl_service._generate_user_guidance(
+                        parsed_query.query_type,
+                        parsed_query.parameters if parsed_query.parameters else {},
+                        message_text,
+                    )
+
+                logger.info("✅ 成功生成查詢類型的 LLM 指導")
+                return TextMessage(text=guidance)
+
+            except Exception as e:
+                logger.error(
+                    "❌ 生成查詢類型指導失敗，回退到通用建議",
+                    error=str(e),
+                    query_type=parsed_query.query_type.value,
+                )
+
+        # 🤖 第三優先：檢查是否為問候語
         if self._is_greeting(message_text):
+            logger.info("✅ 識別為問候語，返回歡迎訊息")
             return self._handle_greeting()
-        else:
-            # 🔥 符合 SRP：委託給專門的建議服務
+
+        # 🤖 最後回退：使用通用建議服務
+        try:
+            logger.info("🔄 使用通用建議服務生成回覆")
+            # 確保建議服務已初始化
             if not hasattr(self, "_suggestion_service"):
                 self._initialize_suggestion_service()
+
             return await self._suggestion_service.generate_suggestion(message_text)
+
+        except Exception as e:
+            logger.error("❌ 通用建議服務失敗，使用最終回退", error=str(e))
+
+            # 🚨 最終回退：手動建議
+            return TextMessage(
+                text=f"❓ 無法理解您的查詢：「{message_text}」\n\n"
+                "💡 請嘗試以下格式：\n"
+                "• 「M001機台狀況」\n"
+                "• 「生產部門今日報告」\n"
+                "• 「所有機台稼動率」\n"
+                "• 「故障記錄查詢」\n\n"
+                "📞 如需協助，請聯絡系統管理員"
+            )
 
     def _is_greeting(self, text: str) -> bool:
         """檢查是否為問候語"""

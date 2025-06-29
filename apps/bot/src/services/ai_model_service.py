@@ -326,3 +326,107 @@ class AIModelService:
         output_cost = (output_tokens / 1000) * config.cost_per_1k_output
 
         return input_cost + output_cost
+
+    async def query_with_custom_prompt(
+        self,
+        user_query: str,
+        system_prompt: str,
+        model_name: str | None = None,
+    ) -> tuple[str, float]:
+        """
+        使用自定義系統提示詞查詢 AI 模型
+
+        Args:
+            user_query: 使用者查詢
+            system_prompt: 自定義系統提示詞
+            model_name: 指定使用的模型，None 則使用預設
+
+        Returns:
+            Tuple[AI 回應, 信心度]
+        """
+        if not self.models:
+            logger.warning("沒有可用的 AI 模型")
+            return user_query, 0.3
+
+        model_name = model_name or self.default_model
+        if model_name not in self.models:
+            logger.error(f"模型 {model_name} 不存在，使用預設模型")
+            model_name = self.default_model
+
+        model_config = self.models[model_name]
+
+        try:
+            if model_config.provider == ModelProvider.OPENAI:
+                return await self._call_openai_with_custom_prompt(
+                    user_query, system_prompt, model_config
+                )
+            elif model_config.provider == ModelProvider.GOOGLE:
+                return await self._call_google_with_custom_prompt(
+                    user_query, system_prompt, model_config
+                )
+            else:
+                logger.error(f"不支援的模型供應商: {model_config.provider}")
+                return user_query, 0.3
+
+        except Exception as e:
+            logger.error(f"AI模型調用失敗: {e}")
+            return user_query, 0.3
+
+    async def _call_openai_with_custom_prompt(
+        self, user_query: str, system_prompt: str, config: ModelConfig
+    ) -> tuple[str, float]:
+        """使用自定義系統提示詞調用 OpenAI API"""
+
+        payload = {
+            "model": config.name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_query},
+            ],
+            "max_tokens": min(config.max_tokens, 500),
+            "temperature": 0.1,  # 降低溫度以獲得更一致的 JSON 回應
+            "response_format": {"type": "json_object"},
+        }
+
+        headers = {
+            "Authorization": f"Bearer {config.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(config.endpoint, json=payload, headers=headers)
+            response.raise_for_status()
+
+            result = response.json()
+            content = result["choices"][0]["message"]["content"]
+
+            logger.info("OpenAI自定義提示完成", model=config.name, content_length=len(content))
+            return content, 0.9
+
+    async def _call_google_with_custom_prompt(
+        self, user_query: str, system_prompt: str, config: ModelConfig
+    ) -> tuple[str, float]:
+        """使用自定義系統提示詞調用 Google Gemini API"""
+
+        full_prompt = f"{system_prompt}\n\n用戶查詢: {user_query}"
+
+        payload = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {
+                "temperature": 0.1,  # 降低溫度以獲得更一致的 JSON 回應
+                "maxOutputTokens": min(config.max_tokens, 500),
+                "responseMimeType": "application/json",
+            },
+        }
+
+        url = f"{config.endpoint}?key={config.api_key}"
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+
+            result = response.json()
+            content = result["candidates"][0]["content"]["parts"][0]["text"]
+
+            logger.info("Google自定義提示完成", model=config.name, content_length=len(content))
+            return content, 0.9
