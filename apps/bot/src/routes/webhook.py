@@ -179,8 +179,9 @@ async def test_llm_guidance(request: Request):
         body = await request.json()
         user_input = body.get("text", "機台")
 
-        # 獲取服務工廠
+        # 獲取服務工廠並初始化
         factory = get_enhanced_service_factory()
+        factory.initialize()  # 🔥 關鍵修復：初始化工廠
         message_handler = factory.create_message_handler()
 
         # 模擬處理用戶訊息（使用正確的方法名稱）
@@ -198,7 +199,53 @@ async def test_llm_guidance(request: Request):
         )
 
     except Exception as e:
-        logger.error("測試端點錯誤", error=str(e))
+        logger.error("LLM測試錯誤", error=str(e))
+        return JSONResponse(
+            content={
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            status_code=500,
+        )
+
+
+@router.post("/debug-ai-parser")
+async def debug_ai_parser(request: Request):
+    """調試 AI 解析器的端點"""
+    try:
+        body = await request.json()
+        user_input = body.get("text", "機台")
+
+        # 獲取服務工廠
+        factory = get_enhanced_service_factory()
+        ai_service = factory.get_ai_model_service()
+
+        # 直接測試 AI 解析器
+        from src.services.nl_to_sql.parsers.ai_enhanced_parser import AIEnhancedParser
+
+        parser = AIEnhancedParser(ai_service)
+
+        # 獲取解析結果
+        parsed_result = await parser.parse(user_input)
+
+        return JSONResponse(
+            content={
+                "status": "success",
+                "input": user_input,
+                "parsed_result": {
+                    "query_type": parsed_result.query_type.value,
+                    "confidence": parsed_result.confidence,
+                    "sql_query": parsed_result.sql_query,
+                    "parameters": parsed_result.parameters,
+                    "explanation": parsed_result.explanation,
+                },
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        )
+
+    except Exception as e:
+        logger.error("AI解析器調試錯誤", error=str(e))
         return JSONResponse(
             content={
                 "status": "error",

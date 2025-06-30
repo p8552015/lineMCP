@@ -500,13 +500,27 @@ class MessageHandlerDI:
                 is_relevant=is_relevant,
             )
 
+            # 🔥 智能檢測：區分真正的 UNKNOWN 查詢和低信心度的有效查詢
+            if is_unknown_type:
+                logger.warning("❌ 空查詢檢測：查詢類型為 UNKNOWN - 強制進入LLM指導模式")
+                return await self._handle_unknown_query(message_text, parsed_query)
+
+            # 🔥 特殊處理：有明確機台 ID 的查詢，即使信心度低也嘗試執行
+            has_machine_id = (
+                hasattr(parsed_query, "parameters")
+                and parsed_query.parameters
+                and "machine_id" in parsed_query.parameters
+                and parsed_query.parameters["machine_id"]
+            )
+
+            # 如果有機台 ID，降低信心度要求
+            effective_confidence_threshold = 0.3 if has_machine_id else 0.6
+            is_effectively_low_confidence = (
+                parsed_query.confidence < effective_confidence_threshold
+            )
+
             # 任何一項檢測失敗都視為需要 LLM 指導
-            if (
-                is_unknown_type
-                or is_low_confidence
-                or not has_valid_sql
-                or not is_relevant
-            ):
+            if is_effectively_low_confidence or not has_valid_sql or not is_relevant:
                 if is_unknown_type:
                     logger.warning("❌ 空查詢檢測：查詢類型為 UNKNOWN")
                 elif is_low_confidence:
@@ -669,18 +683,5 @@ class MessageHandlerDI:
         """檢查是否為機台查詢（向後相容性）"""
         # 現在統一由自然語言服務處理
         return True  # 讓所有查詢都進入自然語言處理流程
-
-    def _handle_greeting(self) -> Message:
-        """處理問候語"""
-        message = "�� 您好！我是產線管理助手\n"
-        message += "━━━━━━━━━━━━━━━━━━━━\n"
-        message += "🔍 我可以幫您查詢：\n"
-        message += "   • 機台狀態和效能\n"
-        message += "   • 故障記錄和分析\n"
-        message += "   • 生產統計報告\n"
-        message += "   • 部門運行狀況\n\n"
-        message += "💡 試試問我：「M001機台狀況如何？」"
-
-        return TextMessage(text=message)
 
     # 建議生成功能已移至 SuggestionService，符合 SRP 原則

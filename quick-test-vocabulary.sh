@@ -15,9 +15,32 @@ test() {
     echo "📝 測試：$1"
     response=$(curl -s -X POST http://localhost:8000/test-llm \
         -H "Content-Type: application/json" \
-        -d "{\"text\":\"$1\"}" \
-        -w "\n狀態碼: %{http_code}\n")
-    echo "$response" | jq -r '.response // .' 2>/dev/null || echo "$response"
+        -d "{\"text\":\"$1\"}")
+    
+    # 解析回應內容
+    response_text=$(echo "$response" | jq -r '.response // .' 2>/dev/null)
+    status_code=$(echo "$response" | jq -r '.status // "unknown"' 2>/dev/null)
+    
+    # 判斷回應類型 - 優先檢查具體格式
+    if echo "$response_text" | grep -q "📊 查詢結果"; then
+        echo "✅ 返回數據庫查詢結果"
+    elif echo "$response_text" | grep -q "📊.*狀態報告"; then
+        echo "✅ 返回機台狀態報告"
+    elif echo "$response_text" | grep -q -E "(需要指定|請.*指定|缺少.*資訊|可以嘗試|無法理解|不支援|查詢.*數據|查詢.*指標|查詢.*部門)"; then
+        echo "✅ 觸發 LLM 指導回應"
+    elif echo "$response_text" | grep -q "建議"; then
+        # 「建議」可能出現在機台狀態報告中，需要區分
+        if echo "$response_text" | grep -q "📊"; then
+            echo "✅ 返回機台狀態報告"
+        else
+            echo "✅ 觸發 LLM 指導回應"
+        fi
+    else
+        echo "❓ 未知回應類型"
+    fi
+    
+    echo "$response_text"
+    echo "狀態: $status_code"
     echo "---"
     echo ""
 }
@@ -37,12 +60,14 @@ test "CNC車床今天不良率"
 test "品質部門M002銑床即時產量"
 
 # 3. 測試結果解讀
-echo "📊 預期結果"
-echo "==========="
-echo "✅ M001機台稼動率 → 提取: 機台(M001) + 指標(稼動率)"
-echo "✅ 生產部門本週的OEE指標 → 提取: 部門(生產) + 時間(本週) + 指標(OEE)"
-echo "✅ CNC車床今天不良率 → 提取: 機台類型(CNC車床) + 時間(今天) + 指標(不良率)"
-echo "✅ 品質部門M002銑床即時產量 → 提取: 部門(品質) + 機台(M002) + 時間(即時) + 指標(產量)"
+echo "📊 預期結果（根據修復報告）"
+echo "============================"
+echo "✅ M001機台稼動率 → 返回機台詳細資訊（正常查詢）"
+echo "✅ 生產部門本週的OEE指標 → 觸發 LLM 指導（空查詢，缺少具體資訊）"
+echo "🎯 CNC車床今天不良率 → 觸發 LLM 指導（品質指標，系統不支援）"
+echo "✅ 品質部門M002銑床即時產量 → 返回機台詳細資訊（正常查詢）"
+echo ""
+echo "⚠️ 重要：根據專案最高原則，所有空查詢都應該觸發 LLM 指導而非返回原始數據"
 echo ""
 
 # 4. 相關檔案

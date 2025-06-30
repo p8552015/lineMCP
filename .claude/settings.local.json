@@ -148,7 +148,9 @@
       "Bash(ruff check:*)",
       "Bash(./quick-test-vocabulary.sh:*)",
       "mcp__serena__replace_symbol_body",
-      "mcp__serena__insert_at_line"
+      "mcp__serena__insert_at_line",
+      "Bash(/Users/yen/Desktop/lineMCP/quick-test-vocabulary.sh)",
+      "Bash(./quick-start.sh:*)"
     ],
     "deny": []
   }
