@@ -513,6 +513,18 @@ class MessageHandlerDI:
                 and parsed_query.parameters["machine_id"]
             )
 
+            # 🔥 模糊查詢檢測：單一詞彙或過於簡短的查詢應觸發 LLM 指導
+            is_ambiguous_query = (
+                len(message_text.strip()) <= 3  # 3個字符以下
+                or message_text.strip() in ["車床", "銑床", "機台", "設備", "生產", "製造", "工廠"]
+                or (len(message_text.split()) == 1 and not has_machine_id)  # 單詞且無機台ID
+            )
+
+            # 如果是模糊查詢，強制觸發 LLM 指導
+            if is_ambiguous_query:
+                logger.warning(f"🔍 檢測到模糊查詢：'{message_text}' - 強制進入LLM指導模式")
+                return await self._handle_unknown_query(message_text, parsed_query)
+
             # 如果有機台 ID，降低信心度要求
             effective_confidence_threshold = 0.3 if has_machine_id else 0.6
             is_effectively_low_confidence = (
