@@ -430,3 +430,135 @@ class AIModelService:
 
             logger.info("Google自定義提示完成", model=config.name, content_length=len(content))
             return content, 0.9
+
+    async def generate_user_guidance(
+        self,
+        user_input: str,
+        guidance_prompt: str,
+        model_name: str | None = None,
+    ) -> tuple[str, float]:
+        """
+        專門用於生成用戶指導的AI方法（不使用JSON格式）
+
+        Args:
+            user_input: 用戶原始輸入
+            guidance_prompt: 指導提示詞
+            model_name: 指定使用的模型，None 則使用預設
+
+        Returns:
+            Tuple[用戶指導回應, 信心度]
+        """
+        if not self.models:
+            logger.warning("沒有可用的 AI 模型")
+            return f"無法處理查詢「{user_input}」，請稍後再試。", 0.3
+
+        model_name = model_name or self.default_model
+        if model_name not in self.models:
+            logger.error(f"模型 {model_name} 不存在，使用預設模型")
+            model_name = self.default_model
+
+        model_config = self.models[model_name]
+
+        # 創建用戶友善的系統提示詞（非JSON格式）
+        system_prompt = """你是一個友善、專業的製造業智能助手。
+用戶向你詢問了一個關於工業設備或生產的問題，但系統無法直接處理這個查詢。
+
+請以自然、友善的語氣回應用戶，幫助他們：
+1. 理解為什麼無法直接處理他們的查詢
+2. 提供具體、實用的建議
+3. 給出 2-3 個相關的查詢範例
+
+回應要求：
+- 使用繁體中文
+- 語氣友善專業，避免過於技術性
+- 直接回應，不要使用JSON格式
+- 保持簡潔實用（200字以內）
+- 聚焦在幫助用戶獲得所需資訊"""
+
+        try:
+            if model_config.provider == ModelProvider.OPENAI:
+                return await self._call_openai_for_guidance(
+                    user_input, guidance_prompt, system_prompt, model_config
+                )
+            elif model_config.provider == ModelProvider.GOOGLE:
+                return await self._call_google_for_guidance(
+                    user_input, guidance_prompt, system_prompt, model_config
+                )
+            else:
+                logger.error(f"不支援的模型供應商: {model_config.provider}")
+                return f"無法處理查詢「{user_input}」，請稍後再試。", 0.3
+
+        except Exception as e:
+            logger.error(f"AI用戶指導生成失敗: {e}")
+            return f"無法處理查詢「{user_input}」，請稍後再試。", 0.3
+
+    async def _call_openai_for_guidance(
+        self,
+        user_input: str,
+        guidance_prompt: str,
+        system_prompt: str,
+        config: ModelConfig,
+    ) -> tuple[str, float]:
+        """為用戶指導調用 OpenAI API（無JSON格式限制）"""
+
+        payload = {
+            "model": config.name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": guidance_prompt},
+            ],
+            "max_tokens": min(config.max_tokens, 300),  # 限制用戶指導長度
+            "temperature": 0.7,  # 較高溫度生成更自然的回應
+            # 注意：不使用 response_format，允許自然語言回應
+        }
+
+        headers = {
+            "Authorization": f"Bearer {config.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(config.endpoint, json=payload, headers=headers)
+            response.raise_for_status()
+
+            result = response.json()
+            content = result["choices"][0]["message"]["content"]
+
+            logger.info(
+                "OpenAI用戶指導生成完成", model=config.name, content_length=len(content)
+            )
+            return content.strip(), 0.9
+
+    async def _call_google_for_guidance(
+        self,
+        user_input: str,
+        guidance_prompt: str,
+        system_prompt: str,
+        config: ModelConfig,
+    ) -> tuple[str, float]:
+        """為用戶指導調用 Google Gemini API（無JSON格式限制）"""
+
+        full_prompt = f"{system_prompt}\n\n{guidance_prompt}"
+
+        payload = {
+            "contents": [{"parts": [{"text": full_prompt}]}],
+            "generationConfig": {
+                "temperature": 0.7,  # 較高溫度生成更自然的回應
+                "maxOutputTokens": min(config.max_tokens, 300),
+                # 注意：不使用 responseMimeType，允許自然語言回應
+            },
+        }
+
+        url = f"{config.endpoint}?key={config.api_key}"
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload)
+            response.raise_for_status()
+
+            result = response.json()
+            content = result["candidates"][0]["content"]["parts"][0]["text"]
+
+            logger.info(
+                "Google用戶指導生成完成", model=config.name, content_length=len(content)
+            )
+            return content.strip(), 0.9

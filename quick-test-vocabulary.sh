@@ -26,7 +26,7 @@ test() {
         echo "✅ 返回數據庫查詢結果"
     elif echo "$response_text" | grep -q "📊.*狀態報告"; then
         echo "✅ 返回機台狀態報告"
-    elif echo "$response_text" | grep -q -E "(需要指定|請.*指定|缺少.*資訊|可以嘗試|無法理解|不支援|查詢.*數據|查詢.*指標|查詢.*部門)"; then
+    elif echo "$response_text" | grep -q -E "(需要指定|請.*指定|缺少.*資訊|可以嘗試|無法理解|不支援|查詢.*數據|查詢.*指標|查詢.*部門|查詢.*生產|查詢.*不良率|查詢.*產量|查詢.*在)"; then
         echo "✅ 觸發 LLM 指導回應"
     elif echo "$response_text" | grep -q "建議"; then
         # 「建議」可能出現在機台狀態報告中，需要區分

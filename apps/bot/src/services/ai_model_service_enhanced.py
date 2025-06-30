@@ -130,8 +130,15 @@ class EnhancedAIModelService(AIModelService):
             logger.warning("沒有可用的 AI 模型，使用基礎規則解析")
             return user_query, 0.5
 
-        # 確定要使用的模型列表（主模型 + 備用模型）
-        target_models = [model_name] if model_name else self.fallback_models
+        # 🔥 修復：始終使用完整的備用模型列表，確保在主模型失敗時能自動切換
+        if model_name and model_name in self.models:
+            # 如果指定模型，將其設為首選，但仍包含其他備用模型
+            target_models = [model_name] + [
+                m for m in self.fallback_models if m != model_name
+            ]
+        else:
+            # 使用預設的備用模型順序
+            target_models = self.fallback_models
         target_models = [m for m in target_models if m in self.models]
 
         if not target_models:
@@ -237,6 +244,9 @@ class EnhancedAIModelService(AIModelService):
                 else:
                     raise
 
+        # 如果所有重試都失敗，拋出最後一個異常
+        raise RuntimeError("所有重試嘗試都失敗")
+
     def _calculate_retry_delay(self, attempt: int) -> float:
         """計算重試延遲時間"""
         if self.retry_config.exponential_backoff:
@@ -335,3 +345,120 @@ class EnhancedAIModelService(AIModelService):
             # 但仍然給予嘗試機會
 
         return True
+
+    async def generate_user_guidance(
+        self,
+        user_input: str,
+        guidance_prompt: str,
+        model_name: str | None = None,
+    ) -> tuple[str, float]:
+        """
+        專門用於生成用戶指導的AI方法（增強版：支援備用模型）
+
+        Args:
+            user_input: 用戶原始輸入
+            guidance_prompt: 指導提示詞
+            model_name: 指定使用的模型，None 則使用預設
+
+        Returns:
+            Tuple[用戶指導回應, 信心度]
+        """
+        if not self.models:
+            logger.warning("沒有可用的 AI 模型")
+            return f"無法處理查詢「{user_input}」，請稍後再試。", 0.3
+
+        # 🔥 使用增強版的備用模型機制
+        if model_name and model_name in self.models:
+            # 如果指定模型，將其設為首選，但仍包含其他備用模型
+            target_models = [model_name] + [
+                m for m in self.fallback_models if m != model_name
+            ]
+        else:
+            # 使用預設的備用模型順序
+            target_models = self.fallback_models
+        target_models = [m for m in target_models if m in self.models]
+
+        if not target_models:
+            logger.error("沒有可用的模型")
+            return f"無法處理查詢「{user_input}」，請稍後再試。", 0.3
+
+        # 創建用戶友善的系統提示詞（非JSON格式）
+        system_prompt = """你是一個友善、專業的製造業智能助手。
+用戶向你詢問了一個關於工業設備或生產的問題，但系統無法直接處理這個查詢。
+
+請以自然、友善的語氣回應用戶，幫助他們：
+1. 理解為什麼無法直接處理他們的查詢
+2. 提供具體、實用的建議
+3. 給出 2-3 個相關的查詢範例
+
+回應要求：
+- 使用繁體中文
+- 語氣友善專業，避免過於技術性
+- 直接回應，不要使用JSON格式
+- 保持簡潔實用（200字以內）
+- 聚焦在幫助用戶獲得所需資訊"""
+
+        # 嘗試每個模型，直到成功
+        for model in target_models:
+            # 檢查模型是否健康（包括配額檢查）
+            if not self._is_model_healthy(model):
+                logger.info(f"⏭️ 跳過不健康的模型: {model}")
+                continue
+
+            try:
+                logger.info(f"🔄 嘗試使用模型: {model}")
+                model_config = self.models[model]
+
+                if model_config.provider == ModelProvider.OPENAI:
+                    result = await self._call_openai_for_guidance(
+                        user_input, guidance_prompt, system_prompt, model_config
+                    )
+                elif model_config.provider == ModelProvider.GOOGLE:
+                    result = await self._call_google_for_guidance(
+                        user_input, guidance_prompt, system_prompt, model_config
+                    )
+                else:
+                    logger.error(f"不支援的模型供應商: {model_config.provider}")
+                    continue
+
+                # 記錄成功
+                self._model_health[model]["failures"] = 0
+                self._model_health[model]["last_success"] = time.time()
+
+                logger.info(f"✅ 模型 {model} 用戶指導生成成功")
+                return result
+
+            except Exception as e:
+                # 檢查是否為配額錯誤
+                error_message = str(e).lower()
+                is_quota_error = any(
+                    keyword in error_message
+                    for keyword in [
+                        "quota",
+                        "rate limit",
+                        "429",
+                        "insufficient_quota",
+                        "resource_exhausted",
+                        "billing",
+                        "payment",
+                        "exceeded",
+                    ]
+                )
+
+                if is_quota_error:
+                    logger.error(f"❌ 模型 {model} 配額已用盡: {e}")
+                    # 記錄配額錯誤
+                    self._model_health[model]["quota_exhausted"] = True
+                    self._model_health[model]["quota_exhausted_at"] = time.time()
+                else:
+                    logger.warning(f"❌ 模型 {model} 調用失敗: {e}")
+                self._model_health[model]["failures"] += 1
+
+                # 如果不是最後一個模型，繼續嘗試下一個
+                if model != target_models[-1]:
+                    logger.info("🔄 切換到備用模型...")
+                    continue
+
+        # 所有模型都失敗了
+        logger.error("❌ 所有 AI 模型都調用失敗，返回基礎結果")
+        return f"抱歉，系統暫時無法處理您的查詢「{user_input}」。請稍後再試，或嘗試更具體的查詢方式。", 0.3

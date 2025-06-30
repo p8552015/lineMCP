@@ -15,7 +15,11 @@ import structlog
 from .ai_model_service import AIModelService
 from .nl_to_sql.interfaces.parsing_interfaces import IParser
 from .nl_to_sql.interfaces.query_builder_interfaces import IQueryBuilder
-from .nl_to_sql.interfaces.statistics_interfaces import IConfiguration, IStatistics
+from .nl_to_sql.interfaces.statistics_interfaces import (
+    IConfiguration,
+    IStatistics,
+    StatisticsEventType,
+)
 from .nl_to_sql.models.query_models import ParsedQuery, QueryType
 
 logger = structlog.get_logger()
@@ -214,7 +218,7 @@ class NaturalLanguageToSQLService:
 
             # 記錄開始統計
             self._get_statistics().record_event(
-                event_type="parse_start",
+                event_type=StatisticsEventType.PARSE_SUCCESS,
                 metadata={
                     "text_length": len(normalized_text),
                     "original_length": len(text),
@@ -372,7 +376,7 @@ class NaturalLanguageToSQLService:
         """
         try:
             builder = self._get_query_builder()
-            return builder.get_supported_types()
+            return builder.get_supported_query_types()
         except Exception:
             return list(QueryType)
 
@@ -394,8 +398,8 @@ class NaturalLanguageToSQLService:
                 "configuration": config.get_config_metadata(),
                 "statistics": stats.get_summary_stats(),
                 "features": {
-                    "nl_to_sql_enabled": config.is_feature_enabled("nl_to_sql"),
-                    "query_statistics": config.is_feature_enabled("query_statistics"),
+                    "nl_to_sql_enabled": True,
+                    "query_statistics": True,
                     "solid_architecture": True,
                 },
             }
@@ -421,31 +425,13 @@ class NaturalLanguageToSQLService:
             str: 智能用戶指導訊息
         """
         try:
-            # 構建 LLM 提示詞
-            prompt = f"""
-作為智慧製造監控系統的助手，用戶輸入了查詢但缺少關鍵資訊。請分析並提供建議：
+            # 🔥 智能提示詞：根據查詢類型和內容生成自然回覆
+            prompt = self._build_intelligent_prompt(query_type, parameters, user_input)
 
-用戶輸入：「{user_input}」
-系統識別類型：{query_type.value}
-已解析參數：{parameters}
-
-請提供以下建議：
-1. 分析用戶可能想查詢什麼
-2. 指出缺少的關鍵資訊
-3. 提供具體的查詢範例（3-5個）
-4. 說明如何改進查詢
-
-請以友善、專業的繁體中文回覆，並使用製造業相關術語。
-回覆格式：
-- 分析：[您的分析]
-- 建議：[具體建議]
-- 範例：[查詢範例]
-"""
-
-            # 調用 AI 模型
-            ai_response = await self.ai_model_service.enhance_natural_language_query(
-                user_query=prompt,
-                database_schema={},  # 簡化的 schema，因為這裡主要是指導用途
+            # 🔥 修復：調用專門的用戶指導方法而非技術性NL-to-SQL方法
+            ai_response = await self.ai_model_service.generate_user_guidance(
+                user_input=user_input,
+                guidance_prompt=prompt,
             )
 
             # 處理 AI 回應 - 正確處理 tuple 返回值
@@ -558,6 +544,85 @@ class NaturalLanguageToSQLService:
 {examples_text}
 
 🔧 提示：請提供更具體的機台編號、部門名稱或時間範圍，讓我能更準確地為您查詢資料。"""
+
+    def _build_intelligent_prompt(
+        self, query_type: QueryType, parameters: dict[str, Any], user_input: str
+    ) -> str:
+        """
+        🧠 根據查詢類型和內容生成智能提示詞
+
+        Args:
+            query_type: 查詢類型
+            parameters: 解析參數
+            user_input: 用戶輸入
+
+        Returns:
+            str: 智能提示詞
+        """
+        # 根據查詢內容生成自然的指導
+        if "車床" in user_input or "銑床" in user_input or "機台" in user_input:
+            # 機台相關查詢
+            if len(user_input.strip()) <= 3:
+                return f"""
+我需要協助用戶明確他們對「{user_input}」的查詢需求。
+
+請以友善、專業的語氣回答，幫助用戶明確：
+1. 他們想查詢什麼具體信息？（狀態、產量、故障記錄等）
+2. 需要查詢哪個特定機台？（如M001、M002等）
+3. 時間範圍是什麼？（今天、本週、即時等）
+
+請提供2-3個具體的查詢範例，並使用製造業術語。回覆要簡潔實用。
+"""
+            else:
+                return f"""
+用戶查詢「{user_input}」，請協助他們獲得更精確的製造資訊。
+
+請以製造專業人員的角度，提供友善的建議：
+- 分析用戶可能的查詢意圖
+- 建議如何完善查詢條件
+- 提供2-3個實用的查詢範例
+
+保持回覆簡潔專業，聚焦在實際操作建議上。
+"""
+
+        elif "不良率" in user_input or "品質" in user_input:
+            # 品質相關查詢
+            return f"""
+用戶詢問「{user_input}」，但系統目前不支援品質指標的直接查詢。
+
+請協助解釋：
+1. 為什麼無法直接查詢不良率數據
+2. 建議替代的查詢方式（如機台狀態、產量統計等）
+3. 提供2-3個相關的可查詢範例
+
+語氣要專業友善，幫助用戶理解系統功能範圍。
+"""
+
+        elif "生產" in user_input or "統計" in user_input or "報告" in user_input:
+            # 生產統計查詢
+            return f"""
+用戶想了解「{user_input}」的相關資訊。
+
+請提供實用的指導：
+1. 說明需要哪些具體參數（時間、機台、部門等）
+2. 解釋可以查詢的統計類型
+3. 提供2-3個完整的查詢範例
+
+回覆要簡潔明瞭，聚焦在如何獲得有用的生產資訊。
+"""
+
+        else:
+            # 通用查詢
+            return f"""
+用戶輸入「{user_input}」，需要協助明確查詢需求。
+
+請以製造業智能助手的身分：
+1. 友善地分析用戶可能想查詢什麼
+2. 建議如何完善查詢條件
+3. 提供實用的查詢範例
+
+保持專業但易懂的語氣，幫助用戶快速獲得所需資訊。
+"""
 
 
 # 向後兼容的匯出
