@@ -94,7 +94,7 @@ jobs:
     
     - name: Upload coverage to Codecov
       if: matrix.python-version == env.PYTHON_VERSION
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: apps/bot/coverage.xml
         flags: unittests
@@ -332,7 +332,7 @@ jobs:
     
     - name: Upload Node.js coverage
       if: matrix.node-version == env.NODE_VERSION
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: apps/servers/coverage/lcov.info
         flags: nodejs
