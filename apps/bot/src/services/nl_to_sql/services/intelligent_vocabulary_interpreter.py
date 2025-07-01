@@ -9,7 +9,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast, overload
+from typing import Any
 
 import yaml
 
@@ -363,7 +363,7 @@ class LLMInterpretationEngine:
         user_input_lower = user_input.lower()
 
         # 初始化回應
-        response = {
+        response: dict[str, str | float | None] = {
             "machine_id": None,
             "metric_type": None,
             "time_period": None,
@@ -393,10 +393,8 @@ class LLMInterpretationEngine:
         for pattern, machine_id in machine_patterns.items():
             if pattern in user_input_lower:
                 response["machine_id"] = machine_id
-                if response["confidence"] is not None:
-                    response["confidence"] += 0.4
-                else:
-                    response["confidence"] = 0.4
+                current_confidence = response.get("confidence") or 0.0
+                response["confidence"] = float(current_confidence) + 0.4
                 reasoning_parts.append(f"識別機台: {pattern} -> {machine_id}")
                 break
 
@@ -416,10 +414,8 @@ class LLMInterpretationEngine:
         for pattern, metric_type in metric_patterns.items():
             if pattern in user_input_lower:
                 response["metric_type"] = metric_type
-                if response["confidence"] is not None:
-                    response["confidence"] += 0.3
-                else:
-                    response["confidence"] = 0.3
+                current_confidence = response.get("confidence") or 0.0
+                response["confidence"] = float(current_confidence) + 0.3
                 reasoning_parts.append(f"識別指標: {pattern} -> {metric_type}")
                 break
 
@@ -438,10 +434,8 @@ class LLMInterpretationEngine:
         for pattern, time_period in time_patterns.items():
             if pattern in user_input_lower:
                 response["time_period"] = time_period
-                if response["confidence"] is not None:
-                    response["confidence"] += 0.3
-                else:
-                    response["confidence"] = 0.3
+                current_confidence = response.get("confidence") or 0.0
+                response["confidence"] = float(current_confidence) + 0.3
                 reasoning_parts.append(f"識別時間: {pattern} -> {time_period}")
                 break
 
@@ -458,24 +452,25 @@ class LLMInterpretationEngine:
         for pattern, department in department_patterns.items():
             if pattern in user_input_lower:
                 response["department"] = department
-                if response["confidence"] is not None:
-                    response["confidence"] += 0.3
-                else:
-                    response["confidence"] = 0.3
+                current_confidence = response.get("confidence") or 0.0
+                response["confidence"] = float(current_confidence) + 0.3
                 reasoning_parts.append(f"識別部門: {pattern} -> {department}")
                 break
 
         # 🔥 複合查詢加分機制
-        if response["machine_id"] and response["metric_type"]:
-            response["confidence"] += 0.2
+        if response.get("machine_id") and response.get("metric_type"):
+            current_confidence = response.get("confidence") or 0.0
+            response["confidence"] = float(current_confidence) + 0.2
             reasoning_parts.append("複合查詢加分: 機台+指標")
 
-        if response["time_period"]:
-            response["confidence"] += 0.1
+        if response.get("time_period"):
+            current_confidence = response.get("confidence") or 0.0
+            response["confidence"] = float(current_confidence) + 0.1
             reasoning_parts.append("時間範圍加分")
 
         # 確保信心度不超過 1.0
-        response["confidence"] = min(response["confidence"], 1.0)
+        current_confidence = response.get("confidence") or 0.0
+        response["confidence"] = min(float(current_confidence), 1.0)
 
         # 組合推理說明
         if reasoning_parts:

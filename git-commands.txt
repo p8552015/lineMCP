@@ -1,0 +1,63 @@
+# GitHub 上傳指令
+
+請依序執行以下指令來上傳 Claude Code 自定義指令完整指南到 GitHub：
+
+## 1. 切換到專案目錄
+cd /Users/yen/Desktop/lineMCP
+
+## 2. 檢查當前狀態
+git status
+
+## 3. 查看新增/修改的檔案
+git diff --name-only
+git ls-files --others --exclude-standard
+
+## 4. 將變更加入暫存區
+git add .
+
+## 5. 檢查即將提交的變更
+git diff --cached --name-only
+
+## 6. 建立提交
+git commit -m "feat: 新增 Claude Code 自定義指令完整指南
+
+- 建立完整的自定義指令創建指南 (spec/Claude_Code_自定義指令創建完整指南.md)
+- 包含 YAML Front Matter 格式和 \$ARGUMENTS 語法
+- 提供 3 個實際可用的指令範例
+- 添加故障排除和最佳實踐指南
+- 修復自定義指令參數傳遞問題
+- 新增 .claude/commands/find-root-cause.md 示範指令
+- 建立測試驗證文檔
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+## 7. 推送到 GitHub
+git push origin $(git branch --show-current)
+
+## 8. 驗證上傳成功
+git log --oneline -3
+
+---
+
+## 主要變更內容：
+
+### 新增檔案：
+1. spec/Claude_Code_自定義指令創建完整指南.md - 完整的創建指南
+2. .claude/commands/find-root-cause.md - 示範自定義指令
+3. test-claude-command.md - 測試指南
+4. ~/.claude/commands/find-root-cause.md - 全域指令版本
+
+### 修復問題：
+- 自定義指令無法接收參數的問題
+- YAML Front Matter 格式錯誤
+- $ARGUMENTS 語法不正確
+
+### 新增功能：
+- 完整的創建流程指南
+- 3個實際可用的指令範例
+- 故障排除和最佳實踐
+- 檢查清單和範例指令庫
+
+這次提交包含了一個完整的 Claude Code 自定義指令解決方案！

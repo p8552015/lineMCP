@@ -150,7 +150,15 @@
       "mcp__serena__replace_symbol_body",
       "mcp__serena__insert_at_line",
       "Bash(/Users/yen/Desktop/lineMCP/quick-test-vocabulary.sh)",
-      "Bash(./quick-start.sh:*)"
+      "Bash(./quick-start.sh:*)",
+      "Bash(source:*)",
+      "Bash(/Users/yen/claude-plugins/test-command.sh:*)",
+      "Bash(export CLAUDE_PLUGIN_DIR=$HOME/claude-plugins)",
+      "Bash(CLAUDE_PLUGIN_DIR=$HOME/claude-plugins)",
+      "Bash(exec zsh)",
+      "Bash(/Users/yen/claude-plugins/verify-setup.sh:*)",
+      "Bash(claude find-root-cause --topic \"檢查程式品質\")",
+      "Bash(claude --version)"
     ],
     "deny": []
   }
