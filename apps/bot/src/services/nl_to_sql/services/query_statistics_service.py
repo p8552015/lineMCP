@@ -108,7 +108,9 @@ class QueryStatisticsService(IStatistics):
 
             # 🔥 增強的 duration 類型轉換，捕獲所有可能的異常
             safe_duration = self._safe_duration_conversion(duration, 0.0)
-            parse_time = safe_duration * 1000 if safe_duration > 0 else None  # 轉換為毫秒
+            parse_time = (
+                safe_duration * 1000 if safe_duration > 0 else None
+            )  # 轉換為毫秒
 
             # 更新計數器
             self._success_counts[parser_type] += 1
@@ -197,7 +199,9 @@ class QueryStatisticsService(IStatistics):
             safe_duration = self._safe_duration_conversion(
                 metadata.get("duration", 0) if metadata else 0, 0.0
             )
-            parse_time = safe_duration * 1000 if safe_duration > 0 else None  # 轉換為毫秒
+            parse_time = (
+                safe_duration * 1000 if safe_duration > 0 else None
+            )  # 轉換為毫秒
 
             # 更新計數器
             self._failure_counts[parser_type] += 1
@@ -658,7 +662,9 @@ class QueryStatisticsService(IStatistics):
 
             # 🛡️ 最終類型驗證：確保是有效的浮點數
             if not isinstance(avg_time_float, int | float):
-                logger.error("❌ 類型轉換後仍非數值", result_type=type(avg_time_float).__name__)
+                logger.error(
+                    "❌ 類型轉換後仍非數值", result_type=type(avg_time_float).__name__
+                )
                 return "unknown"
 
             # 🛡️ 檢查是否為有效數值（不是 NaN 或無限值）
@@ -948,7 +954,8 @@ class QueryStatisticsService(IStatistics):
             # 檢查歷史記錄的完整性
             if len(self._history) > self._max_history_size:
                 validation_result["errors"].append(
-                    f"歷史記錄超出最大限制: {len(self._history)} > " f"{self._max_history_size}"
+                    f"歷史記錄超出最大限制: {len(self._history)} > "
+                    f"{self._max_history_size}"
                 )
                 validation_result["is_valid"] = False
 
@@ -957,7 +964,9 @@ class QueryStatisticsService(IStatistics):
                 "total_parsers": len(all_parser_types),
                 "total_history_records": len(self._history),
                 "uptime_hours": (time.time() - self._start_time) / 3600,
-                "data_consistency": ("良好" if validation_result["is_valid"] else "需要修復"),
+                "data_consistency": (
+                    "良好" if validation_result["is_valid"] else "需要修復"
+                ),
             }
 
         except Exception as e:

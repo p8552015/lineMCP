@@ -104,7 +104,9 @@ class APIKeyValidator:
                 length=len(key),
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
-                error_message=(f"API Key 前綴錯誤，預期以 '{pattern_info['prefix']}' 開始"),
+                error_message=(
+                    f"API Key 前綴錯誤，預期以 '{pattern_info['prefix']}' 開始"
+                ),
             )
 
         # 檢查必要部分

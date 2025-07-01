@@ -59,7 +59,9 @@ def mcp_error_handler(
             except MCPParseError as e:
                 logger.error(f"MCP parse error in {func_name}", error=str(e))
                 if include_technical_details:
-                    return TextMessage(text=f"🔧 {error_message}：資料格式解析錯誤 - {str(e)}")
+                    return TextMessage(
+                        text=f"🔧 {error_message}：資料格式解析錯誤 - {str(e)}"
+                    )
                 else:
                     return TextMessage(text=f"🔧 {error_message}，資料格式異常")
 

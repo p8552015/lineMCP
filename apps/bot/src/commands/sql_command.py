@@ -67,7 +67,8 @@ class SqlCommandHandler(CommandHandler):
                 )
             else:
                 return TextMessage(
-                    text="❌ SQL查詢包含不安全的關鍵字\\n\\n" "🔒 只允許 SELECT 查詢以確保資料安全"
+                    text="❌ SQL查詢包含不安全的關鍵字\\n\\n"
+                    "🔒 只允許 SELECT 查詢以確保資料安全"
                 )
 
         sql_query = " ".join(args).strip()
@@ -112,7 +113,9 @@ class SqlCommandHandler(CommandHandler):
         """格式化 SQL 查詢結果"""
         if not data:
             return TextMessage(
-                text=f"📊 SQL查詢完成\\n\\n" f"```sql\\n{query}\\n```\\n\\n" "🔍 查詢無結果"
+                text=f"📊 SQL查詢完成\\n\\n"
+                f"```sql\\n{query}\\n```\\n\\n"
+                "🔍 查詢無結果"
             )
 
         # 構建結果文字

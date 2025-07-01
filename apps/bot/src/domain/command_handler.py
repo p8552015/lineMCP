@@ -149,7 +149,9 @@ class CommandRegistry:
         # 註冊別名
         for alias in handler.aliases:
             if alias in self._aliases:
-                raise ValueError(f"別名 '{alias}' 已被指令 '{self._aliases[alias]}' 使用")
+                raise ValueError(
+                    f"別名 '{alias}' 已被指令 '{self._aliases[alias]}' 使用"
+                )
             self._aliases[alias] = command_name
 
     def get_handler(self, command_name: str) -> CommandHandler:

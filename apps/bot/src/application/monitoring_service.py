@@ -482,7 +482,9 @@ class MonitoringApplicationService(BaseApplicationService):
                 )
 
             if len(slow_requests) > len(response_times) * 0.1:
-                recommendations.append(f"有 {len(slow_requests)} 個慢請求（>2s），建議檢查資料庫查詢效能")
+                recommendations.append(
+                    f"有 {len(slow_requests)} 個慢請求（>2s），建議檢查資料庫查詢效能"
+                )
 
         # 分析錯誤率
         error_rate = (

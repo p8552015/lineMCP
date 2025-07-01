@@ -400,7 +400,9 @@ class AIModelService:
             result = response.json()
             content = result["choices"][0]["message"]["content"]
 
-            logger.info("OpenAI自定義提示完成", model=config.name, content_length=len(content))
+            logger.info(
+                "OpenAI自定義提示完成", model=config.name, content_length=len(content)
+            )
             return content, 0.9
 
     async def _call_google_with_custom_prompt(
@@ -428,7 +430,9 @@ class AIModelService:
             result = response.json()
             content = result["candidates"][0]["content"]["parts"][0]["text"]
 
-            logger.info("Google自定義提示完成", model=config.name, content_length=len(content))
+            logger.info(
+                "Google自定義提示完成", model=config.name, content_length=len(content)
+            )
             return content, 0.9
 
     async def generate_user_guidance(

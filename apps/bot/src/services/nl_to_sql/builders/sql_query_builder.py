@@ -81,7 +81,9 @@ class SQLQueryBuilder(IQueryBuilder):
         supported_types = self.get_supported_query_types()
         if not any(query_type.value == qt.value for qt in supported_types):
             supported_values = [qt.value for qt in supported_types]
-            raise ValueError(f"不支援的查詢類型: {query_type.value}，支援的類型: {supported_values}")
+            raise ValueError(
+                f"不支援的查詢類型: {query_type.value}，支援的類型: {supported_values}"
+            )
 
         # 驗證參數
         if not self.validate_parameters(query_type, parameters):

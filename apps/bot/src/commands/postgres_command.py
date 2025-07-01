@@ -83,7 +83,9 @@ class PostgreSQLCommand:
             查詢結果
         """
         try:
-            logger.info("🔍 開始執行 PostgreSQL 查詢", query=user_input, user_id=user_id)
+            logger.info(
+                "🔍 開始執行 PostgreSQL 查詢", query=user_input, user_id=user_id
+            )
 
             # 檢查是否為預定義查詢
             if user_input in self.postgres_queries:

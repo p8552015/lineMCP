@@ -11,7 +11,7 @@ import selectors
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -77,7 +77,8 @@ class ProductionMCPClient:
     def server_configs(self) -> dict[str, Any]:
         """獲取服務器配置字典 - 提供 API 一致性"""
         config_summary = mcp_config.get_config_summary()
-        return config_summary.get("servers", {})
+        servers = config_summary.get("servers", {})
+        return servers if isinstance(servers, dict) else {}
 
     def list_servers(self) -> list[str]:
         """列出所有可用的服務器名稱 - 提供 API 一致性"""
@@ -109,7 +110,9 @@ class ProductionMCPClient:
                 return True
             else:
                 # 連接池狀態不一致，標記為斷開並繼續建立新連接
-                logger.warning(f"⚠️ 連接池返回 CONNECTED 但無進程，重建連接：{server_name}")
+                logger.warning(
+                    f"⚠️ 連接池返回 CONNECTED 但無進程，重建連接：{server_name}"
+                )
                 connection_info.status = ConnectionStatus.DISCONNECTED
                 # 繼續執行下面的連接邏輯
 
@@ -129,7 +132,9 @@ class ProductionMCPClient:
             logger.info(f"🚀 建立 MCP 連接：{server_name} ({server_config.protocol})")
 
             if server_config.protocol != "stdio":
-                logger.error(f"❌ 目前只支援 STDIO 協議，不支援：{server_config.protocol}")
+                logger.error(
+                    f"❌ 目前只支援 STDIO 協議，不支援：{server_config.protocol}"
+                )
                 return False
 
             # 檢查服務器腳本文件（對於 npx 命令跳過檢查）
@@ -144,6 +149,10 @@ class ProductionMCPClient:
             env.update(server_config.env)
 
             # 創建子進程
+            if not server_config.command:
+                logger.error("❌ 服務器命令不能為空")
+                return False
+
             process = await asyncio.create_subprocess_exec(
                 server_config.command,
                 *server_config.args,
@@ -196,9 +205,10 @@ class ProductionMCPClient:
             # 檢查進程是否退出
             if process.returncode is not None:
                 logger.error(f"❌ 服務器進程退出，返回碼：{process.returncode}")
-                stderr_output = await process.stderr.read()
-                if stderr_output:
-                    logger.error(f"❌ 服務器錯誤：{stderr_output.decode()}")
+                if process.stderr:
+                    stderr_output = await process.stderr.read()
+                    if stderr_output:
+                        logger.error(f"❌ 服務器錯誤：{stderr_output.decode()}")
                 return False
 
             # 先發送初始化請求
@@ -214,14 +224,19 @@ class ProductionMCPClient:
             }
 
             init_json = json.dumps(init_request) + "\n"
-            process.stdin.write(init_json.encode())
-            await process.stdin.drain()
+            if process.stdin:
+                process.stdin.write(init_json.encode())
+                await process.stdin.drain()
 
             # 等待初始化響應
             try:
-                init_response = await asyncio.wait_for(
-                    process.stdout.readline(), timeout=timeout
-                )
+                if process.stdout:
+                    init_response = await asyncio.wait_for(
+                        process.stdout.readline(), timeout=timeout
+                    )
+                else:
+                    logger.error("❌ 無法讀取進程輸出")
+                    return False
 
                 if init_response:
                     init_text = init_response.decode().strip()
@@ -241,8 +256,9 @@ class ProductionMCPClient:
                         }
 
                         notif_json = json.dumps(initialized_notif) + "\n"
-                        process.stdin.write(notif_json.encode())
-                        await process.stdin.drain()
+                        if process.stdin:
+                            process.stdin.write(notif_json.encode())
+                            await process.stdin.drain()
 
             except (TimeoutError, json.JSONDecodeError) as e:
                 logger.warning(f"⚠️ 初始化響應解析失敗，跳過：{e}")
@@ -258,15 +274,20 @@ class ProductionMCPClient:
             request_json = json.dumps(request) + "\n"
             logger.info(f"📤 發送請求：{request}")
 
-            process.stdin.write(request_json.encode())
-            await process.stdin.drain()
+            if process.stdin:
+                process.stdin.write(request_json.encode())
+                await process.stdin.drain()
 
             # 等待響應 - 與 ultimate-stdio-test.py 完全相同
             logger.info("⏳ 等待響應...")
             try:
-                response_line = await asyncio.wait_for(
-                    process.stdout.readline(), timeout=timeout
-                )
+                if process.stdout:
+                    response_line = await asyncio.wait_for(
+                        process.stdout.readline(), timeout=timeout
+                    )
+                else:
+                    logger.error("❌ 無法讀取進程響應")
+                    return False
 
                 if response_line:
                     response_text = response_line.decode().strip()
@@ -296,6 +317,9 @@ class ProductionMCPClient:
             logger.error(f"❌ 通信測試失敗：{e}")
             return False
 
+        # 預設情況（不應該到達這裡）
+        return False
+
     async def call_tool(
         self,
         server_name: str,
@@ -314,7 +338,9 @@ class ProductionMCPClient:
         for attempt in range(max_retries + 1):
             try:
                 if attempt > 0:
-                    logger.info(f"🔄 重試工具調用 (第{attempt}次)：{server_name}.{tool_name}")
+                    logger.info(
+                        f"🔄 重試工具調用 (第{attempt}次)：{server_name}.{tool_name}"
+                    )
                 else:
                     logger.info(f"🛠️ 調用工具：{server_name}.{tool_name}")
 
@@ -376,8 +402,12 @@ class ProductionMCPClient:
                 # 發送請求
                 try:
                     request_json = json.dumps(request) + "\n"
-                    process.stdin.write(request_json.encode())
-                    await process.stdin.drain()
+                    if process.stdin:
+                        process.stdin.write(request_json.encode())
+                        await process.stdin.drain()
+                    else:
+                        logger.error("❌ 無法寫入進程stdin")
+                        return {"success": False, "error": "進程stdin不可用"}
                 except (BrokenPipeError, ConnectionError) as e:
                     logger.error(f"❌ 寫入失敗：{e}")
                     self.connections[server_name] = False
@@ -387,6 +417,12 @@ class ProductionMCPClient:
 
                 # 等待響應
                 try:
+                    if process.stdout is None:
+                        logger.error("❌ 無法讀取進程stdout")
+                        if attempt < max_retries:
+                            continue
+                        return {"success": False, "error": "進程stdout不可用"}
+
                     response_line = await asyncio.wait_for(
                         process.stdout.readline(), timeout=timeout
                     )
@@ -425,7 +461,9 @@ class ProductionMCPClient:
                             error_info = response["error"]
                             error_msg = error_info.get("message", "未知錯誤")
                             error_code = error_info.get("code", 0)
-                            logger.error(f"❌ 工具調用錯誤 (code: {error_code})：{error_msg}")
+                            logger.error(
+                                f"❌ 工具調用錯誤 (code: {error_code})：{error_msg}"
+                            )
                             # 對於某些錯誤不重試
                             if error_code in [
                                 -32600,
@@ -458,12 +496,16 @@ class ProductionMCPClient:
                 await self.connection_pool.record_failure(server_name, str(e))
 
                 logger.error(
-                    f"❌ 工具調用異常 {server_name}.{tool_name} " f"(嘗試 {attempt + 1})：{e}"
+                    f"❌ 工具調用異常 {server_name}.{tool_name} "
+                    f"(嘗試 {attempt + 1})：{e}"
                 )
                 if attempt < max_retries:
                     await asyncio.sleep(1)  # 等待後重試
                     continue
                 return {"success": False, "error": f"工具調用失敗：{str(e)}"}
+
+        # 預設情況：所有重試都失敗
+        return {"success": False, "error": "所有重試都失敗"}
 
     async def list_tools(self, server_name: str = "postgres") -> dict[str, Any]:
         """列出服務器工具"""
@@ -484,6 +526,11 @@ class ProductionMCPClient:
             }
 
             request_json = json.dumps(request) + "\n"
+            if process.stdin is None:
+                return {"success": False, "error": "進程stdin不可用"}
+            if process.stdout is None:
+                return {"success": False, "error": "進程stdout不可用"}
+
             process.stdin.write(request_json.encode())
             await process.stdin.drain()
 
@@ -496,7 +543,9 @@ class ProductionMCPClient:
 
                 if "result" in response and "tools" in response["result"]:
                     tools = response["result"]["tools"]
-                    logger.info(f"📋 列出工具成功：{server_name} -> {len(tools)} 個工具")
+                    logger.info(
+                        f"📋 列出工具成功：{server_name} -> {len(tools)} 個工具"
+                    )
                     return {"success": True, "tools": tools}
                 elif "error" in response:
                     return {"success": False, "error": response["error"]["message"]}
@@ -506,6 +555,9 @@ class ProductionMCPClient:
         except Exception as e:
             logger.error(f"❌ 列出工具失敗 {server_name}：{e}")
             return {"success": False, "error": str(e)}
+
+        # 預設情況（不應該到達這裡）
+        return {"success": False, "error": "未知錯誤"}
 
     async def _verify_process_health(self, server_name: str) -> bool:
         """驗證進程健康狀態"""
@@ -575,7 +627,8 @@ class ProductionMCPClient:
     async def get_connection_pool_status(self) -> dict[str, Any]:
         """獲取連接池狀態"""
         await self._ensure_pool_started()
-        return await self.connection_pool.get_pool_status()
+        status = await self.connection_pool.get_pool_status()
+        return status if isinstance(status, dict) else {}
 
     async def close(self):
         """關閉客戶端和所有連接"""

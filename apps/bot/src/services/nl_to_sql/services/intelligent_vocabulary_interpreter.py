@@ -478,7 +478,9 @@ class LLMInterpretationEngine:
                 reasoning_parts
             )
         else:
-            response["reasoning"] = f"無法從查詢 '{user_input}' 中識別出明確的製造業詞彙"
+            response["reasoning"] = (
+                f"無法從查詢 '{user_input}' 中識別出明確的製造業詞彙"
+            )
 
         return json.dumps(response, ensure_ascii=False, indent=2)
 
@@ -697,7 +699,12 @@ async def example_usage():
     interpreter = IntelligentVocabularyInterpreter(config_path)
 
     # 測試查詢
-    test_queries = ["M001機台稼動率", "生產部門本週的OEE指標", "CNC車床今天不良率", "品質部門即時數據"]
+    test_queries = [
+        "M001機台稼動率",
+        "生產部門本週的OEE指標",
+        "CNC車床今天不良率",
+        "品質部門即時數據",
+    ]
 
     for query in test_queries:
         print(f"\n查詢：{query}")

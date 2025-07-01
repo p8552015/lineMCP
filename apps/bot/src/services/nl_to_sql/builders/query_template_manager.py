@@ -15,7 +15,7 @@
 """
 
 import re
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -87,7 +87,9 @@ class QueryTemplateManager(ITemplateManager):
                 query_type.value == qt.value for qt in self._templates
             )
             if not template_found_after_default:
-                raise KeyError(f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗")
+                raise KeyError(
+                    f"查詢類型 {query_type.value} 的模板不存在，預設模板載入也失敗"
+                )
 
         # 修復：根據值查找正確的模板
         template = None
@@ -189,8 +191,11 @@ class QueryTemplateManager(ITemplateManager):
             bool: 模板是否安全
         """
         try:
-            # 從配置獲取禁止的關鍵字
-            security_config = self._config.get_template_security_config()
+            # 從配置獲取禁止的關鍵字 (安全處理)
+            security_config = (
+                getattr(self._config, "get_template_security_config", lambda: {})()
+                or {}
+            )
             forbidden_keywords = security_config.get(
                 "forbidden_keywords",
                 [
@@ -338,7 +343,7 @@ class QueryTemplateManager(ITemplateManager):
         Returns:
             Dict[str, Any]: 詳細的驗證結果
         """
-        validation_result = {
+        validation_result: dict[str, Any] = {
             "is_valid": True,
             "is_mcp_compatible": True,
             "warnings": [],
@@ -490,7 +495,9 @@ class QueryTemplateManager(ITemplateManager):
                             )
                         else:
                             failed_templates.append((type_name, "模板驗證失敗"))
-                            logger.warning("⚠️ 無效的模板，跳過載入", query_type=type_name)
+                            logger.warning(
+                                "⚠️ 無效的模板，跳過載入", query_type=type_name
+                            )
                     else:
                         failed_templates.append((type_name, "模板為空"))
                         logger.warning("⚠️ 空模板，跳過載入", query_type=type_name)
@@ -630,7 +637,9 @@ class QueryTemplateManager(ITemplateManager):
                     logger.error("❌ 預設模板驗證失敗", query_type=query_type.value)
 
             except Exception as e:
-                logger.error("❌ 預設模板載入失敗", query_type=query_type.value, error=str(e))
+                logger.error(
+                    "❌ 預設模板載入失敗", query_type=query_type.value, error=str(e)
+                )
 
         logger.info(
             "📋 預設模板載入完成",
@@ -727,7 +736,7 @@ class QueryTemplateManager(ITemplateManager):
             len(self.get_template_parameters(qt)) for qt in self._templates
         )
 
-        complexity_distribution = {}
+        complexity_distribution: dict[str, int] = {}
         for query_type in self._templates:
             metadata = self._template_metadata.get(query_type, {})
             performance = metadata.get("estimated_performance", "unknown")
@@ -758,7 +767,7 @@ class QueryTemplateManager(ITemplateManager):
         Returns:
             Dict[str, Any]: 驗證結果
         """
-        validation_results = {
+        validation_results: dict[str, Any] = {
             "is_valid": True,
             "valid_templates": [],
             "invalid_templates": [],
@@ -819,7 +828,9 @@ class QueryTemplateManager(ITemplateManager):
                 validation_results["errors"].append(f"{query_type.value}: {str(e)}")
                 validation_results["invalid_templates"].append(query_type.value)
                 validation_results["is_valid"] = False
-                logger.error("模板驗證過程中發生錯誤", query_type=query_type.value, error=str(e))
+                logger.error(
+                    "模板驗證過程中發生錯誤", query_type=query_type.value, error=str(e)
+                )
 
         # 生成摘要
         validation_results["summary"] = {

@@ -47,7 +47,9 @@ class ModelsCommandHandler(CommandHandler):
 
         except Exception as e:
             logger.error(f"查詢 AI 模型失敗: {e}", exc_info=True)
-            return TextMessage(text="❌ 查詢 AI 模型資訊時發生錯誤\\n\\n" "請稍後再試或聯絡系統管理員")
+            return TextMessage(
+                text="❌ 查詢 AI 模型資訊時發生錯誤\\n\\n" "請稍後再試或聯絡系統管理員"
+            )
 
     async def _list_all_models(self) -> TextMessage:
         """列出所有可用的 AI 模型"""
@@ -59,14 +61,18 @@ class ModelsCommandHandler(CommandHandler):
 
             if not models_info["models"]:
                 return TextMessage(
-                    text="🤖 AI 模型資訊\\n\\n" "⚠️ 目前沒有可用的 AI 模型\\n" "請檢查系統配置或聯絡管理員"
+                    text="🤖 AI 模型資訊\\n\\n"
+                    "⚠️ 目前沒有可用的 AI 模型\\n"
+                    "請檢查系統配置或聯絡管理員"
                 )
 
             return self._format_models_list(models_info)
 
         except Exception as e:
             logger.error(f"獲取模型列表失敗: {e}")
-            return TextMessage(text="❌ 無法獲取 AI 模型列表\\n\\n" f"錯誤：{str(e)[:100]}")
+            return TextMessage(
+                text="❌ 無法獲取 AI 模型列表\\n\\n" f"錯誤：{str(e)[:100]}"
+            )
 
     async def _get_model_details(self, model_name: str) -> TextMessage:
         """獲取特定模型的詳細資訊"""
@@ -103,7 +109,8 @@ class ModelsCommandHandler(CommandHandler):
         except Exception as e:
             logger.error(f"獲取模型詳細資訊失敗: {e}")
             return TextMessage(
-                text=f"❌ 無法獲取模型 {model_name} 的詳細資訊\\n\\n" f"錯誤：{str(e)[:100]}"
+                text=f"❌ 無法獲取模型 {model_name} 的詳細資訊\\n\\n"
+                f"錯誤：{str(e)[:100]}"
             )
 
     async def _get_models_from_service(self, ai_service) -> dict:
@@ -185,7 +192,9 @@ class ModelsCommandHandler(CommandHandler):
 
             response_lines.append("")
 
-        response_lines.extend(["💡 查看模型詳情：/models <模型名稱>", "🔍 檢查模型狀態：/status"])
+        response_lines.extend(
+            ["💡 查看模型詳情：/models <模型名稱>", "🔍 檢查模型狀態：/status"]
+        )
 
         return TextMessage(text="\\n".join(response_lines))
 
@@ -232,6 +241,8 @@ class ModelsCommandHandler(CommandHandler):
                 for cost_type, amount in cost_info.items():
                     response_lines.append(f"   • {cost_type}: ${amount}")
 
-        response_lines.extend(["", "💡 使用此模型進行自然語言查詢", "🔄 切換模型請聯絡系統管理員"])
+        response_lines.extend(
+            ["", "💡 使用此模型進行自然語言查詢", "🔄 切換模型請聯絡系統管理員"]
+        )
 
         return TextMessage(text="\\n".join(response_lines))

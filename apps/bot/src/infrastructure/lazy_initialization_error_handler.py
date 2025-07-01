@@ -133,7 +133,9 @@ class LazyInitializationErrorHandler:
 
         for attempt in range(self.config.max_retry_attempts):
             try:
-                logger.info(f"🔄 嘗試初始化 {self.config.service_name}，第 {attempt + 1} 次")
+                logger.info(
+                    f"🔄 嘗試初始化 {self.config.service_name}，第 {attempt + 1} 次"
+                )
 
                 # 設置超時
                 result = await asyncio.wait_for(
@@ -305,7 +307,8 @@ class LazyInitializationErrorHandler:
             self._recovery_attempts = 1
 
         logger.info(
-            f"🔧 嘗試自動恢復 {self.config.service_name} " f"(第{self._recovery_attempts}次)"
+            f"🔧 嘗試自動恢復 {self.config.service_name} "
+            f"(第{self._recovery_attempts}次)"
         )
         self.state = InitializationState.RECOVERING
 

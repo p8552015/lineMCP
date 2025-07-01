@@ -154,13 +154,19 @@ class SuggestionService:
         if any(keyword in user_input_lower for keyword in ["機台", "設備", "machine"]):
             suggestion += self._get_machine_query_suggestions()
 
-        elif any(keyword in user_input_lower for keyword in ["故障", "問題", "錯誤", "維修"]):
+        elif any(
+            keyword in user_input_lower for keyword in ["故障", "問題", "錯誤", "維修"]
+        ):
             suggestion += self._get_fault_query_suggestions()
 
-        elif any(keyword in user_input_lower for keyword in ["部門", "加工", "組裝", "品管"]):
+        elif any(
+            keyword in user_input_lower for keyword in ["部門", "加工", "組裝", "品管"]
+        ):
             suggestion += self._get_department_query_suggestions()
 
-        elif any(keyword in user_input_lower for keyword in ["統計", "報告", "生產", "效率"]):
+        elif any(
+            keyword in user_input_lower for keyword in ["統計", "報告", "生產", "效率"]
+        ):
             suggestion += self._get_statistics_query_suggestions()
 
         else:

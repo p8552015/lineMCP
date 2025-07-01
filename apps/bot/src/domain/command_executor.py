@@ -46,7 +46,9 @@ class CommandExecutor:
         self._register_all_commands()
 
         self._initialized = True
-        logger.info(f"指令執行器初始化完成，註冊了 {len(self.registry.list_commands())} 個指令")
+        logger.info(
+            f"指令執行器初始化完成，註冊了 {len(self.registry.list_commands())} 個指令"
+        )
 
     def parse_and_validate_command(
         self, message_text: str

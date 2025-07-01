@@ -186,7 +186,8 @@ class HealthChecker:
                 response_time = (time.time() - start_time) * 1000
 
                 checks["line_api"] = {
-                    "healthy": response.status_code in [200, 401],  # 401 是預期的（無效 token）
+                    "healthy": response.status_code
+                    in [200, 401],  # 401 是預期的（無效 token）
                     "response_time_ms": response_time,
                     "status_code": response.status_code,
                 }

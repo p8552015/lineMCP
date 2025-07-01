@@ -84,7 +84,9 @@ class MessageFormatter:
         """格式化機台狀態訊息"""
         if not data.get("found", False):
             machine_id = data.get("machine_id", "未知")
-            return TextMessage(text=f"❌ {data.get('message', f'找不到機台 {machine_id}')}")
+            return TextMessage(
+                text=f"❌ {data.get('message', f'找不到機台 {machine_id}')}"
+            )
 
         machine_id = data.get("machine_id", "未知")
         machine_name = data.get("machine_name", "未知機台")

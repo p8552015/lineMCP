@@ -86,7 +86,9 @@ class QueryApplicationService(BaseApplicationService):
 
         # 🔥 緊急修復：檢查空查詢
         if not query or not query.strip():
-            logger.error("❌ 緊急阻止：嘗試執行空查詢", user_id=user_id, query_repr=repr(query))
+            logger.error(
+                "❌ 緊急阻止：嘗試執行空查詢", user_id=user_id, query_repr=repr(query)
+            )
             raise create_validation_error("query", query, "查詢不能為空")
 
         # 驗證查詢
@@ -192,7 +194,9 @@ class QueryApplicationService(BaseApplicationService):
         # 安全檢查：只允許 SELECT 查詢
         allowed_prefixes = ["select", "explain"]
         if not any(query_lower.startswith(prefix) for prefix in allowed_prefixes):
-            raise create_validation_error("query", query, "只允許 SELECT 和 EXPLAIN 查詢")
+            raise create_validation_error(
+                "query", query, "只允許 SELECT 和 EXPLAIN 查詢"
+            )
 
         # 禁止的關鍵字
         forbidden_keywords = [
@@ -209,7 +213,9 @@ class QueryApplicationService(BaseApplicationService):
 
         for keyword in forbidden_keywords:
             if keyword in query_lower:
-                raise create_validation_error("query", query, f"查詢包含禁止的關鍵字: {keyword}")
+                raise create_validation_error(
+                    "query", query, f"查詢包含禁止的關鍵字: {keyword}"
+                )
 
         # 檢查查詢長度
         if len(query) > 10000:  # 10KB 限制

@@ -92,11 +92,22 @@ skips = ["B101", "B601"]
 [tool.mypy]
 python_version = "3.11"
 strict = false
-warn_return_any = false
+warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 follow_imports = "silent"
 show_column_numbers = true
+# 漸進式嚴格檢查
+disallow_untyped_defs = false
+disallow_any_generics = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+# 排除測試和遷移檔案
+exclude = [
+    "tests/",
+    "alembic/",
+    "performance_tests/",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

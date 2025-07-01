@@ -204,7 +204,9 @@ class InstallationGuide:
                 lines.extend(["```bash", step.command, "```", ""])
 
             if step.verification_command:
-                lines.extend(["驗證：", "```bash", step.verification_command, "```", ""])
+                lines.extend(
+                    ["驗證：", "```bash", step.verification_command, "```", ""]
+                )
 
                 if step.expected_output:
                     lines.extend([f"預期輸出：`{step.expected_output}`", ""])

@@ -490,11 +490,17 @@ class AIEnhancedParser(IParser):
             return QueryType.FAULT_ANALYSIS
 
         # 生產統計關鍵詞
-        if any(keyword in text_lower for keyword in ["統計", "報告", "生產", "產量", "效率"]):
+        if any(
+            keyword in text_lower
+            for keyword in ["統計", "報告", "生產", "產量", "效率"]
+        ):
             return QueryType.PRODUCTION_STATS
 
         # 所有機台關鍵詞
-        if any(keyword in text_lower for keyword in ["所有機台", "全部機台", "整體", "概覽"]):
+        if any(
+            keyword in text_lower
+            for keyword in ["所有機台", "全部機台", "整體", "概覽"]
+        ):
             return QueryType.ALL_MACHINES
 
         # 機台狀態關鍵詞（最後檢查，較通用）

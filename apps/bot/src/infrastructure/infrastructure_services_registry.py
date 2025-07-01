@@ -190,7 +190,9 @@ def _register_nl_to_sql_services(registry: ServiceRegistry) -> None:
     )
     registry.register_factory(
         IParser,
-        lambda provider: provider.get_required_service(CompositeParser),  # 預設使用組合解析器
+        lambda provider: provider.get_required_service(
+            CompositeParser
+        ),  # 預設使用組合解析器
         scope=ServiceScope.SINGLETON,
     )
 

@@ -15,7 +15,7 @@
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 import yaml
@@ -135,7 +135,7 @@ class ConfigurationService(IConfiguration):
         """
         settings = self._config_cache.get("parser_settings", {})
         logger.debug("⚙️ 獲取解析器設定", settings_keys=list(settings.keys()))
-        return settings
+        return settings if isinstance(settings, dict) else {}
 
     def get_template_security_config(self) -> dict[str, Any]:
         """
@@ -147,16 +147,32 @@ class ConfigurationService(IConfiguration):
         templates_config = self._config_cache.get("sql_templates", {})
 
         # 提取安全性設定
-        template_settings = templates_config.get("template_settings", {})
-        security_config = template_settings.get("security", {})
+        template_settings = (
+            templates_config.get("template_settings", {})
+            if isinstance(templates_config, dict)
+            else {}
+        )
+        security_config = (
+            template_settings.get("security", {})
+            if isinstance(template_settings, dict)
+            else {}
+        )
 
         logger.debug(
             "🔒 獲取模板安全性配置",
-            security_keys=list(security_config.keys()),
-            forbidden_keywords_count=len(security_config.get("forbidden_keywords", [])),
+            security_keys=(
+                list(security_config.keys())
+                if isinstance(security_config, dict)
+                else []
+            ),
+            forbidden_keywords_count=(
+                len(security_config.get("forbidden_keywords", []))
+                if isinstance(security_config, dict)
+                else 0
+            ),
         )
 
-        return security_config
+        return security_config if isinstance(security_config, dict) else {}
 
     def get_setting(self, key_path: str, default: Any = None) -> Any:
         """
@@ -249,7 +265,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 驗證結果
         """
-        validation_result = {
+        validation_result: dict[str, Any] = {
             "is_valid": True,
             "errors": [],
             "warnings": [],
@@ -286,7 +302,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 配置摘要
         """
-        summary = {
+        summary: dict[str, Any] = {
             "config_base_path": str(self._config_base_path),
             "loaded_configs": list(self._config_cache.keys()),
             "config_file_status": {},
@@ -326,7 +342,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 環境變數配置字典
         """
-        env_config = {}
+        env_config: dict[str, Any] = {}
 
         # 使用統一的 settings 物件取代直接的環境變數存取
         from src.settings import get_settings
@@ -437,7 +453,8 @@ class ConfigurationService(IConfiguration):
             ),
         }
 
-        return feature_map.get(feature_name, False)
+        result = feature_map.get(feature_name, False)
+        return bool(result)
 
     def get_performance_setting(self, setting_name: str, default: Any = None) -> Any:
         """
@@ -609,7 +626,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 驗證結果
         """
-        result = {"is_valid": True, "errors": [], "pattern_count": 0}
+        result: dict[str, Any] = {"is_valid": True, "errors": [], "pattern_count": 0}
 
         patterns = self.get_query_patterns()
         result["pattern_count"] = len(patterns)
@@ -636,7 +653,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 驗證結果
         """
-        result = {"is_valid": True, "errors": [], "template_count": 0}
+        result: dict[str, Any] = {"is_valid": True, "errors": [], "template_count": 0}
 
         templates = self.get_sql_templates()
         result["template_count"] = len(templates)
@@ -661,7 +678,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             Dict[str, Any]: 驗證結果
         """
-        result = {"is_valid": True, "errors": [], "settings_count": 0}
+        result: dict[str, Any] = {"is_valid": True, "errors": [], "settings_count": 0}
 
         settings = self.get_parser_settings()
         result["settings_count"] = len(settings)

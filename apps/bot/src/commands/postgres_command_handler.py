@@ -130,7 +130,9 @@ class PostgresCommandHandler(CommandHandler):
 
                 if not success:
                     # 初始化失敗，返回用戶友好的錯誤消息
-                    error_text = user_message or "❌ PostgreSQL 服務暫時不可用，請稍後再試"
+                    error_text = (
+                        user_message or "❌ PostgreSQL 服務暫時不可用，請稍後再試"
+                    )
                     return TextMessage(text=error_text)
 
                 logger.info("🐘 PostgreSQL 命令延遲初始化完成")
