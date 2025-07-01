@@ -90,7 +90,35 @@ class RuleBasedParser(IParser):
 
         logger.debug("🔍 開始規則解析", text=text, normalized=normalized_text)
 
-        # 1. 檢查特定機台 ID
+        # 🔥 優先級檢查：品質相關查詢（應該拒絕處理）
+        quality_keywords = ["品質", "品管", "不良率", "合格率", "檢驗", "品檢"]
+        quality_dept_patterns = [
+            r"品質.*部.*",
+            r"品管.*部.*",
+            r".*品質.*產量.*",
+            r".*品質.*即時.*",
+            r".*品質.*數據.*",
+        ]
+
+        # 檢查是否包含品質關鍵詞或品質部門模式
+        has_quality_keyword = any(
+            keyword in normalized_text for keyword in quality_keywords
+        )
+        has_quality_pattern = any(
+            re.search(pattern, normalized_text, re.IGNORECASE)
+            for pattern in quality_dept_patterns
+        )
+
+        if has_quality_keyword or has_quality_pattern:
+            logger.info(
+                "🔍 規則解析器檢測到品質相關查詢，拒絕處理",
+                text=text,
+                has_quality_keyword=has_quality_keyword,
+                has_quality_pattern=has_quality_pattern,
+            )
+            return self._create_unknown_query(f"品質相關查詢不支援：{text}")
+
+        # 1. 檢查特定機台 ID（只有在非品質查詢時才執行）
         machine_match = self._machine_id_pattern.search(normalized_text)
         if machine_match:
             # 2-3位數補零到3位，4位數保持原樣
@@ -135,7 +163,7 @@ class RuleBasedParser(IParser):
 
     def can_handle(self, text: str) -> float:
         """
-        評估處理能力
+        評估處理能力 - 品質查詢優先檢查
 
         Args:
             text: 要評估的文字
@@ -148,7 +176,35 @@ class RuleBasedParser(IParser):
 
         normalized_text = text.strip().lower()
 
-        # 檢查機台 ID 模式
+        # 🔥 優先檢查：品質相關查詢（拒絕處理）
+        quality_keywords = ["品質", "品管", "不良率", "合格率", "檢驗", "品檢"]
+        quality_dept_patterns = [
+            r"品質.*部.*",
+            r"品管.*部.*",
+            r".*品質.*產量.*",
+            r".*品質.*即時.*",
+            r".*品質.*數據.*",
+        ]
+
+        # 檢查是否包含品質關鍵詞或品質部門模式
+        has_quality_keyword = any(
+            keyword in normalized_text for keyword in quality_keywords
+        )
+        has_quality_pattern = any(
+            re.search(pattern, normalized_text, re.IGNORECASE)
+            for pattern in quality_dept_patterns
+        )
+
+        if has_quality_keyword or has_quality_pattern:
+            logger.debug(
+                "🔍 規則解析器能力評估：品質查詢，返回0信心度",
+                text=text,
+                has_quality_keyword=has_quality_keyword,
+                has_quality_pattern=has_quality_pattern,
+            )
+            return 0.0  # 拒絕處理品質相關查詢
+
+        # 檢查機台 ID 模式（只有非品質查詢）
         if self._machine_id_pattern.search(normalized_text):
             return 0.95  # 機台 ID 模式信心度很高
 

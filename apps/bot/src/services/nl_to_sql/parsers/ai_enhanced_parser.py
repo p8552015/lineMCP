@@ -171,7 +171,7 @@ class AIEnhancedParser(IParser):
 
     def _build_system_prompt(self) -> str:
         """
-        建構 AI 系統提示 - 強化空查詢檢測
+        建構 AI 系統提示 - 強化查詢分類準確性
 
         Returns:
             str: 系統提示字串
@@ -181,16 +181,21 @@ class AIEnhancedParser(IParser):
             "你的任務是將自然語言查詢轉換為結構化的查詢意圖。\n\n"
             "支援的查詢類型：\n"
             "1. machine_status - 機台狀態查詢（稼動率、運行狀態、效率）\n"
-            "2. fault_analysis - 故障分析查詢（故障記錄、維修歷史）\n"
-            "3. production_stats - 生產統計查詢（產量、統計報告）\n"
-            "4. all_machines - 所有機台概覽\n"
-            "5. department_status - 部門狀態查詢\n"
-            "6. specific_machine - 特定機台查詢\n\n"
-            "⚠️ 重要：以下情況請返回低信心度（< 0.5）或 unknown 類型：\n"
+            "2. specific_machine - 特定機台查詢（包含明確機台ID的查詢）\n"
+            "3. fault_analysis - 故障分析查詢（故障記錄、維修歷史）\n"
+            "4. production_stats - 生產統計查詢（產量、統計報告）\n"
+            "5. all_machines - 所有機台概覽\n"
+            "6. department_status - 部門狀態查詢\n\n"
+            "🎯 明確支援的查詢範例：\n"
+            "- 「M001機台稼動率」→ specific_machine（包含機台ID且查詢稼動率）\n"
+            "- 「M002機台狀態」→ specific_machine（明確機台查詢）\n"
+            "- 「CNC車床運行狀況」→ machine_status（一般機台狀態查詢）\n"
+            "- 「加工部機台狀態」→ department_status（部門查詢）\n\n"
+            "⚠️ 重要：以下情況請返回 unknown 類型且低信心度（< 0.5）：\n"
             "- 查詢涉及「不良率」、「合格率」、「品質指標」、「檢驗」等品質相關指標\n"
-            "- 查詢要求複雜的時間範圍計算（如「今天」、「本週」的具體數據）\n"
-            "- 查詢涉及多個條件組合且無法明確歸類\n"
-            "- 查詢語義模糊或包含系統不支援的功能\n\n"
+            "- 查詢包含「品質部門」、「品管部」且要求生產數據（如產量、即時數據）\n"
+            "- 查詢要求複雜的時間範圍計算或系統不支援的功能\n"
+            "- 查詢語義模糊或包含多個不相容的條件\n\n"
             "**重要：必須嚴格按照 JSON 格式回覆，不要添加任何解釋文字**\n"
             "**只返回 JSON，不要任何其他文字**\n\n"
             "請分析用戶的自然語言輸入，返回 JSON 格式：\n"
@@ -200,11 +205,14 @@ class AIEnhancedParser(IParser):
             '  "parameters": \\{"參數": "值"\\},\n'
             '  "confidence": 0.9\n'
             "}\n\n"
-            "範例：\n"
-            "輸入：「CNC車床今天不良率」\n"
-            '輸出：\\{"query_type": "unknown", "entities": \\["CNC車床", "不良率"\\], '
+            "正確範例：\n"
+            "輸入：「M001機台稼動率」\n"
+            '輸出：\\{"query_type": "specific_machine", "entities": \\["M001", "稼動率"\\], '
+            '"parameters": \\{"machine_id": "M001", "metric": "utilization_rate"\\}, "confidence": 0.9\\}\n\n'
+            "輸入：「品質部門M002銑床即時產量」\n"
+            '輸出：\\{"query_type": "unknown", "entities": \\["品質部門", "M002", "產量"\\], '
             '"parameters": \\{\\}, "confidence": 0.3\\}\n'
-            "原因：涉及不良率（品質指標），系統不支援此類查詢"
+            "原因：涉及品質部門的生產數據查詢，系統不支援此類跨部門查詢"
         )
 
     def _prepare_ai_context(
@@ -401,31 +409,46 @@ class AIEnhancedParser(IParser):
         Returns:
             ParsedQuery: 解析結果
         """
-        # 🔥 修復：智能查詢類型推斷
+        # 🔥 修復：智能查詢類型推斷，尊重品質檢測結果
         query_type = self._infer_query_type_from_content(original_text, [], {})
 
-        # 如果仍無法推斷，嘗試從 AI 結果推斷
+        # 🔥 關鍵修復：如果內容檢測返回 UNKNOWN（品質查詢），直接返回 UNKNOWN
         if query_type == QueryType.UNKNOWN:
-            query_type = self._infer_query_type_from_sql(ai_result)
+            logger.info(
+                "🔍 內容檢測確定為 UNKNOWN 查詢，直接返回",
+                original_text=original_text,
+                reason="品質相關或不支援的查詢類型",
+            )
 
-        # 如果仍然無法確定，使用內容關鍵詞檢查
-        if query_type == QueryType.UNKNOWN:
+            # 提取參數（但標記為不支援）
+            parameters = self._extract_parameters_from_text(original_text, ai_result)
+            parameters["unsupported_query"] = True
+            parameters["detected_reason"] = "quality_or_unsupported"
+
+            return ParsedQuery(
+                query_type=QueryType.UNKNOWN,
+                sql_query="",  # 不生成 SQL
+                parameters=parameters,
+                confidence=0.2,  # 低信心度，表示不支援
+                explanation=f"檢測到不支援的查詢類型：{original_text}",
+            )
+
+        # 只有當不是品質查詢時，才繼續其他推斷邏輯
+        # 如果內容檢測失敗，嘗試從 AI 結果推斷
+        if query_type == QueryType.MACHINE_STATUS:  # 檢查是否是預設值
+            sql_inferred_type = self._infer_query_type_from_sql(ai_result)
+            if sql_inferred_type != QueryType.MACHINE_STATUS:
+                query_type = sql_inferred_type
+
+        # 如果仍然是預設值，使用內容關鍵詞檢查
+        if query_type == QueryType.MACHINE_STATUS:
             lower_result = ai_result.lower()
 
-            # 檢查是否包含查詢類型關鍵詞
+            # 檢查是否包含更具體的查詢類型關鍵詞
             for type_key, mapped_type in self._query_type_mapping.items():
-                if type_key in lower_result:
+                if type_key in lower_result and mapped_type != QueryType.MACHINE_STATUS:
                     query_type = mapped_type
                     break
-
-        # 如果還是無法確定，至少根據原始文字做基本推斷
-        if query_type == QueryType.UNKNOWN:
-            logger.warning(
-                "⚠️ 無法從 AI 結果推斷查詢類型，使用預設",
-                ai_result=ai_result[:100],
-                original_text=original_text,
-            )
-            query_type = QueryType.MACHINE_STATUS  # 預設查詢類型
 
         # 提取參數
         parameters = self._extract_parameters_from_text(original_text, ai_result)
@@ -442,7 +465,7 @@ class AIEnhancedParser(IParser):
         self, text: str, target_entities: list, parameters: dict
     ) -> QueryType:
         """
-        從內容推斷查詢類型
+        從內容推斷查詢類型 - 強化品質部門檢測
 
         Args:
             text: 原始查詢文字
@@ -455,33 +478,66 @@ class AIEnhancedParser(IParser):
         text_lower = text.lower()
         import re
 
-        # 🔥 首先檢查部門查詢模式（最高優先級，避免被其他關鍵詞覆蓋）
+        # 🔥 最高優先級：品質相關查詢檢測（應該返回 UNKNOWN）
+        quality_keywords = ["品質", "品管", "不良率", "合格率", "檢驗", "品檢"]
+        quality_dept_patterns = [
+            r"品質.*部.*",
+            r"品管.*部.*",
+            r".*品質.*產量.*",
+            r".*品質.*即時.*",
+            r".*品質.*數據.*",
+        ]
+
+        # 檢查是否包含品質關鍵詞或品質部門模式
+        has_quality_keyword = any(keyword in text_lower for keyword in quality_keywords)
+        has_quality_pattern = any(
+            re.search(pattern, text_lower) for pattern in quality_dept_patterns
+        )
+
+        if has_quality_keyword or has_quality_pattern:
+            logger.info(
+                "🔍 檢測到品質相關查詢，返回 UNKNOWN",
+                text=text,
+                has_quality_keyword=has_quality_keyword,
+                has_quality_pattern=has_quality_pattern,
+            )
+            return QueryType.UNKNOWN
+
+        # 🔥 第二優先級：檢查明確的機台ID（有效查詢）
+        machine_pattern = re.compile(r"[Mm]\d{2,4}")
+        machine_id_match = machine_pattern.search(text)
+        has_machine_entity = any("M" in entity.upper() for entity in target_entities)
+
+        if (machine_id_match or has_machine_entity) and not (
+            has_quality_keyword or has_quality_pattern
+        ):
+            logger.info(
+                "✅ 檢測到有效機台查詢",
+                text=text,
+                machine_id=(
+                    machine_id_match.group() if machine_id_match else "unknown"
+                ),
+            )
+            return QueryType.SPECIFIC_MACHINE
+
+        # 第三優先級：一般部門查詢模式（排除品質部門）
         department_patterns = [
-            r".*部.*機台.*",
-            r".*部.*狀況.*",
-            r".*部.*狀態.*",
-            r".*部.*概覽.*",
-            r".*部.*設備.*",
+            r"(?!品質|品管).*部.*機台.*",
+            r"(?!品質|品管).*部.*狀況.*",
+            r"(?!品質|品管).*部.*狀態.*",
+            r"(?!品質|品管).*部.*概覽.*",
+            r"(?!品質|品管).*部.*設備.*",
         ]
 
         if any(re.search(pattern, text_lower) for pattern in department_patterns):
             return QueryType.DEPARTMENT_STATUS
 
-        # 部門查詢關鍵詞檢查
-        if any(
-            keyword in text_lower
-            for keyword in ["部門", "加工部", "組裝部", "品管部", "維修部", "生產部"]
-        ):
+        # 非品質部門的部門查詢關鍵詞檢查
+        non_quality_departments = ["加工部", "組裝部", "維修部", "生產部", "製造部"]
+        if any(dept in text_lower for dept in non_quality_departments):
             return QueryType.DEPARTMENT_STATUS
 
-        # 檢查是否有機台ID（高優先級，具體查詢）
-        machine_pattern = re.compile(r"[Mm]\d{2,4}")
-        if machine_pattern.search(text) or any(
-            "M" in entity.upper() for entity in target_entities
-        ):
-            return QueryType.SPECIFIC_MACHINE
-
-        # 故障相關關鍵詞（但排除已確認的部門查詢）
+        # 故障相關關鍵詞
         fault_keywords = ["故障", "問題", "錯誤", "異常", "近期"]
         if any(keyword in text_lower for keyword in fault_keywords):
             return QueryType.FAULT_ANALYSIS
@@ -490,10 +546,10 @@ class AIEnhancedParser(IParser):
         if "維修" in text_lower and "維修部" not in text_lower:
             return QueryType.FAULT_ANALYSIS
 
-        # 生產統計關鍵詞
-        if any(
-            keyword in text_lower
-            for keyword in ["統計", "報告", "生產", "產量", "效率"]
+        # 生產統計關鍵詞（排除品質相關）
+        production_keywords = ["統計", "報告", "生產", "產量", "效率"]
+        if any(keyword in text_lower for keyword in production_keywords) and not (
+            has_quality_keyword or has_quality_pattern
         ):
             return QueryType.PRODUCTION_STATS
 
