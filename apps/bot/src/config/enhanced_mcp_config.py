@@ -14,8 +14,8 @@
 """
 
 import time
-from dataclasses import asdict, dataclass
-from typing import Any
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -48,15 +48,9 @@ class RuntimeEnvironmentInfo:
     available: bool
     version: str
     executable_path: str
-    package_manager: str | None = None
-    issues: list[str] = None
-    recommendations: list[str] = None
-
-    def __post_init__(self):
-        if self.issues is None:
-            self.issues = []
-        if self.recommendations is None:
-            self.recommendations = []
+    package_manager: Optional[str] = None
+    issues: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -64,18 +58,12 @@ class ServerConfigAnalysis:
     """服務器配置分析結果"""
 
     server_name: str
-    current_config: dict[str, Any]
+    current_config: Dict[str, Any]
     is_valid: bool
-    runtime_info: RuntimeEnvironmentInfo | None = None
-    validation_issues: list[str] = None
-    optimization_suggestions: list[str] = None
-    nodecomman_config: dict[str, Any] | None = None
-
-    def __post_init__(self):
-        if self.validation_issues is None:
-            self.validation_issues = []
-        if self.optimization_suggestions is None:
-            self.optimization_suggestions = []
+    runtime_info: Optional[RuntimeEnvironmentInfo] = None
+    validation_issues: List[str] = field(default_factory=list)
+    optimization_suggestions: List[str] = field(default_factory=list)
+    nodecomman_config: Optional[Dict[str, Any]] = None
 
 
 class EnhancedMCPConfig:
@@ -171,7 +159,7 @@ class EnhancedMCPConfig:
                     recommendations.append("建議升級到 Node.js v18 LTS")
 
                 # 檢查 npm
-                npm_info = runtime_info.additional_info.get("npm_version", "")
+                npm_info = runtime_info.env_variables.get("npm_version", "")
                 if not npm_info:
                     issues.append("npm 不可用")
                     recommendations.append("請確保 npm 已正確安裝")
@@ -182,7 +170,7 @@ class EnhancedMCPConfig:
                 version=runtime_info.version,
                 executable_path=runtime_info.executable_path,
                 package_manager=(
-                    "npm" if "npm" in runtime_info.additional_info else None
+                    "npm" if "npm" in runtime_info.env_variables else None
                 ),
                 issues=issues,
                 recommendations=recommendations,
@@ -293,6 +281,9 @@ class EnhancedMCPConfig:
             server_name = analysis.server_name
 
             # 檢查是否有對應的 nodecomman 配置
+            if self._mcp_factory is None:
+                return
+
             nodecomman_config = await self._mcp_factory.get_predefined_config(
                 server_name
             )
@@ -345,6 +336,10 @@ class EnhancedMCPConfig:
             current = analysis.current_config
             nodecomman = analysis.nodecomman_config
 
+            # 檢查 nodecomman 是否可用
+            if nodecomman is None:
+                return
+
             # 比較命令和參數
             if current.get("command") != nodecomman.get("command"):
                 analysis.optimization_suggestions.append(
@@ -364,7 +359,8 @@ class EnhancedMCPConfig:
                 )
 
             # 檢查是否可以創建
-            can_create = await self._mcp_factory.can_create(nodecomman_config)
+            if self._mcp_factory is not None:
+                can_create = await self._mcp_factory.can_create(nodecomman_config)
             if not can_create:
                 analysis.optimization_suggestions.append(
                     "當前環境無法創建此服務器，請檢查依賴"
@@ -435,11 +431,11 @@ class EnhancedMCPConfig:
 
     def _generate_system_recommendations(
         self,
-        environments: dict[str, RuntimeEnvironmentInfo],
-        servers: dict[str, dict[str, Any]],
-    ) -> list[str]:
+        environments: Dict[str, RuntimeEnvironmentInfo],
+        servers: Dict[str, Dict[str, Any]],
+    ) -> List[str]:
         """生成系統級建議"""
-        recommendations = []
+        recommendations: List[str] = []
 
         # 運行時建議
         for env in environments.values():
