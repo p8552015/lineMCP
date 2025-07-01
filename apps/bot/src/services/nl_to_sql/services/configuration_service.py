@@ -15,7 +15,7 @@
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
 import yaml
@@ -95,7 +95,7 @@ class ConfigurationService(IConfiguration):
         獲取查詢模式配置
 
         Returns:
-            Dict[str, Any]: 查詢模式配置字典
+            dict[str, Any]: 查詢模式配置字典
         """
         patterns_config = self._config_cache.get("query_patterns", {})
 
@@ -113,7 +113,7 @@ class ConfigurationService(IConfiguration):
         獲取 SQL 模板配置
 
         Returns:
-            Dict[str, str]: 模板名稱到模板字串的映射
+            dict[str, str]: 模板名稱到模板字串的映射
         """
         templates_config = self._config_cache.get("sql_templates", {})
 
@@ -131,7 +131,7 @@ class ConfigurationService(IConfiguration):
         獲取解析器設定
 
         Returns:
-            Dict[str, Any]: 解析器設定字典
+            dict[str, Any]: 解析器設定字典
         """
         settings = self._config_cache.get("parser_settings", {})
         logger.debug("⚙️ 獲取解析器設定", settings_keys=list(settings.keys()))
@@ -142,7 +142,7 @@ class ConfigurationService(IConfiguration):
         獲取模板安全性配置
 
         Returns:
-            Dict[str, Any]: 安全性配置字典
+            dict[str, Any]: 安全性配置字典
         """
         templates_config = self._config_cache.get("sql_templates", {})
 
@@ -263,7 +263,7 @@ class ConfigurationService(IConfiguration):
         驗證配置的有效性
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         validation_result: dict[str, Any] = {
             "is_valid": True,
@@ -300,7 +300,7 @@ class ConfigurationService(IConfiguration):
         獲取配置摘要資訊
 
         Returns:
-            Dict[str, Any]: 配置摘要
+            dict[str, Any]: 配置摘要
         """
         summary: dict[str, Any] = {
             "config_base_path": str(self._config_base_path),
@@ -340,7 +340,7 @@ class ConfigurationService(IConfiguration):
         載入環境變數配置
 
         Returns:
-            Dict[str, Any]: 環境變數配置字典
+            dict[str, Any]: 環境變數配置字典
         """
         env_config: dict[str, Any] = {}
 
@@ -431,7 +431,7 @@ class ConfigurationService(IConfiguration):
         獲取環境變數配置
 
         Returns:
-            Dict[str, Any]: 環境變數配置字典
+            dict[str, Any]: 環境變數配置字典
         """
         return self._env_config.copy()
 
@@ -517,7 +517,7 @@ class ConfigurationService(IConfiguration):
         驗證配置的有效性（實現 IConfiguration 介面）
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         return self.validate_configuration()
 
@@ -526,7 +526,7 @@ class ConfigurationService(IConfiguration):
         獲取配置元數據（實現 IConfiguration 介面）
 
         Returns:
-            Dict[str, Any]: 配置元數據
+            dict[str, Any]: 配置元數據
         """
         from datetime import datetime
 
@@ -624,7 +624,7 @@ class ConfigurationService(IConfiguration):
         驗證查詢模式配置
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         result: dict[str, Any] = {"is_valid": True, "errors": [], "pattern_count": 0}
 
@@ -651,7 +651,7 @@ class ConfigurationService(IConfiguration):
         驗證 SQL 模板配置
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         result: dict[str, Any] = {"is_valid": True, "errors": [], "template_count": 0}
 
@@ -676,7 +676,7 @@ class ConfigurationService(IConfiguration):
         驗證解析器設定
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         result: dict[str, Any] = {"is_valid": True, "errors": [], "settings_count": 0}
 
@@ -700,9 +700,9 @@ class ConfigurationService(IConfiguration):
             old_cache: 舊配置快取
 
         Returns:
-            List[str]: 變更的配置名稱列表
+            list[str]: 變更的配置名稱列表
         """
-        changed = []
+        changed : list[Any] = []
 
         for config_name in self._config_cache:
             if config_name not in old_cache:

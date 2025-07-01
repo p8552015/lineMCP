@@ -5,7 +5,7 @@
 """
 
 import time
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -135,6 +135,9 @@ class EnhancedServiceFactory(IServiceFactory):
                 return None
 
             try:
+                if self._provider is None:
+                    logger.error("ServiceProvider 未初始化")
+                    return None
                 service = self._provider.get_service(service_type)
                 if service:
                     self._dependency_detector.register_service_type(
@@ -146,6 +149,9 @@ class EnhancedServiceFactory(IServiceFactory):
 
         except Exception as e:
             logger.warning(f"服務獲取失敗 {service_name}: {e}")
+            if self._provider is None:
+                logger.error("ServiceProvider 未初始化")
+                return None
             return self._provider.get_service(service_type)
 
     def get_required_service(self, service_type: type) -> Any:
@@ -164,17 +170,22 @@ class EnhancedServiceFactory(IServiceFactory):
         if not self._initialized:
             self.initialize()
 
+        if self._provider is None:
+            raise RuntimeError("ServiceProvider 未初始化")
         return self._provider.get_required_service(service_type)
 
     def create_message_handler(self) -> MessageHandlerDI:
         """創建訊息處理器"""
-        return self.get_required_service(MessageHandlerDI)
+        service = self.get_required_service(MessageHandlerDI)
+        if not isinstance(service, MessageHandlerDI):
+            raise TypeError(f"Expected MessageHandlerDI, got {type(service)}")
+        return service
 
     def get_registry_info(self) -> dict[str, Any]:
         """獲取註冊表資訊"""
         all_descriptors = self._registry.get_all_descriptors()
 
-        info = {
+        info: dict[str, Any] = {
             "total_services": sum(len(descs) for descs in all_descriptors.values()),
             "service_types": [getattr(t, "__name__", str(t)) for t in all_descriptors],
             "by_scope": {},
@@ -192,10 +203,11 @@ class EnhancedServiceFactory(IServiceFactory):
             info["by_scope"][scope.value] = count
 
         # 收集所有標籤
-        all_tags = set()
+        all_tags: set[str] = set()
         for descs in all_descriptors.values():
             for desc in descs:
-                all_tags.update(desc.tags)
+                if desc.tags is not None:
+                    all_tags.update(desc.tags)
 
         # 按標籤分類
         for tag in all_tags:
@@ -351,23 +363,40 @@ class EnhancedServiceFactory(IServiceFactory):
     # 保持與原有 ServiceFactory 的兼容性
     def get_ai_model_service(self) -> EnhancedAIModelService:
         """獲取 AI 模型服務實例"""
-        return self.get_required_service(EnhancedAIModelService)
+        service = self.get_required_service(EnhancedAIModelService)
+        if not isinstance(service, EnhancedAIModelService):
+            raise TypeError(f"Expected EnhancedAIModelService, got {type(service)}")
+        return service
 
     def get_openai_client(self) -> OpenAIClient:
         """獲取 OpenAI 客戶端實例"""
-        return self.get_required_service(OpenAIClient)
+        service = self.get_required_service(OpenAIClient)
+        if not isinstance(service, OpenAIClient):
+            raise TypeError(f"Expected OpenAIClient, got {type(service)}")
+        return service
 
     def get_message_formatter(self) -> MessageFormatter:
         """獲取訊息格式化器實例"""
-        return self.get_required_service(MessageFormatter)
+        service = self.get_required_service(MessageFormatter)
+        if not isinstance(service, MessageFormatter):
+            raise TypeError(f"Expected MessageFormatter, got {type(service)}")
+        return service
 
     def get_nl_service(self) -> NaturalLanguageToSQLService:
         """獲取自然語言處理服務實例"""
-        return self.get_required_service(NaturalLanguageToSQLService)
+        service = self.get_required_service(NaturalLanguageToSQLService)
+        if not isinstance(service, NaturalLanguageToSQLService):
+            raise TypeError(
+                f"Expected NaturalLanguageToSQLService, got {type(service)}"
+            )
+        return service
 
     def get_database_service(self) -> DatabaseService:
         """獲取資料庫服務實例"""
-        return self.get_required_service(DatabaseService)
+        service = self.get_required_service(DatabaseService)
+        if not isinstance(service, DatabaseService):
+            raise TypeError(f"Expected DatabaseService, got {type(service)}")
+        return service
 
     async def get_mcp_client_factory(self):
         """MCP 客戶端工廠函數"""
@@ -376,48 +405,54 @@ class EnhancedServiceFactory(IServiceFactory):
     # 新增的 SOLID 重構服務獲取方法
     def get_configuration_service(self) -> ConfigurationService:
         """獲取配置管理服務實例"""
-        return self.get_required_service(ConfigurationService)
+        return cast(
+            ConfigurationService, self.get_required_service(ConfigurationService)
+        )
 
     def get_statistics_service(self) -> QueryStatisticsService:
         """獲取統計追蹤服務實例"""
-        return self.get_required_service(QueryStatisticsService)
+        return cast(
+            QueryStatisticsService, self.get_required_service(QueryStatisticsService)
+        )
 
     def get_template_manager(self) -> QueryTemplateManager:
         """獲取模板管理器實例"""
-        return self.get_required_service(QueryTemplateManager)
+        return cast(
+            QueryTemplateManager, self.get_required_service(QueryTemplateManager)
+        )
 
     def get_query_builder(self) -> SQLQueryBuilder:
         """獲取查詢建構器實例"""
-        return self.get_required_service(SQLQueryBuilder)
+        return cast(SQLQueryBuilder, self.get_required_service(SQLQueryBuilder))
 
     def get_rule_parser(self) -> RuleBasedParser:
         """獲取規則解析器實例"""
-        return self.get_required_service(RuleBasedParser)
+        return cast(RuleBasedParser, self.get_required_service(RuleBasedParser))
 
     def get_ai_parser(self) -> AIEnhancedParser:
         """獲取 AI 解析器實例"""
-        return self.get_required_service(AIEnhancedParser)
+        return cast(AIEnhancedParser, self.get_required_service(AIEnhancedParser))
 
     def get_composite_parser(self) -> CompositeParser:
         """獲取組合解析器實例"""
-        return self.get_required_service(CompositeParser)
+        return cast(CompositeParser, self.get_required_service(CompositeParser))
 
     # 介面版本的獲取方法
     def get_parser(self) -> IParser:
         """獲取預設解析器（組合解析器）"""
-        return self.get_required_service(IParser)
+        return cast(IParser, self.get_required_service(IParser))
 
     def get_builder(self) -> IQueryBuilder:
         """獲取預設查詢建構器"""
-        return self.get_required_service(IQueryBuilder)
+        return cast(IQueryBuilder, self.get_required_service(IQueryBuilder))
 
     def get_configuration(self) -> IConfiguration:
         """獲取配置服務介面"""
-        return self.get_required_service(IConfiguration)
+        return cast(IConfiguration, self.get_required_service(IConfiguration))
 
     def get_statistics(self) -> IStatistics:
         """獲取統計服務介面"""
-        return self.get_required_service(IStatistics)
+        return cast(IStatistics, self.get_required_service(IStatistics))
 
     def get_health_status(self) -> dict[str, Any]:
         """獲取服務工廠健康狀態"""

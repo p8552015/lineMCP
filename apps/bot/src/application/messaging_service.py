@@ -219,6 +219,8 @@ class MessagingApplicationService(BaseApplicationService):
 
                 factory = get_enhanced_service_factory()
                 db_service = factory.get_service(DatabaseService)
+                if db_service is None:
+                    return TextMessage(text="❌ 資料庫服務暫時不可用，請稍後再試")
                 query_result = await db_service.execute_parsed_query(parsed_query)
 
                 # 格式化結果

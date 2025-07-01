@@ -157,7 +157,7 @@ class OpenAIClient:
                 result_message = response.choices[0].message
 
                 if result_message.tool_calls:
-                    tool_results = []
+                    tool_results : list[Any] = []
                     for tool_call in result_message.tool_calls:
                         tool_name = tool_call.function.name
                         tool_args = json.loads(tool_call.function.arguments)
@@ -184,7 +184,7 @@ class OpenAIClient:
                 }
 
     def _convert_manifest_to_tools(self) -> list[dict[str, Any]]:
-        tools = []
+        tools : list[Any] = []
         for tool_name, tool_config in self.mcp_manifest.items():
             tools.append(
                 {
@@ -218,7 +218,8 @@ class OpenAIClient:
                     timeout=10.0,
                 )
                 response.raise_for_status()
-                return response.json()
+                json_response = response.json()
+                return dict(json_response) if json_response is not None else {}
             except Exception as e:
                 logger.error(
                     "MCP tool execution failed",

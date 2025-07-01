@@ -228,7 +228,7 @@ class CircularDependencyDetector:
 
     def _get_edges_for_cycle(self, cycle_path: list[str]) -> list[DependencyEdge]:
         """獲取循環路徑中的邊"""
-        cycle_edges = []
+        cycle_edges : list[Any] = []
         for i in range(len(cycle_path) - 1):
             from_service = cycle_path[i]
             to_service = cycle_path[i + 1]
@@ -245,7 +245,7 @@ class CircularDependencyDetector:
         self, report: CycleDetectionReport
     ) -> list[str]:
         """生成循環解析建議"""
-        suggestions = []
+        suggestions: list[str] = []
 
         if not report.cycle_path:
             return suggestions
@@ -300,7 +300,7 @@ class CircularDependencyDetector:
                 all_services.add(edge.from_service)
                 all_services.add(edge.to_service)
 
-            analysis = {
+            analysis: dict[str, Any] = {
                 "total_services": len(all_services),
                 "total_dependencies": len(self._dependency_edges),
                 "high_risk_services": [],
@@ -310,8 +310,8 @@ class CircularDependencyDetector:
             }
 
             # 計算每個服務的依賴度
-            in_degree = defaultdict(int)
-            out_degree = defaultdict(int)
+            in_degree: dict[str, int] = defaultdict(int)
+            out_degree: dict[str, int] = defaultdict(int)
 
             for edge in self._dependency_edges:
                 out_degree[edge.from_service] += 1

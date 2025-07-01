@@ -192,7 +192,7 @@ class MetricsCollector:
         user_type: str,
         duration: float,
         success: bool = True,
-        error_type: str = None,
+        error_type: str | None = None,
     ):
         """記錄 LINE 訊息處理指標"""
         if success:
@@ -215,7 +215,7 @@ class MetricsCollector:
         operation: str,
         duration: float,
         success: bool = True,
-        error_type: str = None,
+        error_type: str | None = None,
         input_tokens: int = 0,
         output_tokens: int = 0,
     ):
@@ -249,7 +249,7 @@ class MetricsCollector:
         database: str,
         duration: float,
         success: bool = True,
-        error_type: str = None,
+        error_type: str | None = None,
     ):
         """記錄 MCP 查詢指標"""
         if success:
@@ -282,7 +282,7 @@ metrics_collector = MetricsCollector()
 # ==============================================================================
 
 
-def monitor_http_requests(endpoint: str = None):
+def monitor_http_requests(endpoint: str | None = None):
     """HTTP 請求監控裝飾器"""
 
     def decorator(func):

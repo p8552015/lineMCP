@@ -257,9 +257,9 @@ class CompositeParser(IParser):
         獲取組合解析器資訊
 
         Returns:
-            Dict[str, Any]: 解析器資訊
+            dict[str, Any]: 解析器資訊
         """
-        parser_info_list = []
+        parser_info_list : list[Any] = []
 
         for parser in self._parsers:
             try:
@@ -309,7 +309,7 @@ class CompositeParser(IParser):
         獲取解析器統計資訊
 
         Returns:
-            Dict[str, Any]: 統計資訊
+            dict[str, Any]: 統計資訊
         """
         stats = {
             "total_parsers": len(self._parsers),
@@ -345,9 +345,9 @@ class CompositeParser(IParser):
             text: 待解析文字
 
         Returns:
-            List[Tuple[IParser, float]]: 解析器和其信心度列表
+            list[Tuple[IParser, float]]: 解析器和其信心度列表
         """
-        capabilities = []
+        capabilities : list[Any] = []
 
         for parser in self._parsers:
             try:
@@ -391,7 +391,7 @@ class CompositeParser(IParser):
             capabilities: 解析器能力評估結果
 
         Returns:
-            Tuple[Optional[IParser], float]: 最佳解析器和其信心度
+            Tuple[IParser | None, float]: 最佳解析器和其信心度
         """
         if not capabilities:
             return None, 0.0
@@ -512,9 +512,9 @@ class CompositeParser(IParser):
         驗證組合解析器配置
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
-        validation_result = {
+        validation_result: dict[str, Any] = {
             "is_valid": True,
             "errors": [],
             "warnings": [],
@@ -529,7 +529,11 @@ class CompositeParser(IParser):
         # 驗證每個解析器
         for parser in self._parsers:
             parser_name = getattr(parser, "name", parser.__class__.__name__)
-            parser_validation = {"name": parser_name, "is_valid": True, "errors": []}
+            parser_validation: dict[str, Any] = {
+                "name": parser_name,
+                "is_valid": True,
+                "errors": [],
+            }
 
             # 檢查解析器是否實現正確的介面
             if not hasattr(parser, "parse") or not hasattr(parser, "can_handle"):

@@ -54,7 +54,8 @@ class DatabaseService:
             mcp_client = await self.get_mcp_client()
             result = await mcp_client.call_tool("postgres", "query", {"sql": sql_query})
 
-            return self.parser.parse_query_result(result)
+            parsed_result = self.parser.parse_query_result(result)
+            return list(parsed_result) if parsed_result is not None else []
 
     async def execute_parsed_query(self, parsed_query: ParsedQuery) -> dict[str, Any]:
         """
@@ -131,7 +132,7 @@ class DatabaseService:
         """
         if query_type == QueryType.SPECIFIC_MACHINE:
             return await self._format_machine_status(
-                raw_data, parameters.get("machine_id")
+                raw_data, str(parameters.get("machine_id", ""))
             )
         elif query_type == QueryType.ALL_MACHINES:
             return await self._format_all_machines(raw_data)
@@ -143,7 +144,7 @@ class DatabaseService:
             return await self._format_production_stats(raw_data)
         elif query_type == QueryType.DEPARTMENT_STATUS:
             return await self._format_department_status(
-                raw_data, parameters.get("department")
+                raw_data, str(parameters.get("department", ""))
             )
         else:
             return {"raw_data": raw_data}
@@ -182,7 +183,7 @@ class DatabaseService:
         if not data:
             return {"machines": [], "total_count": 0, "message": "沒有找到任何機台"}
 
-        machines = []
+        machines : list[Any] = []
         for machine in data:
             machines.append(
                 {
@@ -198,12 +199,12 @@ class DatabaseService:
         # 計算統計資訊
         total_machines = len(machines)
         avg_utilization = (
-            sum(m["utilization_rate"] for m in machines) / total_machines
+            sum(m["utilization_rate"] or 0 for m in machines) / total_machines
             if total_machines > 0
             else 0
         )
         avg_efficiency = (
-            sum(m["efficiency_rate"] for m in machines) / total_machines
+            sum(m["efficiency_rate"] or 0 for m in machines) / total_machines
             if total_machines > 0
             else 0
         )
@@ -215,10 +216,10 @@ class DatabaseService:
                 "average_utilization": avg_utilization,
                 "average_efficiency": avg_efficiency,
                 "high_performance_count": len(
-                    [m for m in machines if m["utilization_rate"] > 0.8]
+                    [m for m in machines if (m["utilization_rate"] or 0) > 0.8]
                 ),
                 "low_performance_count": len(
-                    [m for m in machines if m["utilization_rate"] < 0.6]
+                    [m for m in machines if (m["utilization_rate"] or 0) < 0.6]
                 ),
             },
         }
@@ -248,7 +249,7 @@ class DatabaseService:
                 logger.warning(f"無法轉換故障計數: {row.get('total_faults')}")
                 continue
 
-        fault_types = []
+        fault_types : list[Any] = []
         for row in data:
             try:
                 count = row.get("total_faults", 0)
@@ -287,7 +288,7 @@ class DatabaseService:
         if not data:
             return {"departments": [], "message": "沒有生產統計資料"}
 
-        departments = []
+        departments : list[Any] = []
         for dept in data:
             departments.append(
                 {
@@ -301,9 +302,11 @@ class DatabaseService:
             )
 
         # 計算整體統計
-        total_machines = sum(d["machine_count"] for d in departments)
-        total_good_parts = sum(d["total_good_parts"] for d in departments)
-        total_defective_parts = sum(d["total_defective_parts"] for d in departments)
+        total_machines = sum(d["machine_count"] or 0 for d in departments)
+        total_good_parts = sum(d["total_good_parts"] or 0 for d in departments)
+        total_defective_parts = sum(
+            d["total_defective_parts"] or 0 for d in departments
+        )
 
         return {
             "departments": departments,
@@ -330,7 +333,7 @@ class DatabaseService:
                 "message": f"{department} 沒有機台或資料",
             }
 
-        machines = []
+        machines : list[Any] = []
         for machine in data:
             machines.append(
                 {
@@ -367,7 +370,10 @@ class DatabaseService:
 
             result = await self._execute_query(fault_query)
             if result:
-                return self.parser.parse_count_result({"success": True, "data": result})
+                count_result = self.parser.parse_count_result(
+                    {"success": True, "data": result}
+                )
+                return int(count_result) if count_result is not None else 0
             return 0
 
         except Exception as e:

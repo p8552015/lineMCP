@@ -267,7 +267,7 @@ class IEnvironmentValidator(ABC):
             level: 驗證級別
 
         Returns:
-            Dict[RuntimeType, ValidationResult]: 運行時類型到驗證結果的映射
+            dict[RuntimeType, ValidationResult]: 運行時類型到驗證結果的映射
         """
         pass
 
@@ -283,7 +283,7 @@ class IEnvironmentValidator(ABC):
             issues: 要修復的問題列表，None 表示修復所有可修復的問題
 
         Returns:
-            Dict[ValidationIssue, bool]: 問題到修復結果的映射
+            dict[ValidationIssue, bool]: 問題到修復結果的映射
         """
         pass
 
@@ -315,7 +315,7 @@ class IEnvironmentValidator(ABC):
             packages: 要檢查的套件列表，None 表示檢查所有必要套件
 
         Returns:
-            List[DependencyInfo]: 依賴資訊列表
+            list[DependencyInfo]: 依賴資訊列表
         """
         pass
 
@@ -330,7 +330,7 @@ class IEnvironmentValidator(ABC):
             runtime_type: 當前運行時類型
 
         Returns:
-            List[RuntimeType]: 建議的替代運行時類型列表
+            list[RuntimeType]: 建議的替代運行時類型列表
         """
         pass
 
@@ -409,7 +409,7 @@ class IDependencyManager(ABC):
             runtime_type: 運行時類型
 
         Returns:
-            List[DependencyInfo]: 已安裝套件列表
+            list[DependencyInfo]: 已安裝套件列表
         """
         pass
 
@@ -425,7 +425,7 @@ class IDependencyManager(ABC):
             query: 搜尋關鍵字
 
         Returns:
-            List[DependencyInfo]: 搜尋結果列表
+            list[DependencyInfo]: 搜尋結果列表
         """
         pass
 
@@ -441,7 +441,7 @@ class IDependencyManager(ABC):
             package_name: 套件名稱
 
         Returns:
-            Optional[DependencyInfo]: 套件資訊，不存在返回 None
+            DependencyInfo | None: 套件資訊，不存在返回 None
         """
         pass
 
@@ -482,7 +482,7 @@ class IInstallationGuideProvider(ABC):
             runtime_type: 運行時類型
 
         Returns:
-            List[str]: 支援的平台列表
+            list[str]: 支援的平台列表
         """
         pass
 

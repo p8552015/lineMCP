@@ -7,6 +7,7 @@ import hashlib
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import structlog
 
@@ -24,6 +25,7 @@ class APIKeyInfo:
     prefix: str
     checksum: str
     error_message: str | None = None
+    line_number: int | None = None
 
 
 class APIKeyValidator:
@@ -65,9 +67,11 @@ class APIKeyValidator:
             )
 
         pattern_info = self.KEY_PATTERNS[provider]
+        required_parts: list[str] = pattern_info["required_parts"]  # type: ignore[assignment]
 
         # 檢查長度
-        if len(key) < pattern_info["min_length"]:
+        min_length = int(cast(int, pattern_info["min_length"]))
+        if len(key) < min_length:
             return APIKeyInfo(
                 provider=provider,
                 key=key,
@@ -76,12 +80,13 @@ class APIKeyValidator:
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
                 error_message=(
-                    f"API Key 太短，預期至少 {pattern_info['min_length']} 字符，"
+                    f"API Key 太短，預期至少 {min_length} 字符，"
                     f"實際 {len(key)} 字符"
                 ),
             )
 
-        if len(key) > pattern_info["max_length"]:
+        max_length = int(cast(int, pattern_info["max_length"]))
+        if len(key) > max_length:
             return APIKeyInfo(
                 provider=provider,
                 key=key,
@@ -90,13 +95,14 @@ class APIKeyValidator:
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
                 error_message=(
-                    f"API Key 太長，預期最多 {pattern_info['max_length']} 字符，"
+                    f"API Key 太長，預期最多 {max_length} 字符，"
                     f"實際 {len(key)} 字符"
                 ),
             )
 
         # 檢查前綴
-        if not key.startswith(pattern_info["prefix"]):
+        prefix = str(pattern_info["prefix"])
+        if not key.startswith(prefix):
             return APIKeyInfo(
                 provider=provider,
                 key=key,
@@ -104,13 +110,11 @@ class APIKeyValidator:
                 length=len(key),
                 prefix=key[:10] if key else "",
                 checksum=self._calculate_checksum(key),
-                error_message=(
-                    f"API Key 前綴錯誤，預期以 '{pattern_info['prefix']}' 開始"
-                ),
+                error_message=(f"API Key 前綴錯誤，預期以 '{prefix}' 開始"),
             )
 
         # 檢查必要部分
-        for required_part in pattern_info["required_parts"]:
+        for required_part in required_parts:
             if required_part not in key:
                 return APIKeyInfo(
                     provider=provider,
@@ -123,7 +127,8 @@ class APIKeyValidator:
                 )
 
         # 檢查格式
-        if not re.match(pattern_info["pattern"], key):
+        pattern = str(pattern_info["pattern"])
+        if not re.match(pattern, key):
             return APIKeyInfo(
                 provider=provider,
                 key=key,
@@ -149,7 +154,7 @@ class APIKeyValidator:
 
     def scan_env_file(self) -> dict[str, APIKeyInfo]:
         """掃描環境文件中的所有 API Keys"""
-        results = {}
+        results: dict[str, APIKeyInfo] = {}
 
         if not self.env_file_path.exists():
             logger.warning("環境文件不存在", path=str(self.env_file_path))
@@ -225,7 +230,7 @@ class APIKeyValidator:
 
         try:
             # 讀取現有內容
-            lines = []
+            lines : list[Any] = []
             if self.env_file_path.exists():
                 with open(self.env_file_path, encoding="utf-8") as f:
                     lines = f.readlines()

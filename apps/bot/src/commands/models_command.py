@@ -3,6 +3,8 @@ AI 模型查詢指令處理器
 處理 /models 指令的 AI 模型資訊查詢
 """
 
+from typing import Any
+
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
@@ -115,7 +117,11 @@ class ModelsCommandHandler(CommandHandler):
 
     async def _get_models_from_service(self, ai_service) -> dict:
         """從 AI 服務獲取模型資訊"""
-        models_info = {"models": [], "current_model": None, "total_count": 0}
+        models_info: dict[str, Any] = {
+            "models": [],
+            "current_model": None,
+            "total_count": 0,
+        }
 
         # 嘗試不同的方法獲取模型資訊
         try:
@@ -162,11 +168,11 @@ class ModelsCommandHandler(CommandHandler):
         response_lines.append("")
 
         # 按提供商分組顯示
-        providers = {}
+        providers: dict[str, list[dict[str, Any]]] = {}
         for model in models_info["models"]:
             provider = model.get("provider", "unknown")
             if provider not in providers:
-                providers[provider] = []
+                providers[provider] : list[Any] = []
             providers[provider].append(model)
 
         for provider, models in providers.items():

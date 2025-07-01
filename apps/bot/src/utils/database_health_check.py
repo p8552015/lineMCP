@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class DatabaseHealthChecker:
     """資料庫健康檢查器"""
 
-    def __init__(self, database_url: str = None):
+    def __init__(self, database_url: str | None = None):
         # 如果沒有提供 database_url，使用預設值
         self.database_url = (
             database_url or "postgresql://admin:admin@localhost:5432/mydb"
@@ -108,6 +108,14 @@ class DatabaseHealthChecker:
                         "timestamp": datetime.now().isoformat(),
                         "attempts": max_retries,
                     }
+
+        # 如果所有重試都失敗，返回錯誤狀態
+        return {
+            "status": "unhealthy",
+            "message": "資料庫連接失敗",
+            "timestamp": datetime.now().isoformat(),
+            "attempts": max_retries,
+        }
 
     async def comprehensive_health_check(self) -> dict[str, Any]:
         """執行完整的資料庫健康檢查（新接口）"""
@@ -213,7 +221,7 @@ class DatabaseHealthChecker:
         try:
             conn = await asyncpg.connect(self.database_url)
 
-            test_results = {}
+            test_results: dict[str, dict[str, str]] = {}
 
             # 測試機台查詢
             try:
@@ -280,7 +288,7 @@ class DatabaseHealthChecker:
 
     async def verify_critical_functionality(self) -> dict[str, Any]:
         """驗證關鍵功能是否正常運作（舊接口兼容性）"""
-        verification_result = {
+        verification_result: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "tests": {},
             "overall_status": "unknown",

@@ -116,12 +116,12 @@ class VocabularyDatabase:
                         )
 
                         if entry.term_type not in self.entries_by_type:
-                            self.entries_by_type[entry.term_type] = []
+                            self.entries_by_type[entry.term_type] : list[Any] = []
                         self.entries_by_type[entry.term_type].append(entry)
 
     def get_all_entries(self) -> list[VocabularyEntry]:
         """獲取所有詞彙條目"""
-        all_entries = []
+        all_entries : list[Any] = []
         for entries in self.entries_by_type.values():
             all_entries.extend(entries)
         return all_entries
@@ -151,7 +151,7 @@ class PatternMatcher:
     def _compile_patterns(self) -> None:
         """編譯所有正則表達式模式"""
         for term_type, entries in self.vocabulary_db.entries_by_type.items():
-            self.compiled_patterns[term_type] = []
+            self.compiled_patterns[term_type] : list[Any] = []
 
             for entry in entries:
                 for pattern_str in entry.extraction_patterns:
@@ -167,7 +167,7 @@ class PatternMatcher:
         self, text: str
     ) -> list[tuple[VocabularyEntry, re.Match, float]]:
         """匹配文字中的模式"""
-        matches = []
+        matches : list[Any] = []
 
         for _term_type, pattern_entries in self.compiled_patterns.items():
             for pattern, entry in pattern_entries:
@@ -347,7 +347,7 @@ class LLMInterpretationEngine:
     def _get_vocabulary_context(self) -> str:
         """獲取詞彙庫上下文資訊"""
         high_freq_entries = self.vocabulary_db.get_high_frequency_terms(limit=30)
-        context_lines = []
+        context_lines : list[Any] = []
 
         for entry in high_freq_entries:
             synonyms_str = ", ".join(entry.synonyms[:3])  # 只顯示前3個同義詞
@@ -372,7 +372,7 @@ class LLMInterpretationEngine:
             "reasoning": "",
         }
 
-        reasoning_parts = []
+        reasoning_parts : list[Any] = []
 
         # 🔥 機台識別增強
         machine_patterns = {
@@ -650,7 +650,10 @@ class IntelligentVocabularyInterpreter:
             )
 
         merged.extraction_method = "hybrid_fusion"
-        merged.reasoning = f"融合了模式匹配（信心度：{pattern_result.raw_confidence:.2f}）和 LLM 解譯（信心度：{llm_result.raw_confidence:.2f}）的結果"
+        merged.reasoning = (
+            f"融合了模式匹配（信心度：{pattern_result.raw_confidence:.2f}）"
+            f"和 LLM 解譯（信心度：{llm_result.raw_confidence:.2f}）的結果"
+        )
 
         return merged
 
@@ -658,7 +661,7 @@ class IntelligentVocabularyInterpreter:
         """動態新增詞彙條目"""
         try:
             if entry.term_type not in self.vocabulary_db.entries_by_type:
-                self.vocabulary_db.entries_by_type[entry.term_type] = []
+                self.vocabulary_db.entries_by_type[entry.term_type] : list[Any] = []
 
             self.vocabulary_db.entries_by_type[entry.term_type].append(entry)
 

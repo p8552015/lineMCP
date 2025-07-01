@@ -135,7 +135,7 @@ class NodeJSRuntimeManagerTester:
                 ("npx", ["--version"]),
             ]
 
-            validation_results = []
+            validation_results : list[Any] = []
 
             for command, args in test_commands:
                 try:

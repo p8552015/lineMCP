@@ -254,14 +254,14 @@ class MCPResponseParser:
         """檢查 MCP 回應是否成功"""
         if isinstance(result, str):
             result = MCPResponseParser.parse_response(result)
-        return result.get("success", False)
+        return bool(result.get("success", False))
 
     @staticmethod
     def get_error_message(result: dict[str, Any] | str) -> str:
         """獲取 MCP 回應中的錯誤訊息"""
         if isinstance(result, str):
             result = MCPResponseParser.parse_response(result)
-        return result.get("error", "未知錯誤")
+        return str(result.get("error", "未知錯誤"))
 
     @staticmethod
     def _detect_response_format(content: str) -> str:
@@ -326,7 +326,12 @@ class MCPResponseParser:
             cleaned = re.sub(r"[\x00-\x1f\x7f-\x9f]", "", cleaned)
 
             try:
-                return json.loads(cleaned)
+                parsed_data = json.loads(cleaned)
+                return (
+                    parsed_data
+                    if isinstance(parsed_data, dict | list)
+                    else {"data": parsed_data}
+                )
             except json.JSONDecodeError:
                 pass
 
@@ -347,7 +352,11 @@ class MCPResponseParser:
                             original_length=len(content),
                             recovered_length=len(match),
                         )
-                        return parsed
+                        return (
+                            parsed
+                            if isinstance(parsed, dict | list)
+                            else {"data": parsed}
+                        )
                     except json.JSONDecodeError:
                         continue
 
@@ -362,7 +371,11 @@ class MCPResponseParser:
                             logger.info(
                                 "逐行解析恢復成功", start_line=i, end_line=j - 1
                             )
-                            return parsed
+                            return (
+                                parsed
+                                if isinstance(parsed, dict | list)
+                                else {"data": parsed}
+                            )
                         except json.JSONDecodeError:
                             continue
 
@@ -431,7 +444,7 @@ class MCPResponseParser:
             content: 錯誤文本內容
 
         Returns:
-            Dict[str, Any]: 標準化的錯誤回應格式
+            dict[str, Any]: 標準化的錯誤回應格式
         """
         content = content.strip()
 
@@ -491,7 +504,7 @@ class MCPResponseParser:
             content: 回應內容（字串或字典）
 
         Returns:
-            Dict[str, Any]: 標準化的回應格式
+            dict[str, Any]: 標準化的回應格式
 
         Raises:
             MCPParseError: 解析失敗
@@ -507,7 +520,12 @@ class MCPResponseParser:
 
                 if format_type == "json":
                     try:
-                        return json.loads(content)
+                        parsed_data = json.loads(content)
+                        return (
+                            parsed_data
+                            if isinstance(parsed_data, dict)
+                            else {"data": parsed_data}
+                        )
                     except json.JSONDecodeError as e:
                         # 嘗試錯誤恢復
                         logger.warning(

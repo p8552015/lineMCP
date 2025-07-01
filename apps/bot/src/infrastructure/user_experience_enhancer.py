@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import structlog
 
@@ -169,14 +170,14 @@ class UserExperienceEnhancer:
     def create_suggestion_message(self, suggestion_type: str, **kwargs) -> str:
         """創建建議消息"""
         template = self.suggestion_templates.get(suggestion_type, "")
-        return template.format(**kwargs)
+        return str(template.format(**kwargs))
 
     def create_comprehensive_error_message(
         self,
         service_name: str,
         error_type: str,
         retry_count: int = 0,
-        suggestions: list[str] = None,
+        suggestions: list[str] | None = None,
     ) -> str:
         """創建綜合錯誤消息"""
         # 基本錯誤通知
@@ -256,25 +257,25 @@ class UserExperienceEnhancer:
         empty = width - filled
         return "█" * filled + "░" * empty
 
-    def set_user_preference(self, user_id: str, preference_key: str, value: any):
+    def set_user_preference(self, user_id: str, preference_key: str, value: Any):
         """設置用戶偏好"""
         if user_id not in self.user_preferences:
             self.user_preferences[user_id] = {}
         self.user_preferences[user_id][preference_key] = value
 
     def get_user_preference(
-        self, user_id: str, preference_key: str, default: any = None
-    ):
+        self, user_id: str, preference_key: str, default: Any = None
+    ) -> Any:
         """獲取用戶偏好"""
         return self.user_preferences.get(user_id, {}).get(preference_key, default)
 
     def should_show_technical_details(self, user_id: str) -> bool:
         """是否顯示技術細節"""
-        return self.get_user_preference(user_id, "show_technical_details", False)
+        return bool(self.get_user_preference(user_id, "show_technical_details", False))
 
     def get_preferred_language(self, user_id: str) -> str:
         """獲取偏好語言"""
-        return self.get_user_preference(user_id, "language", "zh-TW")
+        return str(self.get_user_preference(user_id, "language", "zh-TW"))
 
 
 # 全局用戶體驗增強器

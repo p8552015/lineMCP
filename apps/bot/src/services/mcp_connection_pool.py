@@ -64,7 +64,7 @@ class ConnectionInfo:
     server_name: str
     process: asyncio.subprocess.Process | None = None
     status: ConnectionStatus = ConnectionStatus.DISCONNECTED
-    metrics: ConnectionMetrics = None
+    metrics: ConnectionMetrics | None = None
     last_health_check: float = 0.0
     recovery_attempts: int = 0
     max_recovery_attempts: int = 3
@@ -135,6 +135,7 @@ class MCPConnectionPool:
             # 檢查連接狀態
             if (
                 connection.status == ConnectionStatus.CONNECTED
+                and connection.metrics is not None
                 and connection.metrics.is_healthy
             ):
                 return connection
@@ -157,23 +158,24 @@ class MCPConnectionPool:
                 connection = self.connections[server_name]
                 metrics = connection.metrics
 
-                metrics.success_count += 1
-                metrics.last_success_time = time.time()
+                if metrics is not None:
+                    metrics.success_count += 1
+                    metrics.last_success_time = time.time()
 
-                # 更新平均回應時間
-                if metrics.average_response_time == 0:
-                    metrics.average_response_time = response_time
-                else:
-                    metrics.average_response_time = (
-                        metrics.average_response_time + response_time
-                    ) / 2
+                    # 更新平均回應時間
+                    if metrics.average_response_time == 0:
+                        metrics.average_response_time = response_time
+                    else:
+                        metrics.average_response_time = (
+                            metrics.average_response_time + response_time
+                        ) / 2
 
-                logger.debug(
-                    "📊 記錄成功操作",
-                    server=server_name,
-                    response_time=response_time,
-                    success_rate=metrics.success_rate,
-                )
+                    logger.debug(
+                        "📊 記錄成功操作",
+                        server=server_name,
+                        response_time=response_time,
+                        success_rate=metrics.success_rate,
+                    )
 
     async def record_failure(self, server_name: str, error: str):
         """記錄失敗操作"""
@@ -182,39 +184,51 @@ class MCPConnectionPool:
                 connection = self.connections[server_name]
                 metrics = connection.metrics
 
-                metrics.failure_count += 1
-                metrics.last_failure_time = time.time()
+                if metrics is not None:
+                    metrics.failure_count += 1
+                    metrics.last_failure_time = time.time()
 
-                # 如果失敗率過高，標記為失敗狀態
-                if metrics.success_rate < 0.5 and metrics.failure_count > 3:
-                    connection.status = ConnectionStatus.FAILED
+                    # 如果失敗率過高，標記為失敗狀態
+                    if metrics.success_rate < 0.5 and metrics.failure_count > 3:
+                        connection.status = ConnectionStatus.FAILED
 
-                logger.warning(
-                    "⚠️ 記錄失敗操作",
-                    server=server_name,
-                    error=error,
-                    success_rate=metrics.success_rate,
-                )
+                    logger.warning(
+                        "⚠️ 記錄失敗操作",
+                        server=server_name,
+                        error=error,
+                        success_rate=metrics.success_rate,
+                    )
 
     async def get_pool_status(self) -> dict[str, Any]:
         """取得連接池狀態"""
         async with self.connection_lock:
-            pool_status = {
+            pool_status: dict[str, Any] = {
                 "total_connections": len(self.connections),
                 "healthy_connections": sum(
-                    1 for conn in self.connections.values() if conn.metrics.is_healthy
+                    1
+                    for conn in self.connections.values()
+                    if conn.metrics is not None and conn.metrics.is_healthy
                 ),
                 "connections": {},
             }
 
             for server_name, connection in self.connections.items():
+                metrics = connection.metrics
                 pool_status["connections"][server_name] = {
                     "status": connection.status.value,
-                    "is_healthy": connection.metrics.is_healthy,
-                    "success_rate": connection.metrics.success_rate,
-                    "success_count": connection.metrics.success_count,
-                    "failure_count": connection.metrics.failure_count,
-                    "average_response_time": connection.metrics.average_response_time,
+                    "is_healthy": metrics.is_healthy if metrics is not None else False,
+                    "success_rate": (
+                        metrics.success_rate if metrics is not None else 0.0
+                    ),
+                    "success_count": (
+                        metrics.success_count if metrics is not None else 0
+                    ),
+                    "failure_count": (
+                        metrics.failure_count if metrics is not None else 0
+                    ),
+                    "average_response_time": (
+                        metrics.average_response_time if metrics is not None else 0.0
+                    ),
                     "recovery_attempts": connection.recovery_attempts,
                 }
 
@@ -300,7 +314,8 @@ class MCPConnectionPool:
             # 標記為已連接 - 實際連接邏輯由 ProductionMCPClient 處理
             # 這裡只是更新連接池狀態，不執行實際連接
             connection.status = ConnectionStatus.CONNECTED
-            connection.metrics.connection_count += 1
+            if connection.metrics is not None:
+                connection.metrics.connection_count += 1
 
             logger.info("🏊 連接池標記連接成功", server=connection.server_name)
             return True

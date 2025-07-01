@@ -166,7 +166,7 @@ class SQLQueryBuilder(IQueryBuilder):
             # 使用參數驗證器檢查
             validator = self._parameter_validators.get(query_type)
             if validator:
-                return validator(parameters)
+                return bool(validator(parameters))
 
             # 預設驗證（參數存在即可）
             return True
@@ -183,7 +183,7 @@ class SQLQueryBuilder(IQueryBuilder):
             query_type: 查詢類型
 
         Returns:
-            List[str]: 必要參數名稱列表
+            list[str]: 必要參數名稱列表
         """
         parameter_requirements = {
             QueryType.SPECIFIC_MACHINE: ["machine_id"],
@@ -201,7 +201,7 @@ class SQLQueryBuilder(IQueryBuilder):
         獲取支援的查詢類型列表
 
         Returns:
-            List[QueryType]: 支援的查詢類型
+            list[QueryType]: 支援的查詢類型
         """
         return [
             QueryType.SPECIFIC_MACHINE,
@@ -220,7 +220,7 @@ class SQLQueryBuilder(IQueryBuilder):
             query_type: 查詢類型
 
         Returns:
-            Dict[str, Any]: 查詢元數據
+            dict[str, Any]: 查詢元數據
         """
         metadata = {
             QueryType.SPECIFIC_MACHINE: {
@@ -270,12 +270,12 @@ class SQLQueryBuilder(IQueryBuilder):
 
         return metadata.get(query_type, default_metadata)
 
-    def _build_parameter_validators(self) -> dict[QueryType, callable]:
+    def _build_parameter_validators(self) -> dict[QueryType, Any]:
         """
         建構參數驗證器
 
         Returns:
-            Dict[QueryType, callable]: 驗證器字典
+            dict[QueryType, callable]: 驗證器字典
         """
 
         def validate_machine_id(params: dict[str, Any]) -> bool:
@@ -304,7 +304,7 @@ class SQLQueryBuilder(IQueryBuilder):
         建構複雜度評估模式
 
         Returns:
-            Dict[str, int]: 複雜度模式字典
+            dict[str, int]: 複雜度模式字典
         """
         return {
             r"LEFT JOIN": 2,
@@ -327,7 +327,7 @@ class SQLQueryBuilder(IQueryBuilder):
             parameters: 原始參數
 
         Returns:
-            Dict[str, Any]: 安全參數
+            dict[str, Any]: 安全參數
         """
         safe_params = {}
 
@@ -337,10 +337,10 @@ class SQLQueryBuilder(IQueryBuilder):
                 safe_params[key] = self._escape_sql_parameter(value)
             elif isinstance(value, int | float):
                 # 數值參數直接使用
-                safe_params[key] = value
+                safe_params[key] = str(value)
             elif isinstance(value, bool):
                 # 布林參數轉換為整數
-                safe_params[key] = 1 if value else 0
+                safe_params[key] = str(1 if value else 0)
             else:
                 # 其他類型轉為字串並轉義
                 safe_params[key] = self._escape_sql_parameter(str(value))
@@ -449,7 +449,7 @@ class SQLQueryBuilder(IQueryBuilder):
             sql_query: SQL 查詢語句
 
         Returns:
-            Dict[str, Any]: 成本估算結果
+            dict[str, Any]: 成本估算結果
         """
         complexity_score = 0
 
@@ -489,9 +489,9 @@ class SQLQueryBuilder(IQueryBuilder):
             complexity_score: 複雜度分數
 
         Returns:
-            List[str]: 優化建議列表
+            list[str]: 優化建議列表
         """
-        suggestions = []
+        suggestions : list[Any] = []
 
         if complexity_score > 5:
             suggestions.append("考慮添加適當的索引")
@@ -516,9 +516,9 @@ class SQLQueryBuilder(IQueryBuilder):
             sql_query: 要驗證的 SQL 查詢
 
         Returns:
-            Dict[str, Any]: 安全性檢查結果
+            dict[str, Any]: 安全性檢查結果
         """
-        security_issues = []
+        security_issues : list[Any] = []
         risk_level = "low"
 
         # 檢查危險的 SQL 操作

@@ -86,7 +86,8 @@ class CostTracker:
         input_cost = (input_tokens / 1000) * self.input_price_per_1k
         output_cost = (output_tokens / 1000) * self.output_price_per_1k
 
-        return round(input_cost + output_cost, 2)
+        total_cost = input_cost + output_cost
+        return float(round(total_cost, 2))
 
     async def get_usage_stats(self, user_id: str | None = None) -> dict[str, Any]:
         month_key = self._get_month_key()

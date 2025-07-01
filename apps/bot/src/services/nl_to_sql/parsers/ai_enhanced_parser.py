@@ -151,7 +151,7 @@ class AIEnhancedParser(IParser):
         獲取 AI 解析器資訊
 
         Returns:
-            Dict[str, Any]: 解析器資訊
+            dict[str, Any]: 解析器資訊
         """
         return {
             "name": "AIEnhancedParser",
@@ -202,7 +202,8 @@ class AIEnhancedParser(IParser):
             "}\n\n"
             "範例：\n"
             "輸入：「CNC車床今天不良率」\n"
-            '輸出：\\{"query_type": "unknown", "entities": \\["CNC車床", "不良率"\\], "parameters": \\{\\}, "confidence": 0.3\\}\n'
+            '輸出：\\{"query_type": "unknown", "entities": \\["CNC車床", "不良率"\\], '
+            '"parameters": \\{\\}, "confidence": 0.3\\}\n'
             "原因：涉及不良率（品質指標），系統不支援此類查詢"
         )
 
@@ -217,9 +218,9 @@ class AIEnhancedParser(IParser):
             context: 原始上下文
 
         Returns:
-            Dict[str, Any]: AI 查詢上下文
+            dict[str, Any]: AI 查詢上下文
         """
-        ai_context = {
+        ai_context: dict[str, Any] = {
             "query_text": text,
             "language": "zh-TW",
             "domain": "manufacturing",
@@ -583,9 +584,9 @@ class AIEnhancedParser(IParser):
         # 提取時間範圍
         text_lower = original_text.lower()
         if any(keyword in text_lower for keyword in ["近期", "最近", "7天"]):
-            parameters["days"] = 7
+            parameters["days"] = str(7)
         elif any(keyword in text_lower for keyword in ["一個月", "30天"]):
-            parameters["days"] = 30
+            parameters["days"] = str(30)
 
         # 提取部門
         department_mapping = {
@@ -666,7 +667,7 @@ class AIEnhancedParser(IParser):
         獲取 AI 服務狀態
 
         Returns:
-            Dict[str, Any]: AI 服務狀態資訊
+            dict[str, Any]: AI 服務狀態資訊
         """
         if not self._ai_service:
             return {
@@ -706,6 +707,6 @@ class AIEnhancedParser(IParser):
         獲取支援的查詢類型
 
         Returns:
-            List[QueryType]: 支援的查詢類型列表
+            list[QueryType]: 支援的查詢類型列表
         """
         return list(self._query_type_mapping.values())

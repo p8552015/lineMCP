@@ -84,7 +84,7 @@ class IQueryBuilder(ABC):
             query_type: 查詢類型
 
         Returns:
-            List[str]: 必要參數名稱列表
+            list[str]: 必要參數名稱列表
 
         Raises:
             InvalidQueryTypeError: 不支援的查詢類型
@@ -97,7 +97,7 @@ class IQueryBuilder(ABC):
         獲取支援的查詢類型列表
 
         Returns:
-            List[QueryType]: 支援的查詢類型
+            list[QueryType]: 支援的查詢類型
         """
         pass
 
@@ -110,7 +110,7 @@ class IQueryBuilder(ABC):
             query_type: 查詢類型
 
         Returns:
-            Dict[str, Any]: 查詢元數據
+            dict[str, Any]: 查詢元數據
                 - description: 查詢描述
                 - estimated_complexity: 預估複雜度
                 - performance_hint: 效能提示
@@ -187,7 +187,7 @@ class ITemplateManager(ABC):
             query_type: 查詢類型
 
         Returns:
-            List[str]: 參數名稱列表
+            list[str]: 參數名稱列表
         """
         pass
 
@@ -250,7 +250,7 @@ class IQueryOptimizer(ABC):
             sql_query: 要分析的 SQL 查詢
 
         Returns:
-            Dict[str, Any]: 分析結果
+            dict[str, Any]: 分析結果
                 - estimated_cost: 預估執行成本
                 - complexity_score: 複雜度評分
                 - optimization_suggestions: 優化建議列表
@@ -266,7 +266,7 @@ class IQueryOptimizer(ABC):
             sql_query: 要驗證的 SQL 查詢
 
         Returns:
-            Dict[str, Any]: 安全性檢查結果
+            dict[str, Any]: 安全性檢查結果
                 - is_safe: 是否安全
                 - security_issues: 安全問題列表
                 - risk_level: 風險等級
@@ -297,7 +297,7 @@ class IQueryCache(ABC):
             cache_key: 快取鍵值
 
         Returns:
-            Optional[Any]: 快取的結果，若無則返回 None
+            Any | None: 快取的結果，若無則返回 None
         """
         pass
 
@@ -331,7 +331,7 @@ class IQueryCache(ABC):
         獲取快取統計資訊
 
         Returns:
-            Dict[str, Any]: 快取統計
+            dict[str, Any]: 快取統計
                 - hit_rate: 命中率
                 - total_requests: 總請求數
                 - cache_size: 快取大小

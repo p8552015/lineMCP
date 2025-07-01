@@ -15,7 +15,7 @@
 
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
 
@@ -48,9 +48,9 @@ class RuntimeEnvironmentInfo:
     available: bool
     version: str
     executable_path: str
-    package_manager: Optional[str] = None
-    issues: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    package_manager: str | None = None
+    issues: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -58,12 +58,12 @@ class ServerConfigAnalysis:
     """服務器配置分析結果"""
 
     server_name: str
-    current_config: Dict[str, Any]
+    current_config: dict[str, Any]
     is_valid: bool
-    runtime_info: Optional[RuntimeEnvironmentInfo] = None
-    validation_issues: List[str] = field(default_factory=list)
-    optimization_suggestions: List[str] = field(default_factory=list)
-    nodecomman_config: Optional[Dict[str, Any]] = None
+    runtime_info: RuntimeEnvironmentInfo | None = None
+    validation_issues: list[str] = field(default_factory=list)
+    optimization_suggestions: list[str] = field(default_factory=list)
+    nodecomman_config: dict[str, Any] | None = None
 
 
 class EnhancedMCPConfig:
@@ -145,8 +145,8 @@ class EnhancedMCPConfig:
             is_available = await self._nodejs_runtime.check_availability()
             runtime_info = await self._nodejs_runtime.get_runtime_info()
 
-            issues = []
-            recommendations = []
+            issues : list[Any] = []
+            recommendations : list[Any] = []
 
             if not is_available:
                 issues.append("Node.js 運行時不可用")
@@ -196,8 +196,8 @@ class EnhancedMCPConfig:
             is_available = await self._python_runtime.check_availability()
             runtime_info = await self._python_runtime.get_runtime_info()
 
-            issues = []
-            recommendations = []
+            issues : list[Any] = []
+            recommendations : list[Any] = []
 
             if not is_available:
                 issues.append("Python 運行時不可用")
@@ -407,7 +407,6 @@ class EnhancedMCPConfig:
     ) -> str:
         """評估系統整體健康狀況"""
         total_issues = 0
-        len(servers)
 
         # 統計運行時問題
         for env in environments.values():
@@ -431,11 +430,11 @@ class EnhancedMCPConfig:
 
     def _generate_system_recommendations(
         self,
-        environments: Dict[str, RuntimeEnvironmentInfo],
-        servers: Dict[str, Dict[str, Any]],
-    ) -> List[str]:
+        environments: dict[str, RuntimeEnvironmentInfo],
+        servers: dict[str, dict[str, Any]],
+    ) -> list[str]:
         """生成系統級建議"""
-        recommendations: List[str] = []
+        recommendations: list[str] = []
 
         # 運行時建議
         for env in environments.values():

@@ -385,7 +385,7 @@ class NaturalLanguageToSQLService:
         獲取服務資訊（向後兼容介面）
 
         Returns:
-            Dict[str, Any]: 服務資訊
+            dict[str, Any]: 服務資訊
         """
         try:
             config = self._get_configuration()

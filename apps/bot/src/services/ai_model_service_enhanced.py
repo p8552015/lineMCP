@@ -66,7 +66,8 @@ class RateLimiter:
         rate_limit = getattr(config, "rate_limit_per_minute", 30)
         if len(minute_calls) >= rate_limit:
             # 等到最早的調用過期
-            return 60 - (now - minute_calls[0]) + 1
+            wait_time = 60 - (now - minute_calls[0]) + 1
+            return float(wait_time)
 
         return 0
 
@@ -256,7 +257,8 @@ class EnhancedAIModelService(AIModelService):
         else:
             delay = self.retry_config.base_delay
 
-        return min(delay, self.retry_config.max_delay)
+        calculated_delay = min(delay, self.retry_config.max_delay)
+        return float(calculated_delay)
 
     def get_model_health_status(self) -> dict[str, Any]:
         """獲取模型健康狀況"""
@@ -282,7 +284,7 @@ class EnhancedAIModelService(AIModelService):
 
     def get_available_models(self) -> list[dict[str, Any]]:
         """獲取可用模型列表（增強版資訊）"""
-        models = []
+        models : list[Any] = []
         for name, config in self.models.items():
             health = self._model_health[name]
             models.append(

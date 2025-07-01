@@ -23,7 +23,7 @@ class PerformanceMetric:
     value: float
     unit: str
     timestamp: datetime
-    tags: dict[str, str] = None
+    tags: dict[str, str] | None = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -37,8 +37,8 @@ class HealthStatus:
     component: str
     status: str  # healthy, unhealthy, degraded, unknown
     message: str
-    details: dict[str, Any] = None
-    timestamp: datetime = None
+    details: dict[str, Any] | None = None
+    timestamp: datetime | None = None
 
     def __post_init__(self):
         if self.details is None:
@@ -78,7 +78,7 @@ class MonitoringApplicationService(BaseApplicationService):
         self._health_statuses: dict[str, HealthStatus] = {}
 
         # 系統統計
-        self._system_stats = {
+        self._system_stats: dict[str, Any] = {
             "start_time": datetime.now(),
             "total_requests": 0,
             "error_count": 0,
@@ -144,10 +144,14 @@ class MonitoringApplicationService(BaseApplicationService):
             status: 請求狀態
             endpoint: 端點名稱
         """
-        self._system_stats["total_requests"] += 1
+        self._system_stats["total_requests"] = (
+            int(self._system_stats["total_requests"]) + 1
+        )
 
         if status == "error":
-            self._system_stats["error_count"] += 1
+            self._system_stats["error_count"] = (
+                int(self._system_stats["error_count"]) + 1
+            )
 
         tags = {"status": status}
         if endpoint:
@@ -174,7 +178,7 @@ class MonitoringApplicationService(BaseApplicationService):
 
         start_time = time.time()
         overall_status = "healthy"
-        component_results = {}
+        component_results: dict[str, Any] = {}
 
         # 檢查應用服務上下文
         try:
@@ -261,7 +265,7 @@ class MonitoringApplicationService(BaseApplicationService):
 
             # 評估健康狀態
             status = "healthy"
-            issues = []
+            issues : list[Any] = []
 
             if cpu_percent > self._performance_baselines["max_cpu_usage"]:
                 status = "degraded"
@@ -310,7 +314,7 @@ class MonitoringApplicationService(BaseApplicationService):
             error_rate = (error_count / max(total_requests, 1)) * 100
 
             status = "healthy"
-            issues = []
+            issues : list[Any] = []
 
             # 檢查響應時間
             if response_times:
@@ -384,10 +388,10 @@ class MonitoringApplicationService(BaseApplicationService):
         recent_metrics = [m for m in self._metrics if m.timestamp > cutoff_time]
 
         # 按指標類型分組
-        metrics_by_type = {}
+        metrics_by_type: dict[str, list[float]] = {}
         for metric in recent_metrics:
             if metric.name not in metrics_by_type:
-                metrics_by_type[metric.name] = []
+                metrics_by_type[metric.name] : list[Any] = []
             metrics_by_type[metric.name].append(metric.value)
 
         # 計算彙總統計
@@ -416,7 +420,7 @@ class MonitoringApplicationService(BaseApplicationService):
             * 100,
             "last_health_check": (
                 self._system_stats["last_health_check"].isoformat()
-                if self._system_stats["last_health_check"]
+                if self._system_stats["last_health_check"] is not None
                 else None
             ),
             "recent_metrics_count": len(recent_metrics),
@@ -438,7 +442,9 @@ class MonitoringApplicationService(BaseApplicationService):
         error_counts = [
             m.value
             for m in relevant_metrics
-            if m.name == "request.count" and m.tags.get("status") == "error"
+            if m.name == "request.count"
+            and m.tags is not None
+            and m.tags.get("status") == "error"
         ]
 
         report = {
@@ -467,7 +473,7 @@ class MonitoringApplicationService(BaseApplicationService):
         self, metrics: list[PerformanceMetric]
     ) -> list[str]:
         """生成效能建議"""
-        recommendations = []
+        recommendations : list[Any] = []
 
         # 分析響應時間
         response_times = [m.value for m in metrics if m.name == "request.duration"]

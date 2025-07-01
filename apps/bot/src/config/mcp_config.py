@@ -6,6 +6,7 @@ MCP 配置管理
 
 import contextlib
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -156,7 +157,7 @@ class MCPConfigManager:
         prefix = "NL_TO_SQL_"
 
         # 定義環境變數映射
-        env_mappings = {
+        env_mappings: dict[str, tuple[str, Callable[[str], Any]]] = {
             f"{prefix}CONFIDENCE_THRESHOLD": ("default_confidence_threshold", float),
             f"{prefix}MAX_PARSE_TIME": ("max_parse_time", int),
             f"{prefix}VERBOSE_LOGGING": (
@@ -451,7 +452,7 @@ def get_mcp_config() -> MCPConfigManager:
             project_root = str(Path(__file__).parent.parent.parent.parent.parent)
 
             # 創建一個簡單的設定物件
-            class SimpleSettings:  # type: ignore
+            class SimpleSettings:
                 def __init__(self) -> None:
                     self.project_root = project_root
 

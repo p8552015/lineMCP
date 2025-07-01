@@ -71,7 +71,9 @@ class PostgreSQLCommand:
 
         logger.info("🐘 PostgreSQL 命令處理器已初始化")
 
-    async def execute(self, user_input: str, user_id: str = None) -> dict[str, Any]:
+    async def execute(
+        self, user_input: str, user_id: str | None = None
+    ) -> dict[str, Any]:
         """
         執行 PostgreSQL 查詢命令
 
@@ -102,7 +104,7 @@ class PostgreSQLCommand:
                         "suggestions": self._get_query_suggestions(user_input),
                     }
 
-                sql_query = nl_result.get("sql_query")
+                sql_query = str(nl_result.get("sql_query", ""))
                 if not sql_query:
                     return {
                         "success": False,
@@ -151,6 +153,8 @@ class PostgreSQLCommand:
             }
 
             # 調用 NL-to-SQL 服務
+            if self.nl_to_sql_service is None:
+                return {"success": False, "error": "NL-to-SQL 服務未初始化"}
             parsed_query = await self.nl_to_sql_service.parse_natural_language(
                 user_input
             )
@@ -227,7 +231,7 @@ class PostgreSQLCommand:
                 }
 
             # 解析 PostgreSQL MCP 返回的結果
-            formatted_data = []
+            formatted_data : list[Any] = []
             summary = {}
 
             for item in content:

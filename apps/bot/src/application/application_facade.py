@@ -3,10 +3,11 @@
 提供統一的應用服務訪問入口
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
-from linebot.v3.messaging import Message
+from linebot.v3.messaging import Message, TextMessage
 
 from src.infrastructure.service_factory_interface import IServiceFactory
 
@@ -14,6 +15,15 @@ from .base_service import ApplicationServiceContext
 from .messaging_service import MessagingApplicationService
 from .monitoring_service import MonitoringApplicationService
 from .query_service import QueryApplicationService
+
+
+@dataclass
+class ProcessMessageResult:
+    """訊息處理結果"""
+
+    success: bool
+    message: Message
+    processing_time: float
 
 logger = structlog.get_logger()
 
@@ -135,6 +145,12 @@ class ApplicationFacade:
 
         try:
             # 使用訊息處理服務
+            if self._messaging_service is None:
+                return ProcessMessageResult(
+                    success=False,
+                    message=TextMessage(text="❌ 訊息處理服務未初始化"),
+                    processing_time=0.0,
+                )
             result = await self._messaging_service.process_message(
                 user_id=user_id,
                 message_text=message_text,
@@ -182,6 +198,8 @@ class ApplicationFacade:
 
         try:
             # 使用查詢服務
+            if self._query_service is None:
+                return {"success": False, "error": "查詢服務未初始化"}
             result = await self._query_service.execute_sql_query(
                 query=query, user_id=user_id, use_cache=use_cache
             )

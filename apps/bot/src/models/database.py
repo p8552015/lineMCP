@@ -3,6 +3,8 @@
 使用 SQLAlchemy 定義所有資料表結構，用於 Alembic 遷移管理
 """
 
+from typing import Any
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+Base: Any = declarative_base()
 
 
 class Machine(Base):

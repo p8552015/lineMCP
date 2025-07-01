@@ -31,9 +31,9 @@ class CircularDependencyError(Exception):
 
 
 def dependency_guard(
-    service_name: str = None,
+    service_name: str | None = None,
     dependency_type: DependencyType = DependencyType.CONSTRUCTOR,
-):
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     依賴注入防護裝飾器
 
@@ -187,7 +187,7 @@ class DependencyInjectionGuard:
         self, service_class: type, args: tuple, kwargs: dict
     ) -> None:
         """分析構造函數依賴"""
-        signature = inspect.signature(service_class.__init__)
+        signature = inspect.signature(service_class.__init__)  # type: ignore[misc]
         service_name = service_class.__name__
 
         # 分析參數中的服務依賴
@@ -291,4 +291,4 @@ def safe_service_creation(service_class: type[T]) -> Callable[..., T]:
     Returns:
         服務創建裝飾器
     """
-    return dependency_guard(service_class.__name__, DependencyType.FACTORY)
+    return dependency_guard(service_class.__name__, DependencyType.FACTORY)  # type: ignore[return-value]

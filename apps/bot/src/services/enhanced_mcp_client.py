@@ -127,6 +127,9 @@ class EnhancedMCPClient:
             logger.info(f"🔗 使用 nodecomman 架構連接: {server_name}")
 
             # 檢查預定義配置
+            if self._mcp_factory is None:
+                logger.error("❌ MCP Factory 未初始化")
+                return False
             config = await self._mcp_factory.get_predefined_config(server_name)
             if not config:
                 logger.error(f"❌ 未找到 {server_name} 的配置")
@@ -156,6 +159,7 @@ class EnhancedMCPClient:
             process = server.process
             if (
                 process
+                and self._lifecycle_manager is not None
                 and await self._lifecycle_manager.register_process(
                     server_name, process, lifecycle_config, config
                 )
@@ -203,7 +207,7 @@ class EnhancedMCPClient:
             timeout: 超時時間
 
         Returns:
-            Dict[str, Any]: 工具執行結果
+            dict[str, Any]: 工具執行結果
         """
         try:
             if self.use_nodecomman and server_name in self._managed_servers:
@@ -368,7 +372,8 @@ class EnhancedMCPClient:
         else:
             # 直接從配置管理器獲取
             config_summary = self.config.get_config_summary()
-            return config_summary.get("servers", {})
+            servers = config_summary.get("servers", {})
+            return dict(servers) if servers is not None else {}
 
     def list_servers(self) -> list[str]:
         """列出所有可用的服務器名稱 - 提供 API 一致性"""

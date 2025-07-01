@@ -173,7 +173,7 @@ class HealthChecker:
 
     async def _check_external_apis(self) -> dict[str, Any]:
         """檢查外部 API 連接"""
-        checks = {}
+        checks: dict[str, dict[str, Any]] = {}
 
         # LINE API 檢查
         try:

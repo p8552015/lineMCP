@@ -103,7 +103,8 @@ class QueryApplicationService(BaseApplicationService):
             if not self._is_cache_expired(cached_result):
                 self._query_stats["cached_queries"] += 1
                 self.logger.info("返回快取查詢結果", cache_key=cache_key)
-                return cached_result["data"]
+                data = cached_result.get("data", {})
+                return dict(data) if data is not None else {}
 
         # 執行查詢
         start_time = datetime.now()
@@ -231,7 +232,8 @@ class QueryApplicationService(BaseApplicationService):
     def _is_cache_expired(self, cached_result: dict[str, Any]) -> bool:
         """檢查快取是否過期"""
         cache_time = datetime.fromisoformat(cached_result["cached_at"])
-        return (datetime.now() - cache_time).total_seconds() > self._cache_ttl_seconds
+        time_diff = (datetime.now() - cache_time).total_seconds()
+        return bool(time_diff > self._cache_ttl_seconds)
 
     def _should_cache_result(self, result: dict[str, Any]) -> bool:
         """判斷結果是否應該被快取"""
@@ -434,7 +436,7 @@ class QueryApplicationService(BaseApplicationService):
         # 檢查快取狀態
         checks["cache"] = {
             "status": "healthy",
-            "cached_results": len(self._query_cache),
+            "cached_results": str(len(self._query_cache)),
             "cache_hit_rate": (
                 self._query_stats["cached_queries"]
                 / max(self._query_stats["total_queries"], 1)

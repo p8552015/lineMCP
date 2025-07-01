@@ -1,4 +1,5 @@
 import socket
+from typing import Any
 from urllib.parse import urlparse
 
 import structlog
@@ -56,7 +57,7 @@ def _setup_telemetry_exporter(tracer_provider: TracerProvider) -> str | None:
         tracer_provider: 追蹤提供者
 
     Returns:
-        Optional[str]: 使用的導出器類型，None 表示沒有導出器
+        str | None: 使用的導出器類型，None 表示沒有導出器
     """
     # 檢查是否啟用 OpenTelemetry
     if not settings.otel_enabled:
@@ -208,7 +209,7 @@ def get_telemetry_health() -> dict:
     Returns:
         dict: 健康狀況信息
     """
-    health_status = {
+    health_status: dict[str, Any] = {
         "telemetry_enabled": True,
         "otlp_endpoint": settings.otel_exporter_otlp_endpoint,
         "otlp_available": False,

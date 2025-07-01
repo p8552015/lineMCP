@@ -4,7 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
 
@@ -61,7 +61,7 @@ class BaseApplicationService(ABC):
         """檢查服務是否已初始化"""
         return self._initialized
 
-    def get_service_info(self) -> Dict[str, Any]:
+    def get_service_info(self) -> dict[str, Any]:
         """
         獲取服務資訊
 
@@ -75,7 +75,7 @@ class BaseApplicationService(ABC):
             "description": self.__doc__.strip().split("\n")[0] if self.__doc__ else "",
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         健康檢查
 
@@ -87,7 +87,7 @@ class BaseApplicationService(ABC):
 
             try:
                 # 基本健康檢查
-                health_data: Dict[str, Any] = {
+                health_data: dict[str, Any] = {
                     "service": self.name,
                     "status": "healthy" if self._initialized else "not_initialized",
                     "checks": {},
@@ -116,7 +116,7 @@ class BaseApplicationService(ABC):
                 self.logger.error("健康檢查失敗", error=str(e))
                 return {"service": self.name, "status": "error", "error": str(e)}
 
-    async def _perform_health_checks(self) -> Dict[str, Dict[str, Any]]:
+    async def _perform_health_checks(self) -> dict[str, dict[str, Any]]:
         """
         執行具體的健康檢查
         子類可以覆寫此方法
@@ -157,9 +157,9 @@ class ApplicationServiceContext:
     提供跨服務的共享資源和配置
     """
 
-    def __init__(self):
-        self.services: Dict[str, BaseApplicationService] = {}
-        self.shared_config: Dict[str, Any] = {}
+    def __init__(self) -> None:
+        self.services: dict[str, BaseApplicationService] = {}
+        self.shared_config: dict[str, Any] = {}
         self._initialized = False
 
     def register_service(self, service: BaseApplicationService) -> None:
@@ -175,7 +175,7 @@ class ApplicationServiceContext:
         self.services[service.name] = service
         logger.info("已註冊應用服務", service_name=service.name)
 
-    def get_service(self, name: str) -> Optional[BaseApplicationService]:
+    def get_service(self, name: str) -> BaseApplicationService | None:
         """
         獲取應用服務
 
@@ -221,9 +221,9 @@ class ApplicationServiceContext:
         self._initialized = False
         logger.info("所有應用服務已關閉")
 
-    async def health_check_all(self) -> Dict[str, Any]:
+    async def health_check_all(self) -> dict[str, Any]:
         """對所有服務進行健康檢查"""
-        results: Dict[str, Any] = {
+        results: dict[str, Any] = {
             "overall_status": "healthy",
             "services": {},
             "summary": {
@@ -256,7 +256,7 @@ class ApplicationServiceContext:
 
         return results
 
-    def get_context_info(self) -> Dict[str, Any]:
+    def get_context_info(self) -> dict[str, Any]:
         """獲取上下文資訊"""
         return {
             "initialized": self._initialized,
@@ -267,7 +267,7 @@ class ApplicationServiceContext:
 
 
 # 全域應用服務上下文
-_application_context: Optional[ApplicationServiceContext] = None
+_application_context: ApplicationServiceContext | None = None
 
 
 def get_application_context() -> ApplicationServiceContext:

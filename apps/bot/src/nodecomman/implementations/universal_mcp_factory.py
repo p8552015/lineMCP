@@ -17,6 +17,7 @@
 
 import asyncio
 import os
+from typing import Any
 
 import structlog
 
@@ -60,7 +61,9 @@ class UniversalMCPServerFactory(IMCPServerFactory):
         self._initialize_runtime_managers()
 
         # 預定義的 MCP 服務器配置
-        self._predefined_configs = self._load_predefined_configs()
+        self._predefined_configs: dict[str, MCPServerConfig] = (
+            self._load_predefined_configs()
+        )
 
     def _initialize_runtime_managers(self):
         """初始化運行時管理器"""
@@ -318,9 +321,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
         """列出所有預定義配置名稱"""
         return list(self._predefined_configs.keys())
 
-    async def create_from_predefined(
-        self, config_name: str, **overrides
-    ) -> MCPServerInfo:
+    async def create_from_predefined(self, config_name: str, **overrides) -> IMCPServer:
         """從預定義配置創建服務器"""
         base_config = self._predefined_configs.get(config_name)
         if not base_config:
@@ -337,7 +338,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
 
     async def cleanup_all_servers(self) -> dict[str, bool]:
         """清理所有服務器"""
-        results = {}
+        results: dict[str, Any] = {}
 
         for server_name in list(self._server_registry.keys()):
             try:
@@ -367,7 +368,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
 
     async def get_supported_runtimes(self) -> list[RuntimeType]:
         """獲取支援的運行時類型"""
-        available_runtimes = []
+        available_runtimes : list[Any] = []
 
         for runtime_type, manager in self._runtime_managers.items():
             try:
@@ -380,7 +381,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
 
     async def validate_config(self, config: MCPServerConfig) -> list[str]:
         """驗證配置"""
-        issues = []
+        issues : list[Any] = []
 
         try:
             # 檢查運行時支援
@@ -426,24 +427,30 @@ class UniversalMCPServerFactory(IMCPServerFactory):
     ) -> MCPServerConfig:
         """獲取預設配置"""
         if server_type == MCPServerType.POSTGRES and runtime_type == RuntimeType.NODEJS:
-            return self._predefined_configs["postgres"]
+            config = self._predefined_configs.get("postgres")
+            if config:
+                return config
         elif server_type == MCPServerType.SQLITE and runtime_type == RuntimeType.NODEJS:
-            return self._predefined_configs["sqlite"]
+            config = self._predefined_configs.get("sqlite")
+            if config:
+                return config
         elif (
             server_type == MCPServerType.FILESYSTEM
             and runtime_type == RuntimeType.NODEJS
         ):
-            return self._predefined_configs["filesystem"]
-        else:
-            # 返回基本配置
-            return MCPServerConfig(
-                name=f"default_{server_type.value}",
-                server_type=server_type,
-                runtime_type=runtime_type,
-                command="node" if runtime_type == RuntimeType.NODEJS else "python",
-                args=["--version"],
-                description=f"預設 {server_type.value} 配置",
-            )
+            config = self._predefined_configs.get("filesystem")
+            if config:
+                return config
+
+        # 返回基本配置（如果沒有預定義配置）
+        return MCPServerConfig(
+            name=f"default_{server_type.value}",
+            server_type=server_type,
+            runtime_type=runtime_type,
+            command="node" if runtime_type == RuntimeType.NODEJS else "python",
+            args=["--version"],
+            description=f"預設 {server_type.value} 配置",
+        )
 
     async def can_create(self, config: MCPServerConfig) -> bool:
         """檢查是否可以創建指定配置的服務器"""

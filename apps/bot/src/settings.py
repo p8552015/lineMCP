@@ -8,11 +8,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     # LINE Configuration
-    line_channel_access_token: str
-    line_channel_secret: str
+    line_channel_access_token: str = ""
+    line_channel_secret: str = ""
 
     # OpenAI Configuration
-    openai_api_key: str
+    openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_max_tokens: int = 1000
     openai_temperature: float = 0.7
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
 
     # Security
-    jwt_secret_key: str
+    jwt_secret_key: str = "default-secret-key"
     jwt_algorithm: str = "HS256"
     jwt_expiry_minutes: int = 15
 

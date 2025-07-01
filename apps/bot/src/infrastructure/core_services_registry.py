@@ -3,8 +3,6 @@
 負責註冊系統核心服務：AI模型、OpenAI客戶端、訊息格式化器、MCP相關服務
 """
 
-from typing import Any
-
 import structlog
 
 from src.services.ai_model_service import AIModelService
@@ -58,7 +56,7 @@ def register_core_services(registry: ServiceRegistry) -> None:
 
     # MCP 相關服務
     registry.register_factory(
-        type[Any],  # MCP Client type
+        object,  # MCP Client type
         lambda provider: get_production_mcp_client,
         scope=ServiceScope.SINGLETON,
     )

@@ -173,9 +173,9 @@ class MCPServerConfig:
         驗證配置有效性
 
         Returns:
-            List[str]: 驗證錯誤列表，空列表表示配置有效
+            list[str]: 驗證錯誤列表，空列表表示配置有效
         """
-        errors = []
+        errors : list[Any] = []
 
         if not self.name:
             errors.append("服務器名稱不能為空")
@@ -362,7 +362,7 @@ class IMCPConnection(ABC):
         列出可用工具
 
         Returns:
-            List[MCPTool]: 可用工具列表
+            list[MCPTool]: 可用工具列表
         """
         pass
 
@@ -372,7 +372,7 @@ class IMCPConnection(ABC):
         列出可用資源
 
         Returns:
-            List[MCPResource]: 可用資源列表
+            list[MCPResource]: 可用資源列表
         """
         pass
 
@@ -495,7 +495,7 @@ class IMCPServerFactory(ABC):
         獲取支援的運行時類型
 
         Returns:
-            List[RuntimeType]: 支援的運行時類型列表
+            list[RuntimeType]: 支援的運行時類型列表
         """
         pass
 
@@ -505,7 +505,7 @@ class IMCPServerFactory(ABC):
         獲取支援的協議類型
 
         Returns:
-            List[MCPProtocol]: 支援的協議類型列表
+            list[MCPProtocol]: 支援的協議類型列表
         """
         pass
 
@@ -515,7 +515,7 @@ class IMCPServerFactory(ABC):
         獲取支援的服務器類型
 
         Returns:
-            List[MCPServerType]: 支援的服務器類型列表
+            list[MCPServerType]: 支援的服務器類型列表
         """
         pass
 
@@ -528,7 +528,7 @@ class IMCPServerFactory(ABC):
             config: 要驗證的配置
 
         Returns:
-            List[str]: 驗證錯誤列表，空列表表示配置有效
+            list[str]: 驗證錯誤列表，空列表表示配置有效
         """
         pass
 
@@ -605,7 +605,7 @@ class IMCPServerManager(ABC):
             name: 服務器名稱
 
         Returns:
-            Optional[IMCPServer]: 服務器實例，不存在返回 None
+            IMCPServer | None: 服務器實例，不存在返回 None
         """
         pass
 
@@ -615,7 +615,7 @@ class IMCPServerManager(ABC):
         列出所有管理的服務器
 
         Returns:
-            Dict[str, IMCPServer]: 服務器名稱到服務器實例的映射
+            dict[str, IMCPServer]: 服務器名稱到服務器實例的映射
         """
         pass
 
@@ -625,7 +625,7 @@ class IMCPServerManager(ABC):
         啟動所有服務器
 
         Returns:
-            Dict[str, bool]: 服務器名稱到啟動結果的映射
+            dict[str, bool]: 服務器名稱到啟動結果的映射
         """
         pass
 
@@ -638,7 +638,7 @@ class IMCPServerManager(ABC):
             timeout: 停止超時時間
 
         Returns:
-            Dict[str, bool]: 服務器名稱到停止結果的映射
+            dict[str, bool]: 服務器名稱到停止結果的映射
         """
         pass
 
@@ -648,6 +648,6 @@ class IMCPServerManager(ABC):
         檢查所有服務器健康狀態
 
         Returns:
-            Dict[str, bool]: 服務器名稱到健康狀態的映射
+            dict[str, bool]: 服務器名稱到健康狀態的映射
         """
         pass

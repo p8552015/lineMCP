@@ -510,7 +510,7 @@ class ProcessLifecycleManager:
                 )
 
             # 停止所有進程
-            stop_tasks = []
+            stop_tasks : list[Any] = []
             for process_id in list(self._managed_processes.keys()):
                 task = asyncio.create_task(self.stop_process(process_id))
                 stop_tasks.append(task)

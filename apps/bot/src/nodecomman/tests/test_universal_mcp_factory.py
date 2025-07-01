@@ -44,7 +44,7 @@ class UniversalMCPFactoryTester:
             "server_lifecycle": False,
             "nodejs_mcp_fix": False,
         }
-        self.created_servers = []
+        self.created_servers : list[Any] = []
 
     async def run_all_tests(self) -> bool:
         """執行所有測試"""

@@ -10,17 +10,17 @@ import structlog
 from linebot.v3.messaging import TextMessage
 
 from src.domain.exceptions import (
-    AIServiceException,
-    AuthenticationException,
+    AIServiceError,
+    AuthenticationError,
     BotError,
-    BusinessLogicException,
-    CommandParsingException,
-    ConfigurationException,
-    DatabaseQueryException,
-    ExternalServiceException,
-    MCPConnectionException,
-    RateLimitException,
-    ValidationException,
+    BusinessLogicError,
+    CommandParsingError,
+    ConfigurationError,
+    DatabaseQueryError,
+    ExternalServiceError,
+    MCPConnectionError,
+    RateLimitError,
+    ValidationError,
 )
 
 logger = structlog.get_logger()
@@ -41,16 +41,16 @@ class UnifiedErrorHandler:
         """
         self.include_technical_details = include_technical_details
         self._error_icons = {
-            ValidationException: "⚠️",
-            CommandParsingException: "❓",
-            DatabaseQueryException: "🗄️",
-            MCPConnectionException: "🔌",
-            AIServiceException: "🤖",
-            AuthenticationException: "🔒",
-            RateLimitException: "⏰",
-            ConfigurationException: "⚙️",
-            BusinessLogicException: "💼",
-            ExternalServiceException: "🌐",
+            ValidationError: "⚠️",
+            CommandParsingError: "❓",
+            DatabaseQueryError: "🗄️",
+            MCPConnectionError: "🔌",
+            AIServiceError: "🤖",
+            AuthenticationError: "🔒",
+            RateLimitError: "⏰",
+            ConfigurationError: "⚙️",
+            BusinessLogicError: "💼",
+            ExternalServiceError: "🌐",
         }
 
     def handle_error(
@@ -139,7 +139,7 @@ class UnifiedErrorHandler:
             error_data.update(error.to_dict())
 
         # 對於嚴重錯誤，記錄完整的堆疊追蹤
-        if not isinstance(error, ValidationException | CommandParsingException):
+        if not isinstance(error, ValidationError | CommandParsingError):
             error_data["traceback"] = traceback.format_exc()
             logger.error("Error occurred", **error_data)
         else:

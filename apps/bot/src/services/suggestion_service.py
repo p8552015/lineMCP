@@ -103,7 +103,7 @@ class SuggestionService:
             context: 上下文資訊
 
         Returns:
-            Optional[Message]: AI 生成的建議，如果失敗則返回 None
+            Message | None: AI 生成的建議，如果失敗則返回 None
         """
         if not self._ai_service:
             return None
@@ -302,7 +302,7 @@ class SuggestionService:
         獲取服務資訊
 
         Returns:
-            Dict[str, Any]: 服務狀態和配置
+            dict[str, Any]: 服務狀態和配置
         """
         return {
             "name": "SuggestionService",

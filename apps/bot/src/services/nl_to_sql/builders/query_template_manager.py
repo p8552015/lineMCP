@@ -15,7 +15,7 @@
 """
 
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
 
@@ -341,7 +341,7 @@ class QueryTemplateManager(ITemplateManager):
             template: 要驗證的模板
 
         Returns:
-            Dict[str, Any]: 詳細的驗證結果
+            dict[str, Any]: 詳細的驗證結果
         """
         validation_result: dict[str, Any] = {
             "is_valid": True,
@@ -405,7 +405,7 @@ class QueryTemplateManager(ITemplateManager):
             query_type: 查詢類型
 
         Returns:
-            List[str]: 參數名稱列表
+            list[str]: 參數名稱列表
         """
         template = self.get_template(query_type)
         parameters = re.findall(r"\{(\w+)\}", template)
@@ -466,8 +466,8 @@ class QueryTemplateManager(ITemplateManager):
         """
         從配置載入模板
         """
-        successfully_loaded = []
-        failed_templates = []
+        successfully_loaded : list[Any] = []
+        failed_templates : list[Any] = []
 
         try:
             # 從配置獲取 SQL 模板
@@ -711,7 +711,7 @@ class QueryTemplateManager(ITemplateManager):
             query_type: 查詢類型
 
         Returns:
-            Dict[str, Any]: 模板元數據
+            dict[str, Any]: 模板元數據
         """
         return self._template_metadata.get(query_type, {})
 
@@ -720,7 +720,7 @@ class QueryTemplateManager(ITemplateManager):
         獲取所有模板
 
         Returns:
-            Dict[QueryType, str]: 所有模板字典
+            dict[QueryType, str]: 所有模板字典
         """
         return self._templates.copy()
 
@@ -729,7 +729,7 @@ class QueryTemplateManager(ITemplateManager):
         獲取模板統計資訊
 
         Returns:
-            Dict[str, Any]: 統計資訊
+            dict[str, Any]: 統計資訊
         """
         total_templates = len(self._templates)
         total_parameters = sum(
@@ -765,7 +765,7 @@ class QueryTemplateManager(ITemplateManager):
         驗證所有模板的有效性（包含 MCP 相容性檢查）
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
         validation_results: dict[str, Any] = {
             "is_valid": True,

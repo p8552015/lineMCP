@@ -46,7 +46,8 @@ class UnifiedMCPClient:
         Returns:
             工具執行結果
         """
-        return await self._production_client.call_tool(server, tool, params, timeout)
+        result = await self._production_client.call_tool(server, tool, params, timeout)
+        return dict(result) if result is not None else {}
 
     async def list_tools(self, server: str) -> list[dict[str, Any]]:
         """
@@ -58,7 +59,8 @@ class UnifiedMCPClient:
         Returns:
             工具列表
         """
-        return await self._production_client.list_tools(server)
+        result = await self._production_client.list_tools(server)
+        return list(result) if result is not None else []
 
     async def connect_to_server(self, server_name: str) -> bool:
         """
@@ -70,7 +72,8 @@ class UnifiedMCPClient:
         Returns:
             連接是否成功
         """
-        return await self._production_client.connect_to_server(server_name)
+        result = await self._production_client.connect_to_server(server_name)
+        return bool(result)
 
     async def close(self):
         """關閉客戶端 - 代理到生產級客戶端"""
@@ -79,11 +82,13 @@ class UnifiedMCPClient:
     @property
     def server_configs(self) -> dict[str, Any]:
         """獲取服務器配置字典 - 提供 API 一致性"""
-        return self._production_client.server_configs
+        result = self._production_client.server_configs
+        return dict(result) if result is not None else {}
 
     def list_servers(self) -> list[str]:
         """列出所有可用的服務器名稱 - 提供 API 一致性"""
-        return self._production_client.list_servers()
+        result = self._production_client.list_servers()
+        return list(result) if result is not None else []
 
 
 # 單例模式

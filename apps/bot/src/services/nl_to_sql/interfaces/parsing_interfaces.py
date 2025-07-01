@@ -80,7 +80,7 @@ class IParser(ABC):
         獲取解析器資訊和元數據
 
         Returns:
-            Dict[str, Any]: 解析器資訊
+            dict[str, Any]: 解析器資訊
                 - name: 解析器名稱
                 - version: 版本號
                 - capabilities: 支援的功能列表
@@ -208,7 +208,7 @@ class IParserFactory(ABC):
         獲取所有可用的解析器類型
 
         Returns:
-            List[str]: 解析器類型列表
+            list[str]: 解析器類型列表
         """
         pass
 

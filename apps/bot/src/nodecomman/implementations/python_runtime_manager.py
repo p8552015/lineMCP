@@ -259,7 +259,7 @@ class PythonRuntimeManager(IRuntimeManager):
     @property
     def runtime_type_value(self) -> RuntimeType:
         """獲取運行時類型"""
-        return self.runtime_type
+        return RuntimeType.PYTHON
 
     def _detect_python_executable(self) -> str | None:
         """檢測 Python 可執行檔"""
@@ -560,7 +560,7 @@ class PythonRuntimeManager(IRuntimeManager):
         獲取 Python 運行時支援的套件列表
 
         Returns:
-            List[str]: 支援的 MCP 相關套件名稱列表
+            list[str]: 支援的 MCP 相關套件名稱列表
         """
         # 返回常用的 Python MCP 相關套件
         return [

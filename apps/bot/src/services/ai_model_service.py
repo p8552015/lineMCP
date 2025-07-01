@@ -298,7 +298,7 @@ class AIModelService:
 
     def get_available_models(self) -> list[dict[str, Any]]:
         """獲取可用模型列表"""
-        models_info = []
+        models_info : list[Any] = []
         for name, config in self.models.items():
             models_info.append(
                 {
@@ -325,7 +325,8 @@ class AIModelService:
         input_cost = (input_tokens / 1000) * config.cost_per_1k_input
         output_cost = (output_tokens / 1000) * config.cost_per_1k_output
 
-        return input_cost + output_cost
+        total_cost = input_cost + output_cost
+        return float(total_cost)
 
     async def query_with_custom_prompt(
         self,

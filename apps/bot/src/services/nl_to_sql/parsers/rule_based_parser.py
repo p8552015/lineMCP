@@ -167,7 +167,7 @@ class RuleBasedParser(IParser):
         獲取解析器資訊
 
         Returns:
-            Dict[str, Any]: 解析器資訊
+            dict[str, Any]: 解析器資訊
         """
         return {
             "name": "RuleBasedParser",
@@ -240,7 +240,7 @@ class RuleBasedParser(IParser):
             text: 輸入文字
 
         Returns:
-            Dict[str, Any]: 提取的參數
+            dict[str, Any]: 提取的參數
         """
         parameters = {}
         normalized_text = text.lower()
@@ -263,7 +263,7 @@ class RuleBasedParser(IParser):
             elif re.search(r"三個月|90天", normalized_text, re.IGNORECASE):
                 days = 90
 
-            parameters["days"] = days
+            parameters["days"] = str(days)
 
         elif query_type == QueryType.DEPARTMENT_STATUS:
             # 提取部門參數
@@ -345,9 +345,9 @@ class RuleBasedParser(IParser):
         獲取支援的查詢類型
 
         Returns:
-            List[QueryType]: 支援的查詢類型列表
+            list[QueryType]: 支援的查詢類型列表
         """
-        supported_types = []
+        supported_types : list[Any] = []
         for query_type_name in self._query_patterns:
             try:
                 query_type = QueryType(query_type_name)
@@ -366,9 +366,9 @@ class RuleBasedParser(IParser):
         驗證模式配置的有效性
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
         """
-        validation_result = {
+        validation_result: dict[str, Any] = {
             "is_valid": True,
             "errors": [],
             "warnings": [],
@@ -399,7 +399,7 @@ class RuleBasedParser(IParser):
                 )
 
             # 驗證正規表達式
-            invalid_patterns = []
+            invalid_patterns : list[Any] = []
             for pattern in patterns:
                 try:
                     re.compile(pattern, re.IGNORECASE)

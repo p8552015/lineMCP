@@ -3,6 +3,8 @@
 處理 /status 指令的系統狀態檢查
 """
 
+from typing import Any
+
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
@@ -119,7 +121,7 @@ class StatusCommandHandler(CommandHandler):
 
     def _check_internal_services(self) -> dict:
         """檢查內部服務狀態"""
-        services_status = []
+        services_status : list[Any] = []
 
         # 檢查各個服務
         services_to_check = [

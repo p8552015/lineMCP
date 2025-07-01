@@ -206,7 +206,7 @@ class ErrorContext:
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
         self.start_time = None
-        self.context_data = {}
+        self.context_data: dict[str, Any] = {}
 
     def __enter__(self):
         import time

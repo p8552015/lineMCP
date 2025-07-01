@@ -100,7 +100,7 @@ class IStatistics(ABC):
         獲取統計摘要
 
         Returns:
-            Dict[str, Any]: 統計摘要
+            dict[str, Any]: 統計摘要
                 - total_requests: 總請求數
                 - success_rate: 成功率
                 - average_response_time: 平均回應時間
@@ -124,7 +124,7 @@ class IStatistics(ABC):
             operation_type: 過濾的操作類型
 
         Returns:
-            Dict[str, Any]: 詳細統計資料
+            dict[str, Any]: 詳細統計資料
         """
         pass
 
@@ -134,7 +134,7 @@ class IStatistics(ABC):
         獲取效能指標
 
         Returns:
-            Dict[str, Any]: 效能指標
+            dict[str, Any]: 效能指標
                 - response_time_percentiles: 回應時間百分位
                 - throughput: 吞吐量
                 - error_rate: 錯誤率
@@ -216,7 +216,7 @@ class IConfiguration(ABC):
         獲取查詢模式配置
 
         Returns:
-            Dict[str, Any]: 查詢模式字典
+            dict[str, Any]: 查詢模式字典
         """
         pass
 
@@ -226,7 +226,7 @@ class IConfiguration(ABC):
         獲取 SQL 模板配置
 
         Returns:
-            Dict[str, str]: SQL 模板字典
+            dict[str, str]: SQL 模板字典
         """
         pass
 
@@ -236,7 +236,7 @@ class IConfiguration(ABC):
         獲取解析器設定
 
         Returns:
-            Dict[str, Any]: 解析器設定字典
+            dict[str, Any]: 解析器設定字典
         """
         pass
 
@@ -255,7 +255,7 @@ class IConfiguration(ABC):
         驗證配置的有效性
 
         Returns:
-            Dict[str, Any]: 驗證結果
+            dict[str, Any]: 驗證結果
                 - is_valid: 配置是否有效
                 - errors: 錯誤列表
                 - warnings: 警告列表
@@ -268,7 +268,7 @@ class IConfiguration(ABC):
         獲取配置元數據
 
         Returns:
-            Dict[str, Any]: 配置元數據
+            dict[str, Any]: 配置元數據
                 - version: 配置版本
                 - last_updated: 最後更新時間
                 - source: 配置來源
@@ -364,7 +364,7 @@ class IMetricsCollector(ABC):
         獲取指標摘要
 
         Returns:
-            Dict[str, Any]: 指標摘要
+            dict[str, Any]: 指標摘要
         """
         pass
 

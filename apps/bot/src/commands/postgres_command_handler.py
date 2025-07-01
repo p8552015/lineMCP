@@ -5,6 +5,8 @@ PostgreSQL 查詢命令處理器
 包含增強的延遲初始化錯誤處理
 """
 
+from typing import Any
+
 import structlog
 from linebot.v3.messaging import Message, TextMessage
 
@@ -55,7 +57,7 @@ class PostgresCommandHandler(CommandHandler):
             logger.warning(f"立即初始化失敗，將使用延遲初始化: {e}")
             self.postgres_command = None
 
-    async def _safe_lazy_initialization(self) -> tuple[bool, any, str]:
+    async def _safe_lazy_initialization(self) -> tuple[bool, Any, str | None]:
         """安全的延遲初始化"""
 
         def create_postgres_command():
@@ -154,6 +156,9 @@ class PostgresCommandHandler(CommandHandler):
             logger.info("🔍 處理 PostgreSQL 查詢命令", query=query, user_id=user_id)
 
             # 執行 PostgreSQL 查詢
+            if self.postgres_command is None:
+                return TextMessage(text="❌ PostgreSQL 服務初始化失敗，請稍後再試")
+
             result = await self.postgres_command.execute(query, user_id)
 
             if result.get("success"):

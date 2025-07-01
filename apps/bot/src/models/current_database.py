@@ -3,6 +3,8 @@
 基於實際的生產環境資料庫結構定義
 """
 
+from typing import Any
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
-Base = declarative_base()
+Base: Any = declarative_base()
 
 
 class Machine(Base):

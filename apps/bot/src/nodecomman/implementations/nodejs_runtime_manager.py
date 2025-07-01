@@ -242,7 +242,7 @@ class NodeJSRuntimeManager(IRuntimeManager):
 
     def __init__(self):
         self._runtime_info: RuntimeInfo | None = None
-        self._supported_packages = [
+        self._supported_packages: list[str] = [
             "@modelcontextprotocol/server-postgres",
             "@modelcontextprotocol/server-sqlite",
             "@modelcontextprotocol/server-filesystem",

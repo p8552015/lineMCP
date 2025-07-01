@@ -13,7 +13,7 @@ try:
     from .database_health_check import DatabaseHealthChecker
 except ImportError:
     # 回退到絕對導入（直接運行腳本時）
-    from database_health_check import DatabaseHealthChecker
+    from database_health_check import DatabaseHealthChecker  # type: ignore[no-redef]
 
 logger = logging.getLogger(__name__)
 

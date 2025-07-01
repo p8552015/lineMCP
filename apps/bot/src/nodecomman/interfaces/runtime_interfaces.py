@@ -167,7 +167,7 @@ class IRuntimeManager(ABC):
         獲取支援的套件列表
 
         Returns:
-            List[str]: 支援的套件名稱列表
+            list[str]: 支援的套件名稱列表
         """
         pass
 
@@ -227,7 +227,7 @@ class IProcess(ABC):
             timeout: 等待超時時間（秒）
 
         Returns:
-            Optional[int]: 進程退出碼，超時返回 None
+            int | None: 進程退出碼，超時返回 None
         """
         pass
 
@@ -315,7 +315,7 @@ class IProcessLifecycleManager(ABC):
             name: 進程名稱
 
         Returns:
-            Optional[IProcess]: 進程實例，不存在返回 None
+            IProcess | None: 進程實例，不存在返回 None
         """
         pass
 
@@ -325,7 +325,7 @@ class IProcessLifecycleManager(ABC):
         列出所有管理的進程
 
         Returns:
-            Dict[str, IProcess]: 進程名稱到進程實例的映射
+            dict[str, IProcess]: 進程名稱到進程實例的映射
         """
         pass
 
@@ -335,7 +335,7 @@ class IProcessLifecycleManager(ABC):
         啟動所有進程
 
         Returns:
-            Dict[str, bool]: 進程名稱到啟動結果的映射
+            dict[str, bool]: 進程名稱到啟動結果的映射
         """
         pass
 
@@ -348,7 +348,7 @@ class IProcessLifecycleManager(ABC):
             timeout: 停止超時時間（秒）
 
         Returns:
-            Dict[str, bool]: 進程名稱到停止結果的映射
+            dict[str, bool]: 進程名稱到停止結果的映射
         """
         pass
 
@@ -358,7 +358,7 @@ class IProcessLifecycleManager(ABC):
         檢查所有進程健康狀態
 
         Returns:
-            Dict[str, bool]: 進程名稱到健康狀態的映射
+            dict[str, bool]: 進程名稱到健康狀態的映射
         """
         pass
 

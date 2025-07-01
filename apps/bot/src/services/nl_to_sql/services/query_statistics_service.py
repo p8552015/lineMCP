@@ -252,7 +252,7 @@ class QueryStatisticsService(IStatistics):
         獲取統計資訊
 
         Returns:
-            Dict[str, Any]: 完整統計資訊
+            dict[str, Any]: 完整統計資訊
         """
         current_time = time.time()
         uptime = current_time - self._start_time
@@ -268,7 +268,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均信心度 - 類型安全版本
-        all_confidences = []
+        all_confidences : list[Any] = []
         for confidences in self._confidence_scores.values():
             # 確保所有信心度值都是數值類型
             safe_confidences = self._safe_numeric_list_conversion(confidences)
@@ -278,7 +278,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均解析時間 - 類型安全版本
-        all_parse_times = []
+        all_parse_times : list[Any] = []
         for times in self._parse_times.values():
             # 確保所有時間值都是數值類型
             safe_times = self._safe_numeric_list_conversion(times)
@@ -340,7 +340,7 @@ class QueryStatisticsService(IStatistics):
             parser_type: 解析器類型
 
         Returns:
-            Dict[str, Any]: 解析器效能統計
+            dict[str, Any]: 解析器效能統計
         """
         success = int(self._success_counts[parser_type])
         failure = int(self._failure_counts[parser_type])
@@ -384,11 +384,11 @@ class QueryStatisticsService(IStatistics):
             hours: 查詢的小時數
 
         Returns:
-            List[Dict[str, Any]]: 最近活動記錄
+            list[dict[str, Any]]: 最近活動記錄
         """
         cutoff_time = time.time() - (hours * 3600)
 
-        recent_records = []
+        recent_records : list[Any] = []
         for record in self._history:
             if record["timestamp"] >= cutoff_time:
                 recent_records.append(record)
@@ -413,7 +413,7 @@ class QueryStatisticsService(IStatistics):
 
         logger.info("🗑️ 統計資料已清除")
 
-    def export_statistics(self, format: str = "dict") -> Any:
+    def export_statistics(self, format: str = "dict") -> dict[str, Any] | str:
         """
         匯出統計資料
 
@@ -502,7 +502,7 @@ class QueryStatisticsService(IStatistics):
 
         mean = sum(numeric_values) / len(numeric_values)
         variance = sum((x - mean) ** 2 for x in numeric_values) / len(numeric_values)
-        return variance**0.5
+        return float(variance**0.5)
 
     def _calculate_percentiles(self, values: list[float]) -> dict[str, float]:
         """
@@ -512,7 +512,7 @@ class QueryStatisticsService(IStatistics):
             values: 數值列表（已經過類型安全轉換）
 
         Returns:
-            Dict[str, float]: 百分位數字典
+            dict[str, float]: 百分位數字典
         """
         if not values:
             return {"p50": 0.0, "p75": 0.0, "p90": 0.0, "p95": 0.0, "p99": 0.0}
@@ -543,9 +543,9 @@ class QueryStatisticsService(IStatistics):
         獲取效能指標
 
         Returns:
-            Dict[str, Any]: 效能指標
+            dict[str, Any]: 效能指標
         """
-        all_parse_times = []
+        all_parse_times : list[Any] = []
         for times in self._parse_times.values():
             # 使用類型安全的轉換
             safe_times = self._safe_numeric_list_conversion(times)
@@ -568,7 +568,7 @@ class QueryStatisticsService(IStatistics):
             hours: 分析的小時數
 
         Returns:
-            Dict[str, Any]: 趨勢分析
+            dict[str, Any]: 趨勢分析
         """
         recent_records = self.get_recent_activity(hours)
 
@@ -576,7 +576,9 @@ class QueryStatisticsService(IStatistics):
             return {"status": "no_recent_data"}
 
         # 計算時段統計
-        hourly_stats = defaultdict(lambda: {"success": 0, "failure": 0})
+        hourly_stats: dict[int, dict[str, int]] = defaultdict(
+            lambda: {"success": 0, "failure": 0}
+        )
 
         for record in recent_records:
             hour = datetime.fromtimestamp(record["timestamp"]).hour
@@ -776,7 +778,7 @@ class QueryStatisticsService(IStatistics):
         Returns:
             str: CSV 格式字串
         """
-        lines = []
+        lines : list[Any] = []
 
         # 標題行
         lines.append(
@@ -892,15 +894,15 @@ class QueryStatisticsService(IStatistics):
             values: 要轉換的數值列表
 
         Returns:
-            List[float]: 轉換後的浮點數列表（移除無效值）
+            list[float]: 轉換後的浮點數列表（移除無效值）
         """
         if not values:
             return []
 
-        converted_values = []
+        converted_values : list[Any] = []
         for value in values:
             if value is not None:
-                converted = self._safe_float_conversion(value, None)
+                converted = self._safe_float_conversion(value, 0.0)
                 if converted is not None:
                     converted_values.append(converted)
 
@@ -911,9 +913,9 @@ class QueryStatisticsService(IStatistics):
         驗證統計數據的完整性
 
         Returns:
-            Dict[str, Any]: 完整性驗證結果
+            dict[str, Any]: 完整性驗證結果
         """
-        validation_result = {
+        validation_result: dict[str, Any] = {
             "is_valid": True,
             "errors": [],
             "warnings": [],
@@ -987,7 +989,7 @@ class QueryStatisticsService(IStatistics):
             context: 轉換的上下文信息
 
         Returns:
-            Dict[str, Any]: 詳細診斷信息
+            dict[str, Any]: 詳細診斷信息
         """
         diagnostic = {
             "original_value": str(value),
@@ -999,7 +1001,7 @@ class QueryStatisticsService(IStatistics):
         }
 
         try:
-            converted = self._safe_float_conversion(value, None)
+            converted = self._safe_float_conversion(value, 0.0)
             if converted is not None:
                 diagnostic["conversion_successful"] = True
                 diagnostic["converted_value"] = converted
@@ -1015,7 +1017,7 @@ class QueryStatisticsService(IStatistics):
         獲取統計服務的健康狀況
 
         Returns:
-            Dict[str, Any]: 服務健康狀況
+            dict[str, Any]: 服務健康狀況
         """
         try:
             validation_result = self._validate_statistics_integrity()
@@ -1055,7 +1057,7 @@ class QueryStatisticsService(IStatistics):
             }
 
             # 添加健康建議
-            recommendations = []
+            recommendations : list[Any] = []
             if len(self._history) > self._max_history_size * 0.9:
                 recommendations.append("建議考慮清理舊的歷史記錄")
             if total_requests > 0 and (total_success / total_requests) < 0.8:
@@ -1125,7 +1127,7 @@ class QueryStatisticsService(IStatistics):
         獲取統計摘要（實現 IStatistics 介面）
 
         Returns:
-            Dict[str, Any]: 統計摘要
+            dict[str, Any]: 統計摘要
         """
         total_success = sum(self._success_counts.values())
         total_failure = sum(self._failure_counts.values())
@@ -1136,7 +1138,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均回應時間 - 類型安全版本
-        all_times = []
+        all_times : list[Any] = []
         for times in self._parse_times.values():
             # 確保所有時間值都是數值類型
             safe_times = self._safe_numeric_list_conversion(times)
@@ -1170,7 +1172,7 @@ class QueryStatisticsService(IStatistics):
             operation_type: 過濾的操作類型
 
         Returns:
-            Dict[str, Any]: 詳細統計資料
+            dict[str, Any]: 詳細統計資料
         """
         # 基礎統計（可以根據時間和操作類型過濾，這裡先返回全部）
         return {
@@ -1202,7 +1204,7 @@ class QueryStatisticsService(IStatistics):
         獲取效能指標（實現 IStatistics 介面）
 
         Returns:
-            Dict[str, Any]: 效能指標
+            dict[str, Any]: 效能指標
         """
         return self._get_performance_metrics()
 
@@ -1224,4 +1226,5 @@ class QueryStatisticsService(IStatistics):
         Returns:
             str: 格式化的統計資料
         """
-        return self.export_statistics(format_type)
+        result = self.export_statistics(format_type)
+        return str(result) if not isinstance(result, str) else result

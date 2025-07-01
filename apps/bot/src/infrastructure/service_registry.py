@@ -29,12 +29,12 @@ class ServiceDescriptor:
     service_type: type
     implementation: type | Callable | Any
     scope: ServiceScope = ServiceScope.SINGLETON
-    tags: list[str] = None
-    metadata: dict[str, Any] = None
+    tags: list[str] | None = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.tags is None:
-            self.tags = []
+            self.tags : list[Any] = []
         if self.metadata is None:
             self.metadata = {}
 
@@ -74,8 +74,8 @@ class ServiceRegistry:
         service_type: type,
         implementation: type | Callable | Any = None,
         scope: ServiceScope = ServiceScope.SINGLETON,
-        tags: list[str] = None,
-        metadata: dict[str, Any] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> "ServiceRegistry":
         """
         註冊服務
@@ -102,7 +102,7 @@ class ServiceRegistry:
         )
 
         if service_type not in self._descriptors:
-            self._descriptors[service_type] = []
+            self._descriptors[service_type] : list[Any] = []
 
         self._descriptors[service_type].append(descriptor)
 
@@ -213,10 +213,10 @@ class ServiceRegistry:
 
     def get_services_by_tag(self, tag: str) -> list[ServiceDescriptor]:
         """根據標籤獲取服務"""
-        results = []
+        results : list[Any] = []
         for descriptors in self._descriptors.values():
             for descriptor in descriptors:
-                if tag in descriptor.tags:
+                if descriptor.tags is not None and tag in descriptor.tags:
                     results.append(descriptor)
         return results
 
@@ -244,9 +244,9 @@ class ServiceRegistry:
     def _get_implementation_name(self, implementation: Any) -> str:
         """獲取實現的名稱"""
         if hasattr(implementation, "__name__"):
-            return implementation.__name__
+            return str(implementation.__name__)
         elif hasattr(implementation, "__class__"):
-            return implementation.__class__.__name__
+            return str(implementation.__class__.__name__)
         else:
             return str(implementation)
 

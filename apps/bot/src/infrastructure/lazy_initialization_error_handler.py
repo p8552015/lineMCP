@@ -82,6 +82,7 @@ class LazyInitializationErrorHandler:
         self.errors: list[InitializationError] = []
         self.last_success_time: float | None = None
         self.initialization_lock = asyncio.Lock()
+        self._recovery_attempts: int = 0
 
         # 錯誤模式匹配
         self.error_patterns = {
