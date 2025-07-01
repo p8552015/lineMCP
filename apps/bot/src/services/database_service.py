@@ -183,7 +183,7 @@ class DatabaseService:
         if not data:
             return {"machines": [], "total_count": 0, "message": "沒有找到任何機台"}
 
-        machines : list[Any] = []
+        machines: list[Any] = []
         for machine in data:
             machines.append(
                 {
@@ -249,7 +249,7 @@ class DatabaseService:
                 logger.warning(f"無法轉換故障計數: {row.get('total_faults')}")
                 continue
 
-        fault_types : list[Any] = []
+        fault_types: list[Any] = []
         for row in data:
             try:
                 count = row.get("total_faults", 0)
@@ -288,7 +288,7 @@ class DatabaseService:
         if not data:
             return {"departments": [], "message": "沒有生產統計資料"}
 
-        departments : list[Any] = []
+        departments: list[Any] = []
         for dept in data:
             departments.append(
                 {
@@ -333,7 +333,7 @@ class DatabaseService:
                 "message": f"{department} 沒有機台或資料",
             }
 
-        machines : list[Any] = []
+        machines: list[Any] = []
         for machine in data:
             machines.append(
                 {

@@ -259,7 +259,7 @@ class CompositeParser(IParser):
         Returns:
             dict[str, Any]: 解析器資訊
         """
-        parser_info_list : list[Any] = []
+        parser_info_list: list[Any] = []
 
         for parser in self._parsers:
             try:
@@ -347,7 +347,7 @@ class CompositeParser(IParser):
         Returns:
             list[Tuple[IParser, float]]: 解析器和其信心度列表
         """
-        capabilities : list[Any] = []
+        capabilities: list[Any] = []
 
         for parser in self._parsers:
             try:
@@ -378,7 +378,9 @@ class CompositeParser(IParser):
                 capabilities.append((parser, 0.0))
 
         # 根據信心度排序
-        capabilities.sort(key=lambda x: x[1], reverse=True)
+        from typing import cast
+
+        capabilities.sort(key=lambda x: cast(float, x[1]), reverse=True)
         return capabilities
 
     def _select_best_parser(

@@ -298,7 +298,7 @@ class AIModelService:
 
     def get_available_models(self) -> list[dict[str, Any]]:
         """獲取可用模型列表"""
-        models_info : list[Any] = []
+        models_info: list[Any] = []
         for name, config in self.models.items():
             models_info.append(
                 {

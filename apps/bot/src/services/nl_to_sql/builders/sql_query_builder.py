@@ -185,7 +185,7 @@ class SQLQueryBuilder(IQueryBuilder):
         Returns:
             list[str]: 必要參數名稱列表
         """
-        parameter_requirements = {
+        parameter_requirements: dict[QueryType, list[str]] = {
             QueryType.SPECIFIC_MACHINE: ["machine_id"],
             QueryType.DEPARTMENT_STATUS: ["department"],
             QueryType.FAULT_ANALYSIS: [],  # days 參數是可選的
@@ -194,7 +194,11 @@ class SQLQueryBuilder(IQueryBuilder):
             QueryType.MACHINE_STATUS: [],
         }
 
-        return parameter_requirements.get(query_type, [])
+        # 明確返回類型以避免 MyPy 錯誤
+        if query_type in parameter_requirements:
+            return parameter_requirements[query_type]
+        else:
+            return []
 
     def get_supported_query_types(self) -> list[QueryType]:
         """
@@ -491,7 +495,7 @@ class SQLQueryBuilder(IQueryBuilder):
         Returns:
             list[str]: 優化建議列表
         """
-        suggestions : list[Any] = []
+        suggestions: list[Any] = []
 
         if complexity_score > 5:
             suggestions.append("考慮添加適當的索引")
@@ -518,7 +522,7 @@ class SQLQueryBuilder(IQueryBuilder):
         Returns:
             dict[str, Any]: 安全性檢查結果
         """
-        security_issues : list[Any] = []
+        security_issues: list[Any] = []
         risk_level = "low"
 
         # 檢查危險的 SQL 操作

@@ -121,7 +121,7 @@ class StatusCommandHandler(CommandHandler):
 
     def _check_internal_services(self) -> dict:
         """檢查內部服務狀態"""
-        services_status : list[Any] = []
+        services_status: list[Any] = []
 
         # 檢查各個服務
         services_to_check = [

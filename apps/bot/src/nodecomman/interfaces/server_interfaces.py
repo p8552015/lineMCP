@@ -175,7 +175,7 @@ class MCPServerConfig:
         Returns:
             list[str]: 驗證錯誤列表，空列表表示配置有效
         """
-        errors : list[Any] = []
+        errors: list[Any] = []
 
         if not self.name:
             errors.append("服務器名稱不能為空")

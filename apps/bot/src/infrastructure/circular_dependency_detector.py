@@ -228,7 +228,7 @@ class CircularDependencyDetector:
 
     def _get_edges_for_cycle(self, cycle_path: list[str]) -> list[DependencyEdge]:
         """獲取循環路徑中的邊"""
-        cycle_edges : list[Any] = []
+        cycle_edges: list[Any] = []
         for i in range(len(cycle_path) - 1):
             from_service = cycle_path[i]
             to_service = cycle_path[i + 1]

@@ -34,7 +34,7 @@ class ServiceDescriptor:
 
     def __post_init__(self):
         if self.tags is None:
-            self.tags : list[Any] = []
+            self.tags: list[Any] = []
         if self.metadata is None:
             self.metadata = {}
 
@@ -102,7 +102,7 @@ class ServiceRegistry:
         )
 
         if service_type not in self._descriptors:
-            self._descriptors[service_type] : list[Any] = []
+            self._descriptors[service_type] = []
 
         self._descriptors[service_type].append(descriptor)
 
@@ -213,7 +213,7 @@ class ServiceRegistry:
 
     def get_services_by_tag(self, tag: str) -> list[ServiceDescriptor]:
         """根據標籤獲取服務"""
-        results : list[Any] = []
+        results: list[Any] = []
         for descriptors in self._descriptors.values():
             for descriptor in descriptors:
                 if descriptor.tags is not None and tag in descriptor.tags:

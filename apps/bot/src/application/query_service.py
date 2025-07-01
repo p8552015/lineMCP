@@ -256,9 +256,11 @@ class QueryApplicationService(BaseApplicationService):
         # 限制快取大小
         if len(self._query_cache) >= 100:
             # 移除最舊的快取項
+            from typing import cast
+
             oldest_key = min(
                 self._query_cache.keys(),
-                key=lambda k: self._query_cache[k]["cached_at"],
+                key=lambda k: cast(float, self._query_cache[k]["cached_at"]),
             )
             del self._query_cache[oldest_key]
 

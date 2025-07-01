@@ -172,7 +172,7 @@ class ModelsCommandHandler(CommandHandler):
         for model in models_info["models"]:
             provider = model.get("provider", "unknown")
             if provider not in providers:
-                providers[provider] : list[Any] = []
+                providers[provider] = []
             providers[provider].append(model)
 
         for provider, models in providers.items():

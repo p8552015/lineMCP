@@ -231,7 +231,7 @@ class PostgreSQLCommand:
                 }
 
             # 解析 PostgreSQL MCP 返回的結果
-            formatted_data : list[Any] = []
+            formatted_data: list[Any] = []
             summary = {}
 
             for item in content:

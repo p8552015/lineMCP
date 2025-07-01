@@ -284,7 +284,7 @@ class EnhancedAIModelService(AIModelService):
 
     def get_available_models(self) -> list[dict[str, Any]]:
         """獲取可用模型列表（增強版資訊）"""
-        models : list[Any] = []
+        models: list[Any] = []
         for name, config in self.models.items():
             health = self._model_health[name]
             models.append(

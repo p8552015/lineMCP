@@ -702,7 +702,7 @@ class ConfigurationService(IConfiguration):
         Returns:
             list[str]: 變更的配置名稱列表
         """
-        changed : list[Any] = []
+        changed: list[Any] = []
 
         for config_name in self._config_cache:
             if config_name not in old_cache:

@@ -230,7 +230,7 @@ class APIKeyValidator:
 
         try:
             # 讀取現有內容
-            lines : list[Any] = []
+            lines: list[Any] = []
             if self.env_file_path.exists():
                 with open(self.env_file_path, encoding="utf-8") as f:
                     lines = f.readlines()

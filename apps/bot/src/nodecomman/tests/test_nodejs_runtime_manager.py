@@ -13,6 +13,7 @@ Node.js Runtime Manager 測試腳本
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -135,7 +136,7 @@ class NodeJSRuntimeManagerTester:
                 ("npx", ["--version"]),
             ]
 
-            validation_results : list[Any] = []
+            validation_results: list[Any] = []
 
             for command, args in test_commands:
                 try:

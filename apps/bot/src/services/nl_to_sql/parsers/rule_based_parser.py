@@ -99,9 +99,11 @@ class RuleBasedParser(IParser):
             return self._create_machine_query(machine_id, text)
 
         # 2. 按優先級檢查查詢模式（按信心度排序，高信心度優先）
+        from typing import cast
+
         sorted_patterns = sorted(
             self._query_patterns.items(),
-            key=lambda x: x[1].get("confidence", 0.7),
+            key=lambda x: cast(float, x[1].get("confidence", 0.7)),
             reverse=True,
         )
 
@@ -347,7 +349,7 @@ class RuleBasedParser(IParser):
         Returns:
             list[QueryType]: 支援的查詢類型列表
         """
-        supported_types : list[Any] = []
+        supported_types: list[Any] = []
         for query_type_name in self._query_patterns:
             try:
                 query_type = QueryType(query_type_name)
@@ -399,7 +401,7 @@ class RuleBasedParser(IParser):
                 )
 
             # 驗證正規表達式
-            invalid_patterns : list[Any] = []
+            invalid_patterns: list[Any] = []
             for pattern in patterns:
                 try:
                     re.compile(pattern, re.IGNORECASE)

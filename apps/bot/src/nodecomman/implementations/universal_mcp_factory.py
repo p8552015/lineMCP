@@ -368,7 +368,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
 
     async def get_supported_runtimes(self) -> list[RuntimeType]:
         """獲取支援的運行時類型"""
-        available_runtimes : list[Any] = []
+        available_runtimes: list[Any] = []
 
         for runtime_type, manager in self._runtime_managers.items():
             try:
@@ -381,7 +381,7 @@ class UniversalMCPServerFactory(IMCPServerFactory):
 
     async def validate_config(self, config: MCPServerConfig) -> list[str]:
         """驗證配置"""
-        issues : list[Any] = []
+        issues: list[Any] = []
 
         try:
             # 檢查運行時支援

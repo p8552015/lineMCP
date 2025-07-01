@@ -192,7 +192,7 @@ class QueryTemplateManager(ITemplateManager):
         """
         try:
             # 從配置獲取禁止的關鍵字 (安全處理)
-            security_config = (
+            security_config: dict = (
                 getattr(self._config, "get_template_security_config", lambda: {})()
                 or {}
             )
@@ -466,8 +466,8 @@ class QueryTemplateManager(ITemplateManager):
         """
         從配置載入模板
         """
-        successfully_loaded : list[Any] = []
-        failed_templates : list[Any] = []
+        successfully_loaded: list[Any] = []
+        failed_templates: list[Any] = []
 
         try:
             # 從配置獲取 SQL 模板

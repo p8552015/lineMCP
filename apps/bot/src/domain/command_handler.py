@@ -204,7 +204,7 @@ class CommandRegistry:
         Returns:
             幫助文字
         """
-        help_sections : list[Any] = []
+        help_sections: list[Any] = []
 
         for handler in sorted(self._handlers.values(), key=lambda h: h.command_name):
             help_sections.append(handler.get_help_text())

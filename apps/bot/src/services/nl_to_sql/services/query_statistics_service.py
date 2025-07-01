@@ -268,7 +268,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均信心度 - 類型安全版本
-        all_confidences : list[Any] = []
+        all_confidences: list[Any] = []
         for confidences in self._confidence_scores.values():
             # 確保所有信心度值都是數值類型
             safe_confidences = self._safe_numeric_list_conversion(confidences)
@@ -278,7 +278,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均解析時間 - 類型安全版本
-        all_parse_times : list[Any] = []
+        all_parse_times: list[Any] = []
         for times in self._parse_times.values():
             # 確保所有時間值都是數值類型
             safe_times = self._safe_numeric_list_conversion(times)
@@ -388,13 +388,15 @@ class QueryStatisticsService(IStatistics):
         """
         cutoff_time = time.time() - (hours * 3600)
 
-        recent_records : list[Any] = []
+        recent_records: list[Any] = []
         for record in self._history:
             if record["timestamp"] >= cutoff_time:
                 recent_records.append(record)
 
         # 按時間排序（最新的在前）
-        recent_records.sort(key=lambda x: x["timestamp"], reverse=True)
+        from typing import cast
+
+        recent_records.sort(key=lambda x: cast(float, x["timestamp"]), reverse=True)
 
         return recent_records
 
@@ -545,7 +547,7 @@ class QueryStatisticsService(IStatistics):
         Returns:
             dict[str, Any]: 效能指標
         """
-        all_parse_times : list[Any] = []
+        all_parse_times: list[Any] = []
         for times in self._parse_times.values():
             # 使用類型安全的轉換
             safe_times = self._safe_numeric_list_conversion(times)
@@ -778,7 +780,7 @@ class QueryStatisticsService(IStatistics):
         Returns:
             str: CSV 格式字串
         """
-        lines : list[Any] = []
+        lines: list[Any] = []
 
         # 標題行
         lines.append(
@@ -899,7 +901,7 @@ class QueryStatisticsService(IStatistics):
         if not values:
             return []
 
-        converted_values : list[Any] = []
+        converted_values: list[Any] = []
         for value in values:
             if value is not None:
                 converted = self._safe_float_conversion(value, 0.0)
@@ -1057,7 +1059,7 @@ class QueryStatisticsService(IStatistics):
             }
 
             # 添加健康建議
-            recommendations : list[Any] = []
+            recommendations: list[Any] = []
             if len(self._history) > self._max_history_size * 0.9:
                 recommendations.append("建議考慮清理舊的歷史記錄")
             if total_requests > 0 and (total_success / total_requests) < 0.8:
@@ -1138,7 +1140,7 @@ class QueryStatisticsService(IStatistics):
         )
 
         # 計算平均回應時間 - 類型安全版本
-        all_times : list[Any] = []
+        all_times: list[Any] = []
         for times in self._parse_times.values():
             # 確保所有時間值都是數值類型
             safe_times = self._safe_numeric_list_conversion(times)

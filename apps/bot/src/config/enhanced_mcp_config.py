@@ -145,8 +145,8 @@ class EnhancedMCPConfig:
             is_available = await self._nodejs_runtime.check_availability()
             runtime_info = await self._nodejs_runtime.get_runtime_info()
 
-            issues : list[Any] = []
-            recommendations : list[Any] = []
+            issues: list[Any] = []
+            recommendations: list[Any] = []
 
             if not is_available:
                 issues.append("Node.js 運行時不可用")
@@ -196,8 +196,8 @@ class EnhancedMCPConfig:
             is_available = await self._python_runtime.check_availability()
             runtime_info = await self._python_runtime.get_runtime_info()
 
-            issues : list[Any] = []
-            recommendations : list[Any] = []
+            issues: list[Any] = []
+            recommendations: list[Any] = []
 
             if not is_available:
                 issues.append("Python 運行時不可用")

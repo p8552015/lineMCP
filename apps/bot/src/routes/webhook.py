@@ -103,7 +103,7 @@ async def handle_webhook(
             # 使用 asyncio.gather 並行處理所有事件，設定總超時時間
             if events:
                 # 創建所有事件的處理任務
-                event_tasks : list[Any] = []
+                event_tasks: list[Any] = []
                 for event in events:
                     if (
                         event.get("type") == "message"

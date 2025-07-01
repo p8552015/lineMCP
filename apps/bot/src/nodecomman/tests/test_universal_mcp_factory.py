@@ -13,6 +13,7 @@
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -44,7 +45,7 @@ class UniversalMCPFactoryTester:
             "server_lifecycle": False,
             "nodejs_mcp_fix": False,
         }
-        self.created_servers : list[Any] = []
+        self.created_servers: list[Any] = []
 
     async def run_all_tests(self) -> bool:
         """執行所有測試"""

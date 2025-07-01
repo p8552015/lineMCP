@@ -25,6 +25,7 @@ class ProcessMessageResult:
     message: Message
     processing_time: float
 
+
 logger = structlog.get_logger()
 
 

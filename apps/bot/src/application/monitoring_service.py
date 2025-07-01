@@ -265,7 +265,7 @@ class MonitoringApplicationService(BaseApplicationService):
 
             # 評估健康狀態
             status = "healthy"
-            issues : list[Any] = []
+            issues: list[Any] = []
 
             if cpu_percent > self._performance_baselines["max_cpu_usage"]:
                 status = "degraded"
@@ -314,7 +314,7 @@ class MonitoringApplicationService(BaseApplicationService):
             error_rate = (error_count / max(total_requests, 1)) * 100
 
             status = "healthy"
-            issues : list[Any] = []
+            issues: list[Any] = []
 
             # 檢查響應時間
             if response_times:
@@ -391,7 +391,7 @@ class MonitoringApplicationService(BaseApplicationService):
         metrics_by_type: dict[str, list[float]] = {}
         for metric in recent_metrics:
             if metric.name not in metrics_by_type:
-                metrics_by_type[metric.name] : list[Any] = []
+                metrics_by_type[metric.name] = []
             metrics_by_type[metric.name].append(metric.value)
 
         # 計算彙總統計
@@ -473,7 +473,7 @@ class MonitoringApplicationService(BaseApplicationService):
         self, metrics: list[PerformanceMetric]
     ) -> list[str]:
         """生成效能建議"""
-        recommendations : list[Any] = []
+        recommendations: list[Any] = []
 
         # 分析響應時間
         response_times = [m.value for m in metrics if m.name == "request.duration"]
