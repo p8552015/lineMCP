@@ -207,10 +207,13 @@ class AIEnhancedParser(IParser):
             "}\n\n"
             "正確範例：\n"
             "輸入：「M001機台稼動率」\n"
-            '輸出：\\{"query_type": "specific_machine", "entities": \\["M001", "稼動率"\\], '
-            '"parameters": \\{"machine_id": "M001", "metric": "utilization_rate"\\}, "confidence": 0.9\\}\n\n'
+            '輸出：\\{"query_type": "specific_machine", '
+            '"entities": \\["M001", "稼動率"\\], '
+            '"parameters": \\{"machine_id": "M001", '
+            '"metric": "utilization_rate"\\}, "confidence": 0.9\\}\n\n'
             "輸入：「品質部門M002銑床即時產量」\n"
-            '輸出：\\{"query_type": "unknown", "entities": \\["品質部門", "M002", "產量"\\], '
+            '輸出：\\{"query_type": "unknown", '
+            '"entities": \\["品質部門", "M002", "產量"\\], '
             '"parameters": \\{\\}, "confidence": 0.3\\}\n'
             "原因：涉及品質部門的生產數據查詢，系統不支援此類跨部門查詢"
         )
