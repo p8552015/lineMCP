@@ -198,9 +198,37 @@ END $$;
 -- CI 性能優化設定
 -- ============================================
 
+-- 創建機台故障記錄表（修復後的版本 - 支援 test_database_integration.py）
+CREATE TABLE IF NOT EXISTS machine_faults (
+    fault_id SERIAL PRIMARY KEY,
+    machine_id VARCHAR(10) REFERENCES machines(id),
+    fault_type VARCHAR(100) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    fault_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    description TEXT,
+    resolved BOOLEAN DEFAULT FALSE,
+    resolution_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入機台故障記錄測試數據
+INSERT INTO machine_faults (machine_id, fault_type, severity, fault_date, description, resolved, resolution_date) VALUES
+-- M001 最近故障記錄
+('M001', '過熱', 'High', CURRENT_TIMESTAMP - INTERVAL '3 days', 'CNC車床A溫度達到58°C，超過安全閾值55°C', TRUE, CURRENT_TIMESTAMP - INTERVAL '2 days'),
+('M002', '電機故障', 'Critical', CURRENT_TIMESTAMP - INTERVAL '5 days', '包裝機主電機異常，無法正常運轉', FALSE, NULL),
+('M003', '油壓不足', 'Medium', CURRENT_TIMESTAMP - INTERVAL '7 days', '焊接機油壓系統壓力下降至80%', TRUE, CURRENT_TIMESTAMP - INTERVAL '6 days')
+ON CONFLICT (fault_id) DO NOTHING;
+
+-- 創建故障記錄索引（支援測試查詢）
+CREATE INDEX IF NOT EXISTS idx_machine_faults_machine_id ON machine_faults(machine_id);
+CREATE INDEX IF NOT EXISTS idx_machine_faults_date ON machine_faults(fault_date);
+CREATE INDEX IF NOT EXISTS idx_machine_faults_severity ON machine_faults(severity);
+CREATE INDEX IF NOT EXISTS idx_machine_faults_resolved ON machine_faults(resolved);
+
 -- 分析表格統計資訊（提升查詢計劃）
 ANALYZE machines;
 ANALYZE machine_utilization;
+ANALYZE machine_faults;
 ANALYZE employees;
 
 -- CI 測試完成標記
@@ -211,10 +239,12 @@ CREATE TABLE IF NOT EXISTS ci_test_metadata (
 );
 
 INSERT INTO ci_test_metadata (key, value) VALUES 
-('ci_init_version', '1.0.0'),
+('ci_init_version', '1.0.1'),
 ('ci_init_date', CURRENT_TIMESTAMP::TEXT),
-('supported_tests', 'T-01,T-05'),
+('supported_tests', 'T-01,T-05,database_integration'),
 ('m001_ready', 'true'),
+('machine_faults_ready', 'true'),
+('schema_fixed', 'fault_id_primary_key'),
 ('data_source', 'ci-test-driven')
 ON CONFLICT (key) DO UPDATE SET 
     value = EXCLUDED.value,
