@@ -15,7 +15,7 @@ from src.domain.command_handler import (
     CommandRegistry,
     get_command_registry,
 )
-from src.domain.exceptions import CommandParsingException
+from src.domain.exceptions import CommandParsingError
 
 
 class MockCommandHandler(CommandHandler):
@@ -266,7 +266,7 @@ class TestCommandExecutor:
         executor = CommandExecutor(mock_context)
         executor._initialized = True
 
-        with pytest.raises(CommandParsingException):
+        with pytest.raises(CommandParsingError):
             await executor.execute_command("user_1", "not a command")
 
     @pytest.mark.asyncio
@@ -275,7 +275,7 @@ class TestCommandExecutor:
         executor = CommandExecutor(mock_context)
         executor._initialized = True
 
-        with pytest.raises(CommandParsingException):
+        with pytest.raises(CommandParsingError):
             await executor.execute_command("user_1", "/unknown")
 
     def test_command_executor_has_command(self, mock_context):

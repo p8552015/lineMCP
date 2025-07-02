@@ -7,12 +7,12 @@ import pytest
 from linebot.v3.messaging import TextMessage
 
 from src.domain.exceptions import (
-    AIServiceException,
+    AIServiceError,
     BotError,
-    CommandParsingException,
-    DatabaseQueryException,
-    MCPConnectionException,
-    ValidationException,
+    CommandParsingError,
+    DatabaseQueryError,
+    MCPConnectionError,
+    ValidationError,
     create_ai_error,
     create_command_error,
     create_db_error,
@@ -62,7 +62,7 @@ class TestCustomExceptions:
 
     def test_validation_exception(self):
         """測試驗證異常"""
-        error = ValidationException("email", "invalid@", "格式不正確")
+        error = ValidationError("email", "invalid@", "格式不正確")
 
         assert "email" in str(error)
         assert "輸入的 email 格式不正確" in error.user_message
@@ -72,7 +72,7 @@ class TestCustomExceptions:
 
     def test_command_parsing_exception(self):
         """測試指令解析異常"""
-        error = CommandParsingException("/unknown", "不支援的指令")
+        error = CommandParsingError("/unknown", "不支援的指令")
 
         assert "/unknown" in str(error)
         assert "無法理解指令" in error.user_message
@@ -82,7 +82,7 @@ class TestCustomExceptions:
     def test_database_query_exception(self):
         """測試資料庫查詢異常"""
         query = "SELECT * FROM non_existent_table"
-        error = DatabaseQueryException(query, "表格不存在", "SELECT")
+        error = DatabaseQueryError(query, "表格不存在", "SELECT")
 
         assert "Database query failed" in str(error)
         assert "資料庫查詢失敗" in error.user_message
@@ -92,7 +92,7 @@ class TestCustomExceptions:
 
     def test_mcp_connection_exception(self):
         """測試 MCP 連接異常"""
-        error = MCPConnectionException("postgres", "query", "連接超時")
+        error = MCPConnectionError("postgres", "query", "連接超時")
 
         assert "postgres.query" in str(error)
         assert "服務連接失敗" in error.user_message
@@ -102,7 +102,7 @@ class TestCustomExceptions:
 
     def test_ai_service_exception(self):
         """測試 AI 服務異常"""
-        error = AIServiceException("openai", "completion", "API 額度不足")
+        error = AIServiceError("openai", "completion", "API 額度不足")
 
         assert "openai" in str(error)
         assert "AI 服務暫時不可用" in error.user_message
@@ -114,27 +114,27 @@ class TestCustomExceptions:
         """測試異常工廠函數"""
         # 測試驗證錯誤工廠
         error1 = create_validation_error("age", -1, "必須為正數")
-        assert isinstance(error1, ValidationException)
+        assert isinstance(error1, ValidationError)
         assert error1.details["field"] == "age"
 
         # 測試指令錯誤工廠
         error2 = create_command_error("/test", "未實現")
-        assert isinstance(error2, CommandParsingException)
+        assert isinstance(error2, CommandParsingError)
         assert error2.details["command"] == "/test"
 
         # 測試資料庫錯誤工廠
         error3 = create_db_error("SELECT 1", "語法錯誤")
-        assert isinstance(error3, DatabaseQueryException)
+        assert isinstance(error3, DatabaseQueryError)
         assert error3.details["query"] == "SELECT 1"
 
         # 測試 MCP 錯誤工廠
         error4 = create_mcp_error("server", "op", "failed")
-        assert isinstance(error4, MCPConnectionException)
+        assert isinstance(error4, MCPConnectionError)
         assert error4.details["server"] == "server"
 
         # 測試 AI 錯誤工廠
         error5 = create_ai_error("gpt", "chat", "quota exceeded")
-        assert isinstance(error5, AIServiceException)
+        assert isinstance(error5, AIServiceError)
         assert error5.details["service"] == "gpt"
 
 
@@ -153,7 +153,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_validation_exception(self, error_handler):
         """測試處理驗證異常"""
-        error = ValidationException("email", "invalid", "格式錯誤")
+        error = ValidationError("email", "invalid", "格式錯誤")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -163,7 +163,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_validation_exception_with_details(self, detailed_error_handler):
         """測試處理驗證異常（包含技術細節）"""
-        error = ValidationException("email", "invalid", "格式錯誤")
+        error = ValidationError("email", "invalid", "格式錯誤")
         result = detailed_error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -173,7 +173,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_command_parsing_exception(self, error_handler):
         """測試處理指令解析異常"""
-        error = CommandParsingException("/unknown", "不支援")
+        error = CommandParsingError("/unknown", "不支援")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -182,7 +182,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_database_query_exception(self, error_handler):
         """測試處理資料庫查詢異常"""
-        error = DatabaseQueryException("SELECT * FROM test", "表格不存在")
+        error = DatabaseQueryError("SELECT * FROM test", "表格不存在")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -191,7 +191,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_mcp_connection_exception(self, error_handler):
         """測試處理 MCP 連接異常"""
-        error = MCPConnectionException("postgres", "query", "超時")
+        error = MCPConnectionError("postgres", "query", "超時")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -200,7 +200,7 @@ class TestUnifiedErrorHandler:
 
     def test_handle_ai_service_exception(self, error_handler):
         """測試處理 AI 服務異常"""
-        error = AIServiceException("openai", "completion", "quota exceeded")
+        error = AIServiceError("openai", "completion", "quota exceeded")
         result = error_handler.handle_error(error)
 
         assert isinstance(result, TextMessage)
@@ -258,7 +258,7 @@ class TestUnifiedErrorHandler:
 
         # 由於我們使用 structlog，這個測試主要驗證不會拋出異常
         # 並且可以看到 stdout 中有日誌輸出（已在測試輸出中確認）
-        validation_error = ValidationException("test", "value", "reason")
+        validation_error = ValidationError("test", "value", "reason")
 
         # 應該能正常處理而不拋出異常
         result = error_handler.handle_error(validation_error)
@@ -269,7 +269,7 @@ class TestUnifiedErrorHandler:
 
     def test_context_information(self, error_handler):
         """測試錯誤上下文資訊"""
-        error = ValidationException("field", "value", "reason")
+        error = ValidationError("field", "value", "reason")
         context = {"user_id": "test_user", "operation": "test_operation"}
 
         result = error_handler.handle_error(error, context)
@@ -305,7 +305,7 @@ class TestErrorHandlerMiddleware:
 
         @middleware
         async def test_function():
-            raise ValidationException("field", "value", "error")
+            raise ValidationError("field", "value", "error")
 
         result = await test_function()
 
@@ -342,7 +342,7 @@ class TestGlobalErrorHandler:
 
     def test_handle_error_gracefully_function(self):
         """測試便捷錯誤處理函數"""
-        error = ValidationException("test", "value", "reason")
+        error = ValidationError("test", "value", "reason")
         result = handle_error_gracefully(error)
 
         assert isinstance(result, TextMessage)
