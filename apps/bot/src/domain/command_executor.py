@@ -126,7 +126,7 @@ class CommandExecutor:
             處理結果訊息
 
         Raises:
-            CommandParsingException: 指令解析失敗
+            CommandParsingError: 指令解析失敗
             ValidationException: 參數驗證失敗
         """
         # 確保已初始化

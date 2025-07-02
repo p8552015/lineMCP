@@ -9,7 +9,7 @@ from linebot.v3.messaging import TextMessage
 
 from src.domain.command_executor import CommandExecutor
 from src.domain.command_handler import CommandContext, CommandHandler
-from src.domain.exceptions import CommandParsingException, ValidationException
+from src.domain.exceptions import CommandParsingError, ValidationError
 
 # 移除對 Command 類的依賴，使用新的解析邏輯
 
@@ -143,7 +143,7 @@ class TestCommandExecutor:
         executor.registry = mock_registry
         executor._initialized = True
 
-        with pytest.raises(CommandParsingException):
+        with pytest.raises(CommandParsingError):
             await executor.execute_command("user123", "invalid command")
 
     @pytest.mark.asyncio
@@ -160,7 +160,7 @@ class TestCommandExecutor:
         executor.registry = mock_registry
         executor._initialized = True
 
-        with pytest.raises(ValidationException):
+        with pytest.raises(ValidationError):
             await executor.execute_command("user123", "/sql invalid")
 
     @pytest.mark.asyncio
@@ -178,7 +178,7 @@ class TestCommandExecutor:
         executor.registry = mock_registry
         executor._initialized = True
 
-        with pytest.raises(CommandParsingException) as exc_info:
+        with pytest.raises(CommandParsingError) as exc_info:
             await executor.execute_command("user123", "/help")
 
         assert "未知的指令" in str(exc_info.value)
@@ -214,7 +214,7 @@ class TestCommandExecutor:
         executor.registry = mock_registry
 
         # 模擬無效指令以觸發初始化但不執行指令
-        with pytest.raises(CommandParsingException):
+        with pytest.raises(CommandParsingError):
             await executor.execute_command("user123", "invalid")
 
         assert executor._initialized is True
