@@ -136,7 +136,7 @@ INSERT INTO machine_utilization (machine_id, date, utilization_rate, efficiency_
 
 -- 創建機台故障記錄表
 CREATE TABLE machine_faults (
-    id SERIAL PRIMARY KEY,
+    fault_id SERIAL PRIMARY KEY,
     machine_id VARCHAR(10) REFERENCES machines(id),
     fault_type VARCHAR(100) NOT NULL,
     severity VARCHAR(20) NOT NULL,
