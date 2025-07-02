@@ -11,7 +11,7 @@ logger = structlog.get_logger()
 
 # Prometheus metrics
 http_requests_total = Counter(
-    "http_requests_total",
+    "http_requests",
     "Total HTTP requests",
     ["method", "endpoint", "status"],
 )
@@ -75,6 +75,22 @@ def setup_middleware(app: FastAPI):
             ).observe(duration)
 
             return response
+        except Exception:
+            # 記錄錯誤情況的指標
+            duration = time.time() - start_time
+
+            http_requests_total.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=500,
+            ).inc()
+
+            http_request_duration_seconds.labels(
+                method=request.method,
+                endpoint=request.url.path,
+            ).observe(duration)
+
+            raise
         finally:
             active_requests.dec()
 

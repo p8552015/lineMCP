@@ -27,7 +27,7 @@ app_info.info({"version": "0.1.0", "name": "line-mcp-bot", "environment": "produ
 
 # HTTP 請求指標
 http_requests_total = Counter(
-    "http_requests_total",
+    "http_requests",
     "Total number of HTTP requests",
     ["method", "endpoint", "status"],
 )
