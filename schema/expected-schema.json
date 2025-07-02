@@ -1,0 +1,600 @@
+{
+  "version": "1.0.1",
+  "description": "LINE MCP 專案資料庫 Schema 期望規範（基於 postgres-init/01-init-data.sql）",
+  "last_updated": "2025-07-02",
+  "baseline_file": "postgres-init/01-init-data.sql",
+  "tables": {
+    "employees": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "department",
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        {
+          "name": "salary",
+          "type": "DECIMAL(10,2)",
+          "nullable": true
+        },
+        {
+          "name": "hire_date",
+          "type": "DATE",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_employees_department",
+          "columns": ["department"]
+        }
+      ]
+    },
+    "products": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        {
+          "name": "price",
+          "type": "DECIMAL(8,2)",
+          "nullable": true
+        },
+        {
+          "name": "stock",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_products_category",
+          "columns": ["category"]
+        }
+      ]
+    },
+    "orders": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "customer_name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "constraints": ["FOREIGN KEY REFERENCES products(id)"]
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "1"
+        },
+        {
+          "name": "total_amount",
+          "type": "DECIMAL(10,2)",
+          "nullable": true
+        },
+        {
+          "name": "order_date",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'pending'"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references_table": "products",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_orders_status",
+          "columns": ["status"]
+        }
+      ]
+    },
+    "machines": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "VARCHAR(10)",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        {
+          "name": "temperature",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "utilization_rate",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "last_maintenance",
+          "type": "DATE",
+          "nullable": true
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_machines_status",
+          "columns": ["status"]
+        }
+      ]
+    },
+    "machine_utilization": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "machine_id",
+          "type": "VARCHAR(10)",
+          "nullable": false,
+          "constraints": ["FOREIGN KEY REFERENCES machines(id)"]
+        },
+        {
+          "name": "date",
+          "type": "DATE",
+          "nullable": false
+        },
+        {
+          "name": "utilization_rate",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "efficiency_rate",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "good_parts",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        {
+          "name": "defective_parts",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "machine_id",
+          "references_table": "machines",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_machine_utilization_machine_id",
+          "columns": ["machine_id"]
+        },
+        {
+          "name": "idx_machine_utilization_date",
+          "columns": ["date"]
+        },
+        {
+          "name": "idx_machine_utilization_machine_date",
+          "columns": ["machine_id", "date"]
+        }
+      ]
+    },
+    "machine_faults": {
+      "primary_key": "fault_id",
+      "required_columns": [
+        {
+          "name": "fault_id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "machine_id",
+          "type": "VARCHAR(10)",
+          "nullable": false,
+          "constraints": ["FOREIGN KEY REFERENCES machines(id)"]
+        },
+        {
+          "name": "fault_type",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "severity",
+          "type": "VARCHAR(20)",
+          "nullable": false
+        },
+        {
+          "name": "fault_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": "CURRENT_DATE"
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "resolved",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "FALSE"
+        },
+        {
+          "name": "resolution_date",
+          "type": "DATE",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "machine_id",
+          "references_table": "machines",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_machine_faults_machine_id",
+          "columns": ["machine_id"]
+        },
+        {
+          "name": "idx_machine_faults_date",
+          "columns": ["fault_date"]
+        },
+        {
+          "name": "idx_machine_faults_severity",
+          "columns": ["severity"]
+        },
+        {
+          "name": "idx_machine_faults_resolved",
+          "columns": ["resolved"]
+        }
+      ]
+    },
+    "machine_utilization": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "machine_id",
+          "type": "VARCHAR(10)",
+          "nullable": false,
+          "constraints": ["FOREIGN KEY REFERENCES machines(id)"]
+        },
+        {
+          "name": "date",
+          "type": "DATE",
+          "nullable": false
+        },
+        {
+          "name": "utilization_rate",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "efficiency_rate",
+          "type": "DECIMAL(5,2)",
+          "nullable": true
+        },
+        {
+          "name": "good_parts",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        {
+          "name": "defective_parts",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0"
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "machine_id",
+          "references_table": "machines",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_machine_utilization_machine_id",
+          "columns": ["machine_id"]
+        },
+        {
+          "name": "idx_machine_utilization_date",
+          "columns": ["date"]
+        },
+        {
+          "name": "idx_machine_utilization_machine_date",
+          "columns": ["machine_id", "date"]
+        }
+      ]
+    },
+    "employees": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "department",
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        {
+          "name": "salary",
+          "type": "DECIMAL(10,2)",
+          "nullable": true
+        },
+        {
+          "name": "hire_date",
+          "type": "DATE",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_employees_department",
+          "columns": ["department"]
+        }
+      ]
+    },
+    "products": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(50)",
+          "nullable": true
+        },
+        {
+          "name": "price",
+          "type": "DECIMAL(8,2)",
+          "nullable": true
+        },
+        {
+          "name": "stock",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_products_category",
+          "columns": ["category"]
+        }
+      ]
+    },
+    "orders": {
+      "primary_key": "id",
+      "required_columns": [
+        {
+          "name": "id",
+          "type": "SERIAL",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        },
+        {
+          "name": "customer_name",
+          "type": "VARCHAR(100)",
+          "nullable": false
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "constraints": ["FOREIGN KEY REFERENCES products(id)"]
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "nullable": false,
+          "default": "1"
+        },
+        {
+          "name": "total_amount",
+          "type": "DECIMAL(10,2)",
+          "nullable": true
+        },
+        {
+          "name": "order_date",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'pending'"
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "product_id",
+          "references_table": "products",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_orders_status",
+          "columns": ["status"]
+        }
+      ]
+    }
+  },
+  "validation_rules": {
+    "naming_conventions": {
+      "primary_key_suffix": "_id",
+      "foreign_key_suffix": "_id",
+      "index_prefix": "idx_",
+      "table_name_case": "snake_case"
+    },
+    "data_integrity": {
+      "foreign_keys_must_exist": true,
+      "primary_keys_required": true,
+      "not_null_constraints_enforced": true
+    },
+    "performance_requirements": {
+      "indexes_on_foreign_keys": true,
+      "indexes_on_frequently_queried_columns": true
+    }
+  }
+}
