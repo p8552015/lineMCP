@@ -1,9 +1,21 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "LINE MCP 專案資料庫 Schema 期望規範（基於 postgres-init/01-init-data.sql）",
-  "last_updated": "2025-07-02",
+  "last_updated": "2025-07-02T16:47:00",
   "baseline_file": "postgres-init/01-init-data.sql",
   "tables": {
+    "alembic_version": {
+      "primary_key": "version_num",
+      "required_columns": [
+        {
+          "name": "version_num",
+          "type": "VARCHAR(32)",
+          "nullable": false,
+          "constraints": ["PRIMARY KEY"]
+        }
+      ],
+      "description": "Alembic 遷移版本追蹤表格（自動生成）"
+    },
     "employees": {
       "primary_key": "id",
       "required_columns": [
@@ -305,7 +317,7 @@
         },
         {
           "name": "fault_date",
-          "type": "DATE",
+          "type": "TIMESTAMP",
           "nullable": false,
           "default": "CURRENT_DATE"
         },
@@ -322,7 +334,7 @@
         },
         {
           "name": "resolution_date",
-          "type": "DATE",
+          "type": "TIMESTAMP",
           "nullable": true
         },
         {
