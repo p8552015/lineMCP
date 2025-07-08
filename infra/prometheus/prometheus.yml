@@ -5,5 +5,5 @@ global:
 scrape_configs:
   - job_name: 'line-mcp-webhook'
     static_configs:
-      - targets: ['webhook:8000']
+      - targets: ['Ｗebhook:8000']
     metrics_path: '/metrics'

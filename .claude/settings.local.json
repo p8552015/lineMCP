@@ -160,7 +160,8 @@
       "Bash(claude find-root-cause --topic \"檢查程式品質\")",
       "Bash(claude --version)",
       "Bash(./scripts/check-tool-versions.sh:*)",
-      "Bash(./scripts/check-schema.sh:*)"
+      "Bash(./scripts/check-schema.sh:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": []
   }
