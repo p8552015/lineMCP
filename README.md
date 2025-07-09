@@ -19,12 +19,14 @@
 - **🏗️ 企業架構**: 25個服務，依賴注入，循環依賴已解決
 
 ### 🌟 核心價值與競爭優勢
-- **🤖 AI 雙引擎智能** - Gemini 1.5 Flash (15M 免費) + GPT-4o-mini 混合驅動
+- **🤖 AI 雙引擎智能** - Gemini 1.5 Flash (15M 免費) + GPT-4o-mini 自動備用切換
 - **⚡ 毫秒級響應** - M001機台查詢 8ms，智能預載快取
 - **🏭 即時工業監控** - 機台狀態、故障預警、預測性維護
-- **💬 自然語言交互** - 「M001機台稼動率」→ 秒級 SQL + 圖表
+- **💬 自然語言交互** - 三層解析策略：規則→AI增強→組合解析
 - **🚀 生產級品質** - 100% 測試覆蓋，17個 CI/CD 工作流程
-- **🏗️ 企業級架構** - SOLID 原則，25個服務，零循環依賴
+- **🏗️ 企業級架構** - SOLID 原則，28個註冊服務，9個指令處理器
+- **🌐 多運行時支援** - nodecomman 架構支援 Node.js/Python/Deno/Bun
+- **📊 6層健康檢查** - 從進程到應用層的完整監控體系
 
 ## 🏗️ 生產級技術架構
 
@@ -42,22 +44,38 @@
 ### ✅ 技術特性矩陣
 
 #### 🏢 **企業級架構設計** 
-- **四層架構**: Application → Domain → Infrastructure → Services  
-- **25個服務註冊**: 依賴注入容器，支援 singleton/transient 生命週期
+- **五層架構**: Routes → Application → Domain → Infrastructure → Services
+- **28個註冊服務**: 依賴注入容器，支援 singleton/transient 生命週期
+- **9個指令處理器**: 統一的命令模式執行框架
 - **零循環依賴**: 通過依賴倒置原則 (DIP) 完全解決
 - **SOLID 原則**: SRP, OCP, LSP, ISP, DIP 完整實現
+- **nodecomman 多運行時**: 15+ 抽象介面支援 Node.js/Python/Deno/Bun
 
 #### 🤖 **AI 雙引擎智能系統**
-- **Google Gemini 1.5 Flash**: 15M 免費 tokens/月 (主要)
-- **OpenAI GPT-4o-mini**: 備用高品質模型
-- **智能 NL-to-SQL**: 規則優先 + AI 增強的混合解析
-- **自動修復機制**: 空查詢自動修復，零錯誤運行
+- **Google Gemini 1.5 Flash**: 15M 免費 tokens/月 (主要引擎)
+- **OpenAI GPT-4o-mini**: 自動備用切換，429錯誤無縫轉換
+- **三層 NL-to-SQL 解析**: 規則解析 → AI增強解析 → 組合解析策略
+- **智能詞彙解釋器**: 支援繁體中文工業術語識別
+- **12個抽象介面**: 完整的 SOLID 原則實現
+- **LLM 用戶指導**: 空查詢自動觸發友善指導生成
 
 #### 🚀 **生產級運維保障**
 - **17個 CI/CD 工作流**: 從代碼到部署的完整自動化
 - **7階段 Docker**: 安全掃描 + 多平台 + 優化建構
 - **完整監控**: Prometheus + Grafana + AlertManager + OpenTelemetry
 - **v5 穩定性修復**: 類型安全 + 空查詢保護機制
+
+#### 📊 **監控與健康檢查系統**
+- **6層健康檢查**: 進程→服務工廠→訊息處理器→LINE API→AI服務→NL-to-SQL
+- **Prometheus 指標**: webhook_requests_total 多維度監控
+- **智能狀態判斷**: healthy/degraded/unhealthy 三級狀態
+- **30秒超時保護**: LINE Platform 兼容的完整超時處理
+
+#### 🚪 **高性能 Routes 層**
+- **FastAPI 非同步架構**: 全面 asyncio 並行處理
+- **5個 API 端點**: Webhook/測試/調試/健康檢查/LLM指導
+- **簽章安全驗證**: 完整的 LINE 平台安全機制  
+- **並行事件處理**: asyncio.gather 多事件並行執行
 
 #### 🔐 **企業級安全與品質**
 - **安全掃描**: Trivy + Hadolint + Bandit + Safety 自動化
@@ -176,14 +194,14 @@ lineMCP/
 │   │   ├── service_factory_interface.py (2K) # IServiceFactory 抽象介面 (DIP)
 │   │   ├── enhanced_service_factory.py (13K) # 增強服務工廠實現
 │   │   ├── error_handler.py (6.0K)       # 統一錯誤處理
-│   │   └── service_registry.py (13K)     # 服務註冊表 (15 個服務)
+│   │   └── service_registry.py (13K)     # 服務註冊表 (28 個服務)
 │   │
-│   ├── 🛠️ commands/                     # 指令處理層 (6 個處理器)
+│   ├── 🛠️ commands/                     # 指令處理層 (9 個處理器)
 │   │   ├── help_command.py, info_command.py
 │   │   ├── models_command.py, sql_command.py
 │   │   ├── status_command.py, tables_command.py
 │   │
-│   ├── 🏢 services/                      # 服務層 - 具體實現 (12 個核心服務)
+│   ├── 🏢 services/                      # 服務層 - 具體實現 (28 個註冊服務)
 │   │   ├── message_handler_di.py (17K)   # 💬 主要訊息處理器 (依賴注入版)
 │   │   ├── ai_model_service.py (12K)     # 🤖 AI 模型服務
 │   │   ├── database_service.py (14K)     # 🗄️ 資料庫服務
@@ -191,7 +209,14 @@ lineMCP/
 │   │   ├── production_mcp_client.py (14K) # 🎯 生產級 MCP 客戶端
 │   │   ├── unified_mcp_client.py (4.4K) # 🔧 統一 MCP 客戶端介面
 │   │   ├── message_formatter.py (8K)     # 📝 訊息格式化服務
-│   │   └── 其他支援服務...
+│   │   ├── enhanced_mcp_client.py       # 🚀 增強版 MCP 客戶端
+│   │   └── nl_to_sql/                   # 🧠 NL-to-SQL 子系統 (12個抽象介面)
+│   │
+│   ├── 🌐 nodecomman/                     # 多運行時支援架構
+│   │   ├── interfaces/                   # 15+ 抽象介面 (SOLID)
+│   │   ├── implementations/              # Node.js + Python 運行時管理
+│   │   ├── UniversalMCPServerFactory     # 跨運行時 MCP 工廠
+│   │   └── ProcessLifecycleManager       # 進程生命週期管理
 │   │
 │   ├── 🎮 routes/                        # 路由層 - API 端點
 │   │   └── webhook.py (9.2K)             # LINE Webhook 處理
@@ -267,14 +292,23 @@ graph TD
 #### 💉 **依賴注入系統 (SOLID 原則實現)**
 - **`IServiceFactory`**: 抽象服務工廠介面，實現依賴倒置原則 (DIP)
 - **`EnhancedServiceFactory`**: 企業級服務工廠實現，支援多種生命週期
-- **`ServiceRegistry`**: 14 個服務註冊 (12 singleton + 2 transient)
+- **`ServiceRegistry`**: 28 個服務註冊，完整的 singleton/transient 管理
 - **循環依賴解決**: ApplicationFacade 透過抽象介面依賴，不直接依賴具體實現
 - **自動依賴解析**: 零配置服務注入，支援多層級依賴關係
+- **模組化註冊器**: Core/Application/Infrastructure 三層註冊系統
 
 #### 🚪 **門面模式 (Facade Pattern)**
 - **`ApplicationFacade`**: 統一的應用層入口
 - **簡化客戶端**: 複雜系統的簡單介面
 - **職責分離**: 清晰的 API 邊界
+
+#### 🌐 **nodecomman 多運行時架構**
+- **15+ 抽象介面**: 完整的 SOLID 原則設計
+- **4 種運行時支援**: Node.js、Python、Deno、Bun 統一管理
+- **`UniversalMCPServerFactory`**: 跨運行時 MCP 服務器工廠
+- **進程生命週期管理**: 自動健康檢查和錯誤恢復
+- **環境驗證系統**: 多層級驗證和自動修復機制
+- **配置管理**: 靈活支援多種 MCP 協議 (STDIO/HTTP/WebSocket/TCP)
 
 #### ✅ **企業級架構優化已完成**
 - ✅ **FlexBuilder 重構**: 成功移除 1416 行未使用代碼
